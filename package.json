@@ -1,40 +1,165 @@
 {
-  "name": "pokemon-pets",
-  "displayName": "pokemon pets",
-  "description": "Collect, display, and enjoy animated Pokémon pets inside VS Code while you code.",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.109.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
-  "main": "./out/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "pokemon-pets.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.109.0",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.39.2",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
-  }
+    "name": "pokemons",
+    "displayName": "Pokemon Pets",
+    "description": "Pokemon pets for VSCode",
+    "version": "0.0.2",
+    "publisher": "AnasFiguigui",
+    "author": {
+        "name": "AnasFiguigui"
+    },
+    "icon": "media/icons/icon.png",
+    "galleryBanner": {
+        "color": "#45a319",
+        "theme": "dark"
+    },
+    "pricing": "Free",
+    "keywords": [
+        "pokemon",
+        "pokemon pets"
+    ],
+    "categories": [
+        "Other"
+    ],
+    "repository": {
+        "type": "github",
+        "url": "https://github.com/AnasFiguigui/pokemon-pets.git"
+    },
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "Pokemon Pets",
+            "properties": {
+                "pokemons.background": {
+                    "type": "string",
+                    "default": "Grass",
+                    "enum": [
+                        "Grass",
+                        "Grass (Fall)",
+                        "Dirt",
+                        "Sand",
+                        "Snow",
+                        "Light Wood",
+                        "Dark Wood",
+                        "Orange Wood",
+                        "Broken Wood"
+                    ],
+                    "description": "The background theme for the window."
+                },
+                "pokemons.scale": {
+                    "type": "string",
+                    "default": "Medium",
+                    "enum": [
+                        "Small",
+                        "Medium",
+                        "Big"
+                    ],
+                    "description": "The size of the pets."
+                },
+                "pokemons.monsters": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggles if monsters can spawn."
+                }
+            }
+        },
+        "commands": [
+            {
+                "command": "pokemons.addPet",
+                "title": "Add pet",
+                "icon": {
+                    "light": "media/icons/light/add.svg",
+                    "dark": "media/icons/dark/add.svg"
+                }
+            },
+            {
+                "command": "pokemons.removePet",
+                "title": "Remove pet",
+                "icon": {
+                    "light": "media/icons/light/remove.svg",
+                    "dark": "media/icons/dark/remove.svg"
+                }
+            },
+            {
+                "command": "pokemons.actions",
+                "title": "Pet actions",
+                "icon": {
+                    "light": "media/icons/light/actions.svg",
+                    "dark": "media/icons/dark/actions.svg"
+                }
+            },
+            {
+                "command": "pokemons.settings",
+                "title": "Pokemon Pets Settings",
+                "icon": {
+                    "light": "media/icons//light/settings.svg",
+                    "dark": "media/icons/dark/settings.svg"
+                }
+            },
+            {
+                "command": "pokemons.openSaveFile",
+                "title": "Pokemon Pets: Open save file (JSON)"
+            },
+            {
+                "command": "pokemons.reloadSaveFile",
+                "title": "Pokemon Pets: Reload save file"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "pokemons.addPet",
+                    "when": "view == pokemons",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "pokemons.removePet",
+                    "when": "view == pokemons",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "pokemons.actions",
+                    "when": "view == pokemons",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "pokemons.settings",
+                    "when": "view == pokemons",
+                    "group": "navigation@3"
+                }
+            ]
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "pokemons",
+                    "name": "Pokemons",
+                    "icon": "media/icons/icon.png",
+                    "contextualTitle": "Pokemon pets for VSCode",
+                    "type": "webview"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.7",
+        "@types/node": "20.x",
+        "@types/vscode": "^1.60.0",
+        "@typescript-eslint/eslint-plugin": "^7.14.1",
+        "@typescript-eslint/parser": "^7.11.0",
+        "@vscode/test-cli": "^0.0.9",
+        "@vscode/test-electron": "^2.4.0",
+        "eslint": "^8.57.0",
+        "typescript": "^5.4.5"
+    }
 }
