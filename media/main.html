@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <!-- Info -->
+    <head>
+        <title>Pokemon Pets </title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Preload font & menus image -->
+        <link rel="preload" href="{media}fonts/Pokemon.ttf" as="font" type="font/ttf">
+        <link rel="preload" href="{media}sprites/ui/menu.png" as="image" type="image/png">
+
+        <!-- Styling -->
+        <link rel="stylesheet" href="{media}main.css">
+
+        <!-- Scripts -->
+    </head>
+
+    <!-- Content -->
+    <body media="{media}" hide>
+        <!-- Game -->
+        <div id="background">
+            <!-- Game canvas -->
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Decor mode -->
+        <div id="decor">
+            <!-- Controls -->
+            <span id="decorHelp">Drag to move</span>
+            
+            <!-- Toggle action & exit buttons -->
+            <div class="decorButtons" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+                <!-- Toggle action -->
+                <div class="menu" button show onclick="DecorMode.toggleAction();">
+                    <span id="decorAction">Action</span>
+                </div>
+
+                <!-- Exit decor mode -->
+                <div class="menu" button show onclick="DecorMode.toggle(false);">
+                    <span>Exit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages"></div>
+
+        <!-- Menus -->
+        <div id="menus" onclick="Menus.close();" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+            <!-- Actions menu -->
+            <div id="actions" class="menu" onclick="event.stopPropagation();">
+                <div id="actionsContent" class="menuContent" scrollable>
+                    <!-- Buttons -->
+                    <div class="menuButton" onclick="toggleActionBall();">
+                        <img src="{media}sprites/ui/ball.png">
+                        <span>Throw Pokeball</span>
+                    </div>
+                    <div class="menuButton" onclick="toggleActionCandy();">
+                        <img src="{media}sprites/ui/candy.png">
+                        <span>Give a Candy</span>
+                    </div>
+                    <div class="menuButton" onclick="openStoreMenu();">
+                        <img src="{media}sprites/ui/house.png">
+                        <span>General Store</span>
+                    </div>
+                    <div class="menuButton" onclick="toggleActionDecor();">
+                        <img src="{media}sprites/ui/axe.png">
+                        <span id="actionsDecor">Enter Decor Mode</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store menu -->
+            <div id="store" class="menu" onclick="event.stopPropagation();">
+                <div id="storeContent" class="menuContent" scrollable>
+                    <!-- Items -->
+                </div>
+            </div>
+
+            <!-- Money menu -->
+            <div id="money" class="menu" button show onclick="event.stopPropagation();">
+                <span id="moneyText">0G</span>
+            </div>
+        </div>
+
+        <!-- Cursor -->
+        <div id="cursor"></div>
+    </body>
+
+    <!-- Scripts -->
+    <script src="{media}engine.js"></script>
+    <script src="{media}characters.js"></script>
+    <script src="{media}decoration.js"></script>
+    <script src="{media}main.js"></script>
+</html>
