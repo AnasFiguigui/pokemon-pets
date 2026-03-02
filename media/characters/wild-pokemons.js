@@ -9,7 +9,7 @@ class WildPokemonAnimations {
             'idle': new Animation(
                 WildPokemonAnimations.frames(4),
                 4,
-                { loop: false },
+                { loop: true },
             ),
             'moveDown': new Animation(
                 WildPokemonAnimations.frames(0),

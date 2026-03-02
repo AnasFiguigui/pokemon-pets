@@ -1,105 +1,81 @@
 # Pokemon Pets
 
-<div align='center'>
+<div align="center">
 
-Keep your favourite **Pokemon** pets with you while coding.
+Keep your favorite Pokémon with you while coding in VS Code.
 
-![alt text](https://raw.githubusercontent.com/Anasfiguiguinzer/Pokemon-Pets/main/pets.png)
+![Pokemon Pets](https://raw.githubusercontent.com/Anasfiguiguinzer/Pokemon-Pets/main/pets.png)
 
 </div>
 
-## Pets
+## Features
 
-You can have pets with custom names to keep you company while coding.  
+- Add Pokémon pets with a full flow: `generation -> species -> form`.
+- Supports mixed sprite sizes per form (`32x32` and `48x48`).
+- Pet moods and interactions (including candy and pokéball actions).
+- Wild Pokémon spawn system with generic/automated animation handling.
+- In-game store and decoration mode (move/sell/place decor).
 
-<details>
-    <summary style="cursor: pointer">
-        <b>Current pets:</b>
-    </summary>
-    <ul>
-        <li>Cats</li>
-        <li>Dogs</li>
-        <li>Dinos</li>
-        <li>Turtles</li>
-        <li>Raccoons</li>
-        <li>Ducks</li>
-        <li>Goats</li>
-        <li>Sheeps</li>
-        <li>Ostrichs</li>
-        <li>Pigs</li>
-        <li>Rabbits</li>
-        <li>Chicken</li>
-        <li>Cows</li>
-        <li>Junimos!</li>
-    </ul>
-</details>
+## Commands
 
-## Monsters
+- `Pokemon Pets: Add Pokémon`
+- `Pokemon Pets: Remove Pokémon`
+- `Pokemon Pets: Pokémon actions`
+- `Pokemon Pets Settings`
+- `Pokemon Pets: Open save file (JSON)`
+- `Pokemon Pets: Reload save file`
 
-Monsters will sometimes appear in your farm, with a maximum of 1 at a time.  
-Clicking on one of them kills it and gives you money to buy decoration.  
-You can disable monsters in settings if you don't want them to appear.  
+## Settings
 
-<details>
-    <summary style="cursor: pointer">
-        <b>Current monsters:</b>
-    </summary>
-    <ul>
-        <li>Bugs</li>
-        <li>Crabs</li>
-        <li>Golems</li>
-        <li>Slimes</li>
-    </ul>
-</details>
-  
-## Decoration
+- `pokemon-pets.background`: farm background theme
+- `pokemon-pets.scale`: pet scale (`Small`, `Medium`, `Big`)
+- `pokemon-pets.monsters`: toggles wild Pokémon spawning
 
-You can use the money obtained by monsters to buy new decoration in the **General Store**.  
-Aditionally, you can rearange or sell your current decoration by entering **Decor Mode**.  
+## Wild Pokémon (Automated)
 
-<details>
-    <summary style="cursor: pointer">
-        <b>Current decoration:</b>
-    </summary>
-    <ul>
-        <li>Chairs</li>
-        <li>Stools</li>
-        <li>Benches</li>
-        <li>Tables</li>
-        <li>Tea Tables</li>
-        <li>End Tables</li>
-        <li>Coffe Tables</li>
-        <li>Rugs</li>
-        <li>Cushions</li>
-        <li>House Plants</li>
-        <li>Large Decoration</li>
-        <li>Small Decoration</li>
-    </ul>
-</details>
+Wild Pokémon now use one shared animation format and one shared class.
 
-## Credits
+- Sprite folder: `media/sprites/wild-pokemons/`
+- Data list: `src/game-data.ts` -> `WildPokemonSpecies`
 
-**Pokemon Pets** was done by a single person in their free time.  
-Since it's free, I'd appreciate you taking a look at my [portfolio](https://anasfiguigui.vercel.app) as a thanks :D  
-Aditionally, all sprite assets are from the original [Pokemon](https://www.pokemon.net/) by ConcernedApe!
+To add a new wild Pokémon:
 
-## Where to Find it
+1. Add its sprite sheet in `media/sprites/wild-pokemons/` using the filename `<name>.png` (lowercase).
+2. Add its name to `WildPokemonSpecies` in `src/game-data.ts`.
 
-**Pokemon Pets** can be found in the **Explorer** panel.  
-If its missing, try searching **"Focus on Pokemon Pets View"** in the **Command Palette:**  
+All wild Pokémon use the same row layout (4 frames each):
 
-- ```Ctrl+Shift+P``` on Windows/Linux
-- ```Cmd(⌘)+Shift+P``` on Mac
+- row 0: `moveDown`
+- row 1: `moveRight`
+- row 2: `moveUp`
+- row 3: `moveLeft`
+- row 4: `idle`
+- row 5: `special`
 
-## VSCode Store
+## Where to find it
 
-**Pokemon Pets** is available on the [VSCode Store](https://marketplace.visualstudio.com/items?itemName=anasfiguigui.pokemon-pets)!
+Open the **Explorer** panel and look for **Pokemon Pets**.
+
+If it is not visible:
+
+- `Ctrl+Shift+P` (Windows/Linux)
+- `Cmd+Shift+P` (macOS)
+
+Then run: **Focus on Pokemon Pets View**.
+
+## VS Code Marketplace
+
+Available on the VS Code Marketplace:
+
+https://marketplace.visualstudio.com/items?itemName=anasfiguigui.pokemon-pets
 
 ## Contributing
 
-If you find bugs or have new features you want to see added, feel free to tell me via [GitHub issues](https://github.com/Anasfiguiguinzer/Pokemon-Pets/issues).  
+Issues and feature requests are welcome:
 
-It's my personal project so I'd like to keep the code mine, but I also like listening to what the community wants.  
-Just keep in mind I won't add things that aren't in **Pokemon**, like recolours or new original pets.  
-If you want those, feel free to fork the repo and add me in the credits.
+https://github.com/Anasfiguiguinzer/Pokemon-Pets/issues
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
