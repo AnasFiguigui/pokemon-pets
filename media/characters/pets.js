@@ -2,9 +2,9 @@
 class AI {
 
     //States
-    static get IDLE() { return 'idle'; }
-    static get MOVE() { return 'move'; }
-    static get SPECIAL() { return 'special'; }
+    static get IDLE() { return 'idle' };
+    static get MOVE() { return 'move' };
+    static get SPECIAL() { return 'special' };
 
     //AI info
     #character;
@@ -39,19 +39,19 @@ class AI {
     //Constructor
     constructor(config) {
         //No config
-        if (typeof config !== 'object') { return; }
+        if (typeof config !== 'object') return;
 
         //Idle config
-        if (typeof config.idleDurationBase === 'number') { this.#idleDurationBase = config.idleDurationBase; }
-        if (typeof config.idleDurationVariation === 'number') { this.#idleDurationVariation = config.idleDurationVariation; }
+        if (typeof config.idleDurationBase == 'number') this.#idleDurationBase = config.idleDurationBase;
+        if (typeof config.idleDurationVariation == 'number') this.#idleDurationVariation = config.idleDurationVariation;
 
         //Sleep config
-        if (typeof config.canSleep === 'boolean') { this.#canSleep = config.canSleep; }
-        if (typeof config.sleepDurationBase === 'number') { this.#sleepDurationBase = config.sleepDurationBase; }
-        if (typeof config.sleepDurationVariation === 'number') { this.#sleepDurationVariation = config.sleepDurationVariation; }
+        if (typeof config.canSleep == 'boolean') this.#canSleep = config.canSleep;
+        if (typeof config.sleepDurationBase == 'number') this.#sleepDurationBase = config.sleepDurationBase;
+        if (typeof config.sleepDurationVariation == 'number') this.#sleepDurationVariation = config.sleepDurationVariation;
 
         //Special config
-        if (typeof config.specialDuration === 'number') { this.#specialDuration = config.specialDuration; }
+        if (typeof config.specialDuration == 'number') this.#specialDuration = config.specialDuration;
     }
 
     assign(character) {
@@ -67,21 +67,20 @@ class AI {
         //Move position out of bounds -> Create a new one
         if (this.#movePos.x > this.character.maxPosX || this.#movePos.y > this.character.maxPosY) {
             this.moveTowards(this.character.randomPoint);
-            return true;
+            return true
         }
 
         //Try to move
-        if (this.#movePos.x < this.character.pos.x) {
+        if (this.#movePos.x < this.character.pos.x)
             return this.moveLeft();
-        } else if (this.#movePos.x > this.character.pos.x) {
+        else if (this.#movePos.x > this.character.pos.x)
             return this.moveRight();
-        } else if (this.#movePos.y < this.character.pos.y) {
+        else if (this.#movePos.y < this.character.pos.y)
             return this.moveUp();
-        } else if (this.#movePos.y > this.character.pos.y) {
+        else if (this.#movePos.y > this.character.pos.y)
             return this.moveDown();
-        } else {
-            return false;
-        }
+        else
+            return false
     }
 
     moveTowards(point) {
@@ -121,23 +120,23 @@ class AI {
     update() {
         //Run on update for current state
         const onUpdate = this[`onUpdate_${this.state}`];
-        if (typeof onUpdate === 'function') { onUpdate.call(this); }
+        if (typeof onUpdate === 'function') onUpdate.call(this);
     }
 
     setState(newState) {
         //Not a valid state
-        if (typeof newState !== 'string') { return; }
+        if (typeof newState !== 'string') return;
 
         //Run on end for old state
         const onEnd = this[`onEnd_${this.state}`];
-        if (typeof onEnd === 'function') { onEnd.call(this); }
+        if (typeof onEnd === 'function') onEnd.call(this);
 
         //Set state
         this.#state = newState;
 
         //Run on start for new state
         const onStart = this[`onStart_${this.state}`];
-        if (typeof onStart === 'function') { onStart.call(this); }
+        if (typeof onStart === 'function') onStart.call(this);
     }
 
     //State: IDLE
@@ -154,7 +153,7 @@ class AI {
 
     onUpdate_idle() {
         //Timer didn't finish
-        if (!this.timer.finished) { return; }
+        if (!this.timer.finished) return;
 
         //Reset timer
         this.timer.reset();
@@ -178,7 +177,7 @@ class AI {
     //State: MOVE
     onUpdate_move() {
         //Try to move
-        if (this._moveTowardsMovePos()) { return; }
+        if (this._moveTowardsMovePos()) return;
 
         //Didn't move -> Point reached, animate idle
         this.setState(AI.IDLE);
@@ -195,7 +194,7 @@ class AI {
 
     onUpdate_special() {
         //Timer didn't finish
-        if (!this.timer.finished) { return; }
+        if (!this.timer.finished) return;
 
         //Reset timer
         this.timer.reset();
@@ -223,8 +222,8 @@ class Character extends GameObject {
         super(config);
 
         //Assign AI
-        this.#ai = ai;
-        ai.assign(this);
+        this.#ai = ai
+        ai.assign(this)
 
         //Respawn character
         this.respawn();
@@ -247,23 +246,12 @@ class Character extends GameObject {
 
 }
 
+class PokemonAnimations {
 
- /*$$$$$$             /$$
-| $$__  $$           | $$
-| $$  \ $$ /$$$$$$  /$$$$$$   /$$$$$$$
-| $$$$$$$//$$__  $$|_  $$_/  /$$_____/
-| $$____/| $$$$$$$$  | $$   |  $$$$$$
-| $$     | $$_____/  | $$ /$$\____  $$
-| $$     |  $$$$$$$  |  $$$$//$$$$$$$/
-|__/      \_______/   \___/ |______*/
-
-//Animations
-class PetAnimations {
-
-    static get CAT() { 
+    static get DEFAULT() {
         return {
             'idle': new Animation(
-                [[0, 4], [1, 4], [2, 4]],
+                [[0, 4], [1, 4], [2, 4], [3, 4]],
                 5,
                 { loop: false }
             ),
@@ -284,7 +272,7 @@ class PetAnimations {
                 5
             ),
             'special': new Animation(
-                [[0, 5], [1, 5], [2, 5], [3, 5], [0, 5], [2, 4]],
+                [[0, 5], [1, 5], [2, 5], [3, 5]],
                 5,
                 { loop: false }
             ),
@@ -335,12 +323,12 @@ class PetMoods {
 class PetAI extends AI {
 
     //States
-    static get MOVE_BALL() { return 'moveball'; }
+    static get MOVE_BALL() { return 'moveball' };
 
     //Moods
     #moodSprite = new Image();
     #moodOffset = new Vec2();
-    #moodElevation = 0; //Elevation is inverted, positive is down, negative is up
+    #moodElevation = 0; //Fine tune offset applied after automatic positioning
     #moodShow = false;
     #moodHideTimeout = new Timeout(() => this.#moodShow = false);
     #moodHeartTimeout = new Timeout(() => this.#setRandomMood());
@@ -353,14 +341,14 @@ class PetAI extends AI {
         //Check config
         if (typeof config === 'object') {
             //Mood elevation
-            if (typeof config.moodElevation === 'number') { this.#moodElevation = -config.moodElevation; } //Elevation is inverted
+            if (typeof config.moodElevation === 'number') this.#moodElevation = config.moodElevation;
         }
 
         //Init moods sprite
         this.#moodSprite.src = `${Game.mediaURI}sprites/emotes.png`;
 
         //Random mood
-        this.#setRandomMood();
+        this.#setRandomMood()
     }
 
     //Click
@@ -371,7 +359,7 @@ class PetAI extends AI {
             Game.setAction(Action.NONE);
 
             //Set mood to heart
-            this.#setHeartMood();
+            this.#setHeartMood()
         }
 
         //Show mood
@@ -409,7 +397,10 @@ class PetAI extends AI {
 
     drawMood(ctx) {
         //Mood is hidden
-        if (!this.#moodShow) { return; }
+        if (!this.#moodShow) return;
+
+        //Auto lift mood depending on pokemon sprite size (32px or 48px)
+        const moodLift = this.character.size.y >= 48 ? 10 : 6;
 
         //Draw mood
         ctx.drawImage(
@@ -419,7 +410,7 @@ class PetAI extends AI {
             PetMoods.size.x,
             PetMoods.size.y,
             this.character.pos.x + Math.round((this.character.size.x - PetMoods.size.x) / 2),
-            this.character.pos.y + this.#moodElevation,
+            this.character.pos.y - moodLift + this.#moodElevation,
             PetMoods.size.x,
             PetMoods.size.y
         );
@@ -427,22 +418,22 @@ class PetAI extends AI {
 
     //Movement
     moveTowards(point, towardsBall) {
-        super.moveTowards(point);
+        super.moveTowards(point)
 
         //Move towards ball
-        if (towardsBall) { this.setState(PetAI.MOVE_BALL); }
+        if (towardsBall) this.setState(PetAI.MOVE_BALL);
     }
 
     //State: MOVING or MOVING_BALL
     onUpdate_moveball() {
         //Try to move
-        if (this._moveTowardsMovePos()) { return; }
+        if (this._moveTowardsMovePos()) return;
 
         //Didn't move -> Point reached, notify game that the ball was reached
-        Game.ball.onReached();
+        Game.ball.onReached()
 
         //Set mood to heart & show mood
-        this.#setHeartMood();
+        this.#setHeartMood()
         this.showMood();
 
         //Animate special
@@ -452,7 +443,7 @@ class PetAI extends AI {
 }
 
 //Characters
-class PetCharacter extends Character {
+class PokemonCharacter extends Character {
 
     // Pet info
     #specie = '';
@@ -465,15 +456,13 @@ class PetCharacter extends Character {
     constructor(name, specie, color, config = {}, config_ai = {}) {
         // Add name & image to config
         config.name = name;
-        config.image = `pokemons/${specie.toLowerCase()}.png`;
-            config.size = new Vec2(32);
-            // Fallback to PetAnimations.CAT if PokemonAnimations.DEFAULT is missing
-            if (typeof PokemonAnimations !== 'undefined' && PokemonAnimations.DEFAULT) {
-                config.animations = PokemonAnimations.DEFAULT;
-            } else {
-                console.warn('PokemonAnimations.DEFAULT not found, using PetAnimations.CAT as fallback.');
-                config.animations = PetAnimations.CAT;
-            }
+        const spriteName = typeof config.spriteName === 'string'
+            ? config.spriteName
+            : specie.toLowerCase().replaceAll(' ', '_');
+        const spriteSize = typeof config.spriteSize === 'number' ? config.spriteSize : 32;
+        config.image = `pokemons/${spriteName}.png`;
+        if (typeof config.size !== 'object') config.size = new Vec2(spriteSize);
+        if (typeof config.animations !== 'object') config.animations = PokemonAnimations.DEFAULT;
 
         // Create character
         super(config, new PetAI(config_ai));
@@ -505,230 +494,48 @@ class PetCharacter extends Character {
         // Consume event
         return true;
     }
+
+    draw(ctx, options = {}) {
+        super.draw(ctx, options);
+
+        if (this.ai && typeof this.ai.drawMood === 'function') {
+            this.ai.drawMood(ctx);
+        }
+    }
+
+    moveTowardsBall(pos) {
+        const target = new Vec2(
+            Util.clamp(pos.x, 0, this.maxPosX),
+            Util.clamp(pos.y, 0, this.maxPosY)
+        );
+        this.ai.moveTowards(target, true);
+    }
 }
 
+class Pokemon extends PokemonCharacter {
 
-// Pokemon class
-class Pokemon extends PetCharacter {
-    #evolution = 0;
-    #level = 0;
+    #form = '';
+    #generation = '';
 
-    get evolution() { return this.#evolution; }
-    get level() { return this.#level; }
+    get form() { return this.#form; }
+    get generation() { return this.#generation; }
 
-    constructor(name, specie, evolution = 0, level = 0) {
-        // Set up config for PetCharacter
+    constructor(name, specie, generation, form, sprite, spriteSize = 32) {
+        const size = spriteSize === 48 ? 48 : 32;
+
         const config = {
-            size: new Vec2(32),
-            // Sprite offset for evolution: 192px per evolution stage
-            spriteSheetOffset: new Vec2(192 * (evolution || 0), 0)
-        };
-        // Use PokemonAnimations.DEFAULT if available, fallback to PetAnimations.CAT
-        if (typeof PokemonAnimations !== 'undefined' && PokemonAnimations.DEFAULT) {
-            config.animations = PokemonAnimations.DEFAULT;
-        } else {
-            config.animations = PetAnimations.CAT;
-        }
-
-        // AI config
-        const config_ai = {
-            moodElevation: -3
+            spriteName: sprite,
+            spriteSize: size,
+            size: new Vec2(size),
+            animations: PokemonAnimations.DEFAULT,
         };
 
-        super(name, specie, 'Color', config, config_ai);
-        this.#evolution = evolution;
-        this.#level = level;
+        super(name, specie, generation, config, {});
+
+        this.#form = form;
+        this.#generation = generation;
     }
 
-    // Level up and evolve logic
-    giveCandy() {
-        this.#level++;
-        // Example: evolve every 5 levels, up to 3
-        const newEvolution = Math.min(3, Math.floor(this.#level / 5));
-        if (newEvolution !== this.#evolution) {
-            this.#evolution = newEvolution;
-            this.updateSpriteSheetOffset();
-        }
-    }
-
-    updateSpriteSheetOffset() {
-        // Update sprite offset for evolution
-        this.spriteSheetOffset = new Vec2(192 * this.#evolution, 0);
-    }
-
-    // Draw overlay with level and evolution
-    drawOverlay(ctx) {
-        ctx.save();
-        ctx.font = 'bold 12px Arial';
-        ctx.fillStyle = 'white';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        const x = this.pos.x + this.size.x / 2;
-        const y = this.pos.y - 8;
-        ctx.strokeText(`Lv.${this.#level} Evo:${this.#evolution}`, x, y);
-        ctx.fillText(`Lv.${this.#level} Evo:${this.#evolution}`, x, y);
-        ctx.restore();
-    }
 }
-
-// Make Pokemon globally available
-window.Pokemon = Pokemon;
-
-
- /*$$$$$$$                                   /$$
-| $$_____/                                  |__/
-| $$       /$$$$$$$   /$$$$$$  /$$$$$$/$$$$  /$$  /$$$$$$   /$$$$$$$
-| $$$$$   | $$__  $$ /$$__  $$| $$_  $$_  $$| $$ /$$__  $$ /$$_____/
-| $$__/   | $$  \ $$| $$$$$$$$| $$ \ $$ \ $$| $$| $$$$$$$$|  $$$$$$
-| $$      | $$  | $$| $$_____/| $$ | $$ | $$| $$| $$_____/ \____  $$
-| $$$$$$$$| $$  | $$|  $$$$$$$| $$ | $$ | $$| $$|  $$$$$$$ /$$$$$$$/
-|________/|__/  |__/ \_______/|__/ |__/ |__/|__/ \_______/|______*/
 
 //Animations
-class MonsterAnimations {
-
-    static get SLIME() { 
-        return {
-            'idle': new Animation(
-                [[0, 0]],
-                4,
-                { loop: false },
-            ),
-            'moveDown': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveRight': new Animation(
-                [[0, 1], [1, 1], [2, 1], [3, 1]],
-                4,
-            ),
-            'moveLeft': new Animation(
-                [[0, 2], [1, 2], [2, 2], [3, 2]],
-                4,
-            ),
-            'moveUp': new Animation(
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                4,
-            ),
-            'special': new Animation(
-                [[0, 4], [1, 4], [2, 4]],
-                4,
-                { loop: false },
-            ),
-        } 
-    };
-}
-
-//AI
-class MonsterAI extends AI {
-
-    //State
-    constructor(config) { 
-        //Fix config & disable sleep
-        if (typeof config !== 'object') { config = {}; }
-        config.canSleep = false;
-        
-        //Base AI
-        super(config); 
-    }
-
-    //Click
-    click() {
-        //Alredy clicked
-        if (this.state === AI.SPECIAL) { return; }
-
-        //Give money to player
-        Game.addMoney(60 + 5 * Util.randomInclusive(8)); //60 - 100 gold
-
-        //Wait to spawn a new monster
-        Game.monsterSpawner.wait(30 * 1000);
-
-        //Play special animation
-        this.setState(AI.SPECIAL);
-    }
-
-    //State: SPECIAL
-    onEnd_special() {
-        //Remove monster from game
-        this.character.remove();
-    }
-
-}
-
-//Characters
-class MonsterCharacter extends Character {
-
-    //Monster info
-    #specie = '';
-    #color = 'Color';
-
-    get specie() { return this.#specie; }
-    get color() { return this.#color; }
-
-
-    //Constructor
-    constructor(specie, color, config = {}, config_ai = {}) {
-        //Add name & image to config
-        config.name = Util.titleCase(specie);
-        config.image = `monsters/${specie.toLowerCase()}.png`;
-        
-        //Create character
-        super(config, new MonsterAI(config_ai));
-
-        //Save info
-        this.#specie = specie;
-        this.#color = color;
-
-        //Move towards random point
-        this.ai.moveTowardsRandom();
-        
-        //Add to monsters list
-        Game.monsters.push(this);
-    }
-
-    remove() {
-        super.remove();
-
-        //Remove from monsters list
-        Game.monsters.removeItem(this);
-    }
-
-    //Clicks
-    mouseUp(pos) {
-        //Notify AI emeny was clicked
-        this.ai.click();
-
-        //Consume event
-        return true;
-    }
-
-}
-
-//Slime
-class Slime extends MonsterCharacter {
-
-    constructor(color) {
-        //Default config
-        const config = {
-            size: new Vec2(16, 24),
-            animations: MonsterAnimations.SLIME
-        };
-
-        //Color sprite sheet offset
-        switch (color.toLowerCase()) {
-            default:
-            case 'iron':
-                config.spriteSheetOffset = new Vec2();
-                break;
-            case 'tiger':
-                config.spriteSheetOffset = new Vec2(64, 0);
-                break;
-        }
-
-        //Create pet
-        super('slime', color, config, {
-            specialDuration: 0.4 * Game.fps
-        });
-    }
-
-}
