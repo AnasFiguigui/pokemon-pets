@@ -226,18 +226,18 @@ window.addEventListener('message', event => {
             document.body.style.setProperty('--scale', Game.scale);
             break;
     
-        //Update monsters toggle
-        case 'monsters':
-            //Clear monsters
-            for (const monster of Game.monsters) monster.remove();
+        //Update wild pokemons toggle
+        case 'wild_pokemons':
+            //Clear wild pokemons
+            for (const wildPokemon of Game.wildPokemons) wildPokemon.remove();
             
             //Toggle spawner
             if (message.value) {
                 //Toggle on
-                Game.monsterSpawner.wait(10 * 1000); // Increased spawn rate (was 30s)
+                Game.wildPokemonSpawner.wait(10 * 1000); // Increased spawn rate (was 30s)
             } else {
                 //Toggle off
-                Game.monsterSpawner.stop();
+                Game.wildPokemonSpawner.stop();
             }
             break;
 
@@ -245,35 +245,17 @@ window.addEventListener('message', event => {
         // Game objects
         //
 
-        //Spawn a pet/decor/monster
+        //Spawn a pokemon/decor/wild pokemon
+        case 'spawn_pokemon':
         case 'spawn_pet': {
             const name = message.name;
             const specie = message.specie.toLowerCase();
-            // Evolution and level from message or default
-            let evolution = 0;
-            let level = 0;
-            if (typeof message.evolution === 'number') evolution = message.evolution;
-            if (typeof message.level === 'number') level = message.level;
+            const generation = (message.color ?? '1').toString();
+            const form = (message.form ?? message.specie).toString();
+            const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
+            const spriteSize = message.spriteSize === 48 ? 48 : 32;
 
-            // Spawn Pokémon based on evolution
-            let poke;
-            switch (evolution) {
-                case 0:
-                    poke = new Pokemon(name, specie, 0, level);
-                    break;
-                case 1:
-                    poke = new Pokemon(name, specie, 1, level);
-                    break;
-                case 2:
-                    poke = new Pokemon(name, specie, 2, level);
-                    break;
-                case 3:
-                    poke = new Pokemon(name, specie, 3, level);
-                    break;
-                default:
-                    poke = new Pokemon(name, specie, 0, level);
-                    break;
-            }
+            new Pokemon(name, specie, generation, form, sprite, spriteSize);
             break;
         }
         
@@ -285,18 +267,14 @@ window.addEventListener('message', event => {
             break;
         }
         
-        case 'spawn_monster': {
+        case 'spawn_wild_pokemon': {
             const specie = message.specie.toLowerCase();
-            const color = message.color.toLowerCase();
-            switch (specie) {
-                case 'slime':
-                    new Slime(color);
-                    break;
-            }
+            new WildPokemon(specie);
             break;
         }
 
-        //Remove a pet
+        //Remove a pokemon
+        case 'remove_pokemon':
         case 'remove_pet':
             Game.pets[message.index].remove();
             break;
@@ -398,7 +376,9 @@ document.body.onmouseup = event => {
 
             //Move all pokemons towards ball
             for (const pokemon of Game.pets) {
-                if (pokemon.ai && typeof pokemon.ai.moveTowards === 'function') {
+                if (typeof pokemon.moveTowardsBall === 'function') {
+                    pokemon.moveTowardsBall(pos);
+                } else if (pokemon.ai && typeof pokemon.ai.moveTowards === 'function') {
                     pokemon.ai.moveTowards(pos, true);
                 }
             }

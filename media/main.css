@@ -1,5 +1,4 @@
-@font-face { font-family: Pokemon; src: url('./fonts/Pokemon.ttf'); }
-
+@font-face { font-family: Pokemon; src: url('./fonts/PokemonPixelFontRegular.woff2'); }
 
 /* Window */
 html,
@@ -21,14 +20,14 @@ body {
     image-rendering: pixelated;
 
     /* Text */
-    font-family: Pokemon, sans-serif;
+    font-family: Pokemon;
     color: var(--text);
     font-size: 19px;
     user-select: none;
 
     /* Vars */
     --scale: 1;
-    --text: #000000;
+    --text: #551215;
 }
 
 body[hide] {

@@ -1,71 +1,105 @@
-# pokemon-pets README
+# Pokemon Pets
 
-This is the README for your extension "pokemon-pets". After writing up a brief description, we recommend including the following sections.
+<div align='center'>
 
-## Features
+Keep your favourite **Pokemon** pets with you while coding.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+![alt text](https://raw.githubusercontent.com/Anasfiguiguinzer/Pokemon-Pets/main/pets.png)
 
-For example if there is an image subfolder under your extension project workspace:
+</div>
 
-\!\[feature X\]\(images/feature-x.png\)
+## Pets
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+You can have pets with custom names to keep you company while coding.  
 
-## Requirements
+<details>
+    <summary style="cursor: pointer">
+        <b>Current pets:</b>
+    </summary>
+    <ul>
+        <li>Cats</li>
+        <li>Dogs</li>
+        <li>Dinos</li>
+        <li>Turtles</li>
+        <li>Raccoons</li>
+        <li>Ducks</li>
+        <li>Goats</li>
+        <li>Sheeps</li>
+        <li>Ostrichs</li>
+        <li>Pigs</li>
+        <li>Rabbits</li>
+        <li>Chicken</li>
+        <li>Cows</li>
+        <li>Junimos!</li>
+    </ul>
+</details>
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Monsters
 
-## Extension Settings
+Monsters will sometimes appear in your farm, with a maximum of 1 at a time.  
+Clicking on one of them kills it and gives you money to buy decoration.  
+You can disable monsters in settings if you don't want them to appear.  
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+<details>
+    <summary style="cursor: pointer">
+        <b>Current monsters:</b>
+    </summary>
+    <ul>
+        <li>Bugs</li>
+        <li>Crabs</li>
+        <li>Golems</li>
+        <li>Slimes</li>
+    </ul>
+</details>
+  
+## Decoration
 
-For example:
+You can use the money obtained by monsters to buy new decoration in the **General Store**.  
+Aditionally, you can rearange or sell your current decoration by entering **Decor Mode**.  
 
-This extension contributes the following settings:
+<details>
+    <summary style="cursor: pointer">
+        <b>Current decoration:</b>
+    </summary>
+    <ul>
+        <li>Chairs</li>
+        <li>Stools</li>
+        <li>Benches</li>
+        <li>Tables</li>
+        <li>Tea Tables</li>
+        <li>End Tables</li>
+        <li>Coffe Tables</li>
+        <li>Rugs</li>
+        <li>Cushions</li>
+        <li>House Plants</li>
+        <li>Large Decoration</li>
+        <li>Small Decoration</li>
+    </ul>
+</details>
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Credits
 
-## Known Issues
+**Pokemon Pets** was done by a single person in their free time.  
+Since it's free, I'd appreciate you taking a look at my [portfolio](https://anasfiguigui.vercel.app) as a thanks :D  
+Aditionally, all sprite assets are from the original [Pokemon](https://www.pokemon.net/) by ConcernedApe!
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Where to Find it
 
-## Release Notes
+**Pokemon Pets** can be found in the **Explorer** panel.  
+If its missing, try searching **"Focus on Pokemon Pets View"** in the **Command Palette:**  
 
-Users appreciate release notes as you update your extension.
+- ```Ctrl+Shift+P``` on Windows/Linux
+- ```Cmd(⌘)+Shift+P``` on Mac
 
-### 1.0.0
+## VSCode Store
 
-Initial release of ...
+**Pokemon Pets** is available on the [VSCode Store](https://marketplace.visualstudio.com/items?itemName=anasfiguigui.pokemon-pets)!
 
-### 1.0.1
+## Contributing
 
-Fixed issue #.
+If you find bugs or have new features you want to see added, feel free to tell me via [GitHub issues](https://github.com/Anasfiguiguinzer/Pokemon-Pets/issues).  
 
-### 1.1.0
+It's my personal project so I'd like to keep the code mine, but I also like listening to what the community wants.  
+Just keep in mind I won't add things that aren't in **Pokemon**, like recolours or new original pets.  
+If you want those, feel free to fork the repo and add me in the credits.
 
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**

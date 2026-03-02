@@ -1,5 +1,9 @@
-out
-dist
-node_modules
+# Node.js modules
+node_modules/
+
+# VS Code specific files
 .vscode-test/
-*.vsix
+.vscode-test-web/
+.vscode/extensions.json
+.vscode/launch.json
+.vscode/tasks.json
