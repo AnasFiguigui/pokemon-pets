@@ -229,7 +229,7 @@ window.addEventListener('message', event => {
         case 'spawn_pet': {
             const name = message.name;
             const specie = message.specie.toLowerCase();
-            const generation = (message.color ?? '1').toString();
+            const generation = (message.color ?? 'generation 1').toString();
             const form = (message.form ?? message.specie).toString();
             const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
             const spriteSize = message.spriteSize === 48 ? 48 : 32;

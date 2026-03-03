@@ -267,7 +267,7 @@ function activate(context) {
         const pokemonData = game_data_1.Pokemons[generation][selectedPokemon.index];
         // Ask for a form/evolution
         const formItems = pokemonData.forms.map((form, idx) => {
-            return new models_1.PetItem(idx, form.name, `${form.spriteSize}x${form.spriteSize} sprite`);
+            return new models_1.PetItem(idx, form.name, '');
         });
         const selectedForm = await vscode.window.showQuickPick(formItems, {
             title: `Select a form for ${pokemonData.name}`,

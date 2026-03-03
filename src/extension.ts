@@ -267,7 +267,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Ask for a form/evolution
         const formItems = pokemonData.forms.map((form, idx) => {
-            return new PetItem(idx, form.name, `${form.spriteSize}x${form.spriteSize} sprite`);
+            return new PetItem(idx, form.name, '');
         });
         const selectedForm = await vscode.window.showQuickPick(formItems, {
             title: `Select a form for ${pokemonData.name}`,
