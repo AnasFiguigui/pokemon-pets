@@ -400,7 +400,7 @@ class PetAI extends AI {
         if (!this.#moodShow) return;
 
         //Auto lift mood depending on pokemon sprite size (32px or 48px)
-        const moodLift = this.character.size.y >= 48 ? 10 : 6;
+        const moodLift = this.character.size.y >= 48 ? 10 : 8;
 
         //Draw mood
         ctx.drawImage(
