@@ -1,44 +1,39 @@
 class DecorationPreset {
 
     static PLANTS = {
-        HOUSE_PLANT_1: {
-            name: 'House Plant 1',
-            size: new Vec2(16, 32),
-            spriteOffset: new Vec2(0, 688),
-            price: 250,
-        },
-    };
-
-    static LARGE_MISC = {
-        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 64), price: 100 },
+        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 64), price: 50 },
         OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 64), price: 100 },
         OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(48, 64), price: 100 },
         OBJECT_04: { name: 'Object 04', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 64), price: 100 },
         OBJECT_05: { name: 'Object 05', size: new Vec2(16, 32), spriteOffset: new Vec2(80, 64), price: 100 },
-        OBJECT_06: { name: 'Object 06', size: new Vec2(16, 32), spriteOffset: new Vec2(96, 64), price: 100 },
-        OBJECT_07: { name: 'Object 07', size: new Vec2(16, 32), spriteOffset: new Vec2(112, 64), price: 100 },
-        OBJECT_08: { name: 'Object 08', size: new Vec2(16, 32), spriteOffset: new Vec2(128, 64), price: 100 },
-        OBJECT_09: { name: 'Object 09', size: new Vec2(16, 32), spriteOffset: new Vec2(144, 64), price: 100 },
-        OBJECT_10: { name: 'Object 10', size: new Vec2(16, 32), spriteOffset: new Vec2(160, 64), price: 100 },
-        OBJECT_11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 64), price: 100 },
+        OBJECT_06: { name: 'Object 06', size: new Vec2(16, 32), spriteOffset: new Vec2(96, 64), price: 200 },
+        OBJECT_07: { name: 'Object 07', size: new Vec2(16, 32), spriteOffset: new Vec2(112, 64), price: 200 },
+        OBJECT_08: { name: 'Object 08', size: new Vec2(16, 32), spriteOffset: new Vec2(128, 64), price: 200 },
+        OBJECT_09: { name: 'Object 09', size: new Vec2(16, 32), spriteOffset: new Vec2(144, 64), price: 300 },
+        OBJECT_10: { name: 'Object 10', size: new Vec2(16, 32), spriteOffset: new Vec2(160, 64), price: 300 },
+        OBJECT_11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 64), price: 300 },
+    };
+
+    static LARGE_MISC = {
+
     };
 
     static MID_MISC = {
-        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 0), price: 100 },
-        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(16, 0), price: 100 },
-        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 0), price: 100 },
-        OBJECT_04: { name: 'Object 04', size: new Vec2(16, 32), spriteOffset: new Vec2(48, 0), price: 100 },
-        OBJECT_05: { name: 'Object 05', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 0), price: 100 },
-        OBJECT_06: { name: 'Object 06', size: new Vec2(16, 32), spriteOffset: new Vec2(80, 0), price: 100 },
-        OBJECT_07: { name: 'Object 07', size: new Vec2(16, 32), spriteOffset: new Vec2(96, 0), price: 100 },
-        OBJECT_08: { name: 'Object 08', size: new Vec2(16, 32), spriteOffset: new Vec2(112, 0), price: 100 },
-        OBJECT_09: { name: 'Object 09', size: new Vec2(16, 32), spriteOffset: new Vec2(128, 0), price: 100 },
-        OBJECT_10: { name: 'Object 10', size: new Vec2(16, 32), spriteOffset: new Vec2(144, 0), price: 100 },
-        OBJECT_11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(160, 0), price: 100 },
-        OBJECT_12: { name: 'Object 12', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 0), price: 100 },
-        OBJECT_13: { name: 'Object 13', size: new Vec2(16, 32), spriteOffset: new Vec2(192, 0), price: 100 },
-        OBJECT_14: { name: 'Object 14', size: new Vec2(16, 32), spriteOffset: new Vec2(208, 0), price: 100 },
-        OBJECT_15: { name: 'Object 15', size: new Vec2(16, 32), spriteOffset: new Vec2(224, 0), price: 100 },
+        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 0), price: 200 },
+        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(16, 0), price: 200 },
+        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 0), price: 200 },
+        OBJECT_04: { name: 'Object 04', size: new Vec2(16, 32), spriteOffset: new Vec2(48, 0), price: 200 },
+        OBJECT_05: { name: 'Object 05', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 0), price: 200 },
+        OBJECT_06: { name: 'Object 06', size: new Vec2(16, 32), spriteOffset: new Vec2(80, 0), price: 200 },
+        OBJECT_07: { name: 'Object 07', size: new Vec2(16, 32), spriteOffset: new Vec2(96, 0), price: 200 },
+        OBJECT_08: { name: 'Object 08', size: new Vec2(16, 32), spriteOffset: new Vec2(112, 0), price: 200 },
+        OBJECT_09: { name: 'Object 09', size: new Vec2(16, 32), spriteOffset: new Vec2(128, 0), price: 200 },
+        OBJECT_10: { name: 'Object 10', size: new Vec2(16, 32), spriteOffset: new Vec2(144, 0), price: 200 },
+        OBJECT_11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(160, 0), price: 200 },
+        OBJECT_12: { name: 'Object 12', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 0), price: 200 },
+        OBJECT_13: { name: 'Object 13', size: new Vec2(16, 32), spriteOffset: new Vec2(192, 0), price: 200 },
+        OBJECT_14: { name: 'Object 14', size: new Vec2(16, 32), spriteOffset: new Vec2(208, 0), price: 200 },
+        OBJECT_15: { name: 'Object 15', size: new Vec2(16, 32), spriteOffset: new Vec2(224, 0), price: 200 },
     };
 
     static SMALL_MISC = {

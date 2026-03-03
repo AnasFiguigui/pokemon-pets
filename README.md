@@ -4,7 +4,7 @@
 
 Celebrating the release of the new Pokémon game by keeping your favorite Pokémon with you while coding in VS Code.
 
-![Pokemon Pets](https://raw.githubusercontent.com/Anasfiguiguin/Pokemon-Pets/pets.png)
+![Pokemon Pets](https://raw.githubusercontent.com/AnasFiguigui/pokemon-pets/refs/heads/main/pets.png)
 
 </div>
 
