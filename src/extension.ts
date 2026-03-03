@@ -18,7 +18,7 @@ let save = new Save();
 
 function loadGame() {
     //Storage folder does not exist -> Create it
-    if (!fs.existsSync(extensionStorageFolder)) fs.mkdirSync(extensionStorageFolder, { recursive: true });
+    if (!fs.existsSync(extensionStorageFolder)) {fs.mkdirSync(extensionStorageFolder, { recursive: true });}
 
     //Bool to check if the save was updated to save its file after load
     let saveUpdated: boolean = false;
@@ -81,7 +81,7 @@ function loadGame() {
     }
 
     //Save game file
-    if (saveUpdated) saveGame();
+    if (saveUpdated) {saveGame();}
 }
 
 function saveGame() {
@@ -114,10 +114,10 @@ function initGame() {
     });
 
     //Load pets
-    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS)) loadPet(pet);
+    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS)) {loadPet(pet);}
 
     //Load decor
-    for (const decor of save.decoration) loadDecor(decor);
+    for (const decor of save.decoration) {loadDecor(decor);}
 
     //Finish
     webview.postMessage({ type: 'init' });
@@ -173,7 +173,7 @@ function loadPet(pet: Pet) {
 
 function addPet(pet: Pet): boolean {
     //Max pets reached
-    if (save.pets.length >= MAX_SUMMONED_POKEMONS) return false;
+    if (save.pets.length >= MAX_SUMMONED_POKEMONS) {return false;}
 
     //Add to list & save json
     save.pets.push(pet);
@@ -196,7 +196,7 @@ function removePet(index: number, saveFile: boolean) {
     });
 
     //Save pets
-    if (saveFile) saveGame();
+    if (saveFile) {saveGame();}
 }
 
 //Decoration
@@ -235,7 +235,7 @@ export function activate(context: vscode.ExtensionContext) {
             webview.postMessage({
                 type: 'background',
                 value: config.get('background')
-            })
+            });
         }
 
         //Scale changed
@@ -243,7 +243,7 @@ export function activate(context: vscode.ExtensionContext) {
             webview.postMessage({
                 type: 'scale',
                 value: config.get('scale')
-            })
+            });
         }
 
         //Wild pokemons toggle changed
@@ -251,9 +251,9 @@ export function activate(context: vscode.ExtensionContext) {
             webview.postMessage({
                 type: 'wild_pokemons',
                 value: config.get('wild')
-            })
+            });
         }
-    })
+    });
 
     //Commands have to be defined in package.json in order to be added here
 
@@ -271,7 +271,7 @@ export function activate(context: vscode.ExtensionContext) {
             title: 'Select a Pokémon generation',
             placeHolder: 'Generation',
         });
-        if (generation == null) return;
+        if (generation === undefined) {return;}
 
         // Ask for a Pokémon
         const pokemonItems = Pokemons[generation].map((poke, idx) => {
@@ -281,7 +281,7 @@ export function activate(context: vscode.ExtensionContext) {
             title: 'Select a Pokémon',
             placeHolder: 'Pokémon',
         });
-        if (selectedPokemon == null) return;
+        if (selectedPokemon === undefined) {return;}
         const pokemonData = Pokemons[generation][selectedPokemon.index];
 
         // Ask for a form/evolution
@@ -292,7 +292,7 @@ export function activate(context: vscode.ExtensionContext) {
             title: `Select a form for ${pokemonData.name}`,
             placeHolder: 'Form',
         });
-        if (selectedForm == null) return;
+        if (selectedForm === undefined) {return;}
         const formData = pokemonData.forms[selectedForm.index];
 
         // Ask for a name (default to selected form)
@@ -306,7 +306,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return text === '' ? 'Please input a name for your Pokémon' : null;
             }
         });
-        if (name == null) return;
+        if (name === undefined) {return;}
 
         // Add Pokémon as pet
         const added = addPet({
@@ -342,7 +342,7 @@ export function activate(context: vscode.ExtensionContext) {
             placeHolder: 'Pet',
             matchOnDescription: true,
         });
-        if (pet == null) return;
+        if (pet === undefined) {return;}
 
         //Remove pet
         removePet(pet.index, true);
@@ -384,7 +384,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('Pokemon Pets is now deactivated 😿')
+    console.log('Pokemon Pets is now deactivated 😿');
 }
 
 export class WebViewProvider implements vscode.WebviewViewProvider {
@@ -448,7 +448,7 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
                     this.postMessage({
                         type: 'spawn_wild_pokemon',
                         specie: specie,
-                    })
+                    });
                     break;
                 }
 
@@ -504,7 +504,7 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
         const htmlContent = new TextDecoder().decode(fileData);
 
         //Replace media folder URI placeholder with path
-        return htmlContent.replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`)
+        return htmlContent.replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`);
     }
 
 }

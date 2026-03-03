@@ -15,23 +15,13 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebViewProvider = void 0;
 exports.activate = activate;
@@ -50,8 +40,9 @@ let savePath;
 let save = new models_1.Save();
 function loadGame() {
     //Storage folder does not exist -> Create it
-    if (!fs.existsSync(extensionStorageFolder))
+    if (!fs.existsSync(extensionStorageFolder)) {
         fs.mkdirSync(extensionStorageFolder, { recursive: true });
+    }
     //Bool to check if the save was updated to save its file after load
     let saveUpdated = false;
     //Check if save file exists
@@ -104,8 +95,9 @@ function loadGame() {
         saveUpdated = true;
     }
     //Save game file
-    if (saveUpdated)
+    if (saveUpdated) {
         saveGame();
+    }
 }
 function saveGame() {
     fs.writeFileSync(savePath, JSON.stringify(save, null, 4));
@@ -132,11 +124,13 @@ function initGame() {
         value: save.money
     });
     //Load pets
-    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS))
+    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS)) {
         loadPet(pet);
+    }
     //Load decor
-    for (const decor of save.decoration)
+    for (const decor of save.decoration) {
         loadDecor(decor);
+    }
     //Finish
     webview.postMessage({ type: 'init' });
 }
@@ -188,8 +182,9 @@ function loadPet(pet) {
 }
 function addPet(pet) {
     //Max pets reached
-    if (save.pets.length >= MAX_SUMMONED_POKEMONS)
+    if (save.pets.length >= MAX_SUMMONED_POKEMONS) {
         return false;
+    }
     //Add to list & save json
     save.pets.push(pet);
     saveGame();
@@ -206,8 +201,9 @@ function removePet(index, saveFile) {
         index: index,
     });
     //Save pets
-    if (saveFile)
+    if (saveFile) {
         saveGame();
+    }
 }
 //Decoration
 function loadDecor(decor) {
@@ -268,8 +264,9 @@ function activate(context) {
             title: 'Select a Pokémon generation',
             placeHolder: 'Generation',
         });
-        if (generation == null)
+        if (generation === undefined) {
             return;
+        }
         // Ask for a Pokémon
         const pokemonItems = game_data_1.Pokemons[generation].map((poke, idx) => {
             return new models_1.PetItem(idx, poke.name, `${poke.forms.length} forms`);
@@ -278,8 +275,9 @@ function activate(context) {
             title: 'Select a Pokémon',
             placeHolder: 'Pokémon',
         });
-        if (selectedPokemon == null)
+        if (selectedPokemon === undefined) {
             return;
+        }
         const pokemonData = game_data_1.Pokemons[generation][selectedPokemon.index];
         // Ask for a form/evolution
         const formItems = pokemonData.forms.map((form, idx) => {
@@ -289,8 +287,9 @@ function activate(context) {
             title: `Select a form for ${pokemonData.name}`,
             placeHolder: 'Form',
         });
-        if (selectedForm == null)
+        if (selectedForm === undefined) {
             return;
+        }
         const formData = pokemonData.forms[selectedForm.index];
         // Ask for a name (default to selected form)
         const tmpname = formData.name;
@@ -303,8 +302,9 @@ function activate(context) {
                 return text === '' ? 'Please input a name for your Pokémon' : null;
             }
         });
-        if (name == null)
+        if (name === undefined) {
             return;
+        }
         // Add Pokémon as pet
         const added = addPet({
             specie: pokemonData.name,
@@ -335,8 +335,9 @@ function activate(context) {
             placeHolder: 'Pet',
             matchOnDescription: true,
         });
-        if (pet == null)
+        if (pet === undefined) {
             return;
+        }
         //Remove pet
         removePet(pet.index, true);
         //Bye pet!

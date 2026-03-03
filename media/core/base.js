@@ -323,10 +323,10 @@ class DecorMode {
 
         //Toggle
         if (show) {
-            this.#actionsToggleButton.innerText = 'Exit Decor Mode';
+            this.#actionsToggleButton.innerText = 'Exit Build Mode';
             this.#overlay.setAttribute('show', '');
         } else {
-            this.#actionsToggleButton.innerText = 'Enter Decor Mode';
+            this.#actionsToggleButton.innerText = 'Enter Build Mode';
             this.#overlay.removeAttribute('show');
         }
     }

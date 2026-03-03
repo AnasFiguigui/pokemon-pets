@@ -497,7 +497,7 @@ class Game {
 
     static setMoney = (amount) => {
         this.#money = amount;
-        this.#moneyText.innerText = `${amount}G`;
+        this.#moneyText.innerText = `Gold: ${amount}`;
     }
 
     static addMoney = (amount) => {

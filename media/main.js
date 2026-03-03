@@ -52,10 +52,12 @@ function openStoreMenu() {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
 
-    //Add back button
-    const back = createStoreItem('> Back');
-    back.onclick = () => Menus.toggle('actions', true);
-    content.appendChild(back);
+    //Top left back button goes to actions menu on root store
+    const backButton = document.getElementById('storeBackBtn');
+    if (backButton) {
+        backButton.innerText = 'Back';
+        backButton.onclick = () => Menus.toggle('actions', true);
+    }
 
     //Create decoration categories
     for (const category of Object.keys(DecorationPreset)) {
@@ -78,10 +80,12 @@ function openStoreCategoryMenu(category) {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
 
-    //Add back button
-    const back = createStoreItem('> Back');
-    back.onclick = openStoreMenu;
-    content.appendChild(back);
+    //Top left back button goes to categories list
+    const backButton = document.getElementById('storeBackBtn');
+    if (backButton) {
+        backButton.innerText = 'Back';
+        backButton.onclick = openStoreMenu;
+    }
 
     //Create category items
     for (const name of Object.keys(DecorationPreset[category])) {

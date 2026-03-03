@@ -197,6 +197,10 @@ body[cursor="none"] {
     border-image-source: url('sprites/ui/menu.png');
     border-image-slice: 20 fill;
     border-image-repeat: stretch;
+
+    /* Text */
+    letter-spacing: 0.3px;
+    font-size: 16px;
 }
 
 .menu[show] {
@@ -215,9 +219,36 @@ body[cursor="none"] {
     cursor: pointer;
 }
 
+.menu[button]:hover {
+    filter: brightness(1.08);
+}
+
 .menu[button] > span {
     /* Spacing */
     margin: -8px -4px;
+}
+
+.menuTopBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -6px -4px 0;
+    padding-bottom: 2px;
+}
+
+.menuTopButton {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: Pokemon;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+}
+
+.menuTopButton:hover {
+    filter: brightness(1.08);
 }
 
 .menuContent {
@@ -228,6 +259,9 @@ body[cursor="none"] {
     display: flex;
     flex-direction: column;
     gap: 4px;
+
+    /* Text */
+    line-height: 1.1;
 }
 
 .menuContent[scrollable] {
@@ -253,6 +287,7 @@ body[cursor="none"] {
 
     /* Visuals */
     border-radius: 5px;
+    box-shadow: inset 0 0 0 1px transparent;
 
     /* Other */
     cursor: pointer;
@@ -262,6 +297,7 @@ body[cursor="none"] {
 .menuButton:hover {
     /* Visuals */
     background-color: #55121230;
+    box-shadow: inset 0 0 0 1px #55121255;
 }
 
 .menuButton > img {
@@ -271,6 +307,7 @@ body[cursor="none"] {
 
     /* Visuals */
     border-radius: 5px;
+    image-rendering: pixelated;
 }
 
 .menuButton > span {
@@ -309,7 +346,7 @@ body[cursor="none"] {
     background-repeat: no-repeat;
     background-position: var(--spriteOffset);
     scale: var(--scale);
-    image-rendering: unset;
+    image-rendering: pixelated;
 }
 
 .storeButtonMoney {
@@ -364,6 +401,7 @@ body[cursor="none"] {
 
     /* Text */
     --border: #ffd889bd;
+    letter-spacing: 0.3px;
     text-shadow: -1px -1px 1px var(--border), 1px -1px 1px var(--border), -1px 1px 1px var(--border), 1px 1px 1px var(--border);
 }
 
