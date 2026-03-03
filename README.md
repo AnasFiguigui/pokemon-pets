@@ -2,10 +2,11 @@
 
 <div align="center">
 
-Celebrating the release of the new Pokémon game by keeping your favorite Pokémon with you while coding in VS Code.
+To celebrate the release of the new Pokémon game, I created this extension so you can keep your favorite Pokémon by your side while coding in VS Code.
 
-![Pokemon Pets](https://raw.githubusercontent.com/AnasFiguigui/pokemon-pets/refs/heads/main/pets.png)
+![Pokemon Pets](https://i.ibb.co/W4FDnf57/Pokemons.gif)
 
+New Pokémon will be added in future releases.
 </div>
 
 ## Community Voting

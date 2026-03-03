@@ -1,6 +1,6 @@
 # Change Log
 
-## [v1.0.0]
+## [v0.9.0]
 
-- Initial release
+- Initial release (Beta)
 
