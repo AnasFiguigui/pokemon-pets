@@ -124,7 +124,7 @@ function initGame() {
     //Send wild pokemons toggle
     webview.postMessage({
         type: 'wild_pokemons',
-        value: config.get('monsters')
+        value: config.get('wild')
     });
     //Send money
     webview.postMessage({
@@ -248,10 +248,10 @@ function activate(context) {
             });
         }
         //Wild pokemons toggle changed
-        if (event.affectsConfiguration("pokemon-pets.monsters")) {
+        if (event.affectsConfiguration("pokemon-pets.wild")) {
             webview.postMessage({
                 type: 'wild_pokemons',
-                value: config.get('monsters')
+                value: config.get('wild')
             });
         }
     });

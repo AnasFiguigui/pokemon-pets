@@ -104,7 +104,7 @@ function initGame() {
     //Send wild pokemons toggle
     webview.postMessage({
         type: 'wild_pokemons',
-        value: config.get('monsters')
+        value: config.get('wild')
     });
 
     //Send money
@@ -247,10 +247,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         //Wild pokemons toggle changed
-        if (event.affectsConfiguration("pokemon-pets.monsters")) {
+        if (event.affectsConfiguration("pokemon-pets.wild")) {
             webview.postMessage({
                 type: 'wild_pokemons',
-                value: config.get('monsters')
+                value: config.get('wild')
             })
         }
     })
