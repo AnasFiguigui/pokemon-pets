@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import { WildPokemonSpecies, Pokemons } from './game-data';
 import { Decoration, Pet, PetItem, Save } from './models';
 
+const MAX_SUMMONED_POKEMONS = 7;
+
 
 //Extension
 let config = vscode.workspace.getConfiguration('pokemon-pets');
@@ -61,6 +63,12 @@ function loadGame() {
 
         //Save updated
         saveUpdated = true;
+    } else if (save.pets.length > MAX_SUMMONED_POKEMONS) {
+        //Trim pets list if there are too many
+        save.pets = save.pets.slice(0, MAX_SUMMONED_POKEMONS);
+
+        //Save updated
+        saveUpdated = true;
     }
 
     //Invalid decoration list
@@ -106,7 +114,7 @@ function initGame() {
     });
 
     //Load pets
-    for (const pet of save.pets) loadPet(pet);
+    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS)) loadPet(pet);
 
     //Load decor
     for (const decor of save.decoration) loadDecor(decor);
@@ -163,13 +171,18 @@ function loadPet(pet: Pet) {
     });
 }
 
-function addPet(pet: Pet) {
+function addPet(pet: Pet): boolean {
+    //Max pets reached
+    if (save.pets.length >= MAX_SUMMONED_POKEMONS) return false;
+
     //Add to list & save json
     save.pets.push(pet);
     saveGame();
 
     //load pet in webview
     loadPet(pet);
+
+    return true;
 }
 
 function removePet(index: number, saveFile: boolean) {
@@ -247,6 +260,12 @@ export function activate(context: vscode.ExtensionContext) {
     //Add pet
     const commandAddPet = vscode.commands.registerCommand('pokemon-pets.addPet', async () => {
 
+        //Check max pets before opening selectors
+        if (save.pets.length >= MAX_SUMMONED_POKEMONS) {
+            vscode.window.showWarningMessage(`You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+            return;
+        }
+
         // Ask for a generation
         const generation = await vscode.window.showQuickPick(Object.keys(Pokemons), {
             title: 'Select a Pokémon generation',
@@ -290,7 +309,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (name == null) return;
 
         // Add Pokémon as pet
-        addPet({
+        const added = addPet({
             specie: pokemonData.name,
             name: name,
             color: generation,
@@ -298,6 +317,11 @@ export function activate(context: vscode.ExtensionContext) {
             sprite: formData.sprite,
             spriteSize: formData.spriteSize,
         });
+
+        if (!added) {
+            vscode.window.showWarningMessage(`You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+            return;
+        }
 
         // New Pokémon!
         vscode.window.showInformationMessage(`Say hi to ${name} the ${formData.name}!`);

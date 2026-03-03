@@ -390,7 +390,9 @@ class Game {
         this.#windowSize = new Vec2(window.innerWidth, window.innerHeight);
         this.#windowSizeScaled = this.windowSize.div(this.scale);
 
-        //Update buffer canvas size
+        //Update canvas sizes
+        this.canvas.width = this.windowSize.x;
+        this.canvas.height = this.windowSize.y;
         this.canvasBuffer.width = this.windowSize.x;
         this.canvasBuffer.height = this.windowSize.y;
 
@@ -421,9 +423,6 @@ class Game {
             //Draw object
             obj.update();
         }
-
-        //Draw objects
-        requestAnimationFrame(this.draw);
     }
 
     //Rendering
@@ -466,8 +465,7 @@ class Game {
         }
 
         //Draw double bufffer into real canvas
-        this.canvas.width = this.canvasBuffer.width;
-        this.canvas.height = this.canvasBuffer.height;
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.drawImage(this.canvasBuffer, 0, 0);
     }
 
@@ -563,6 +561,9 @@ class Game {
         //Perform updates
         for (let update = 0; update < updates; update++) this.update();
 
+        //Draw once per loop
+        this.draw();
+
         //Update delta accumulation
         this.#deltaAccumulation = this.#deltaAccumulation - (updates * interval);
 
@@ -575,6 +576,9 @@ class Game {
         this.#context = this.canvas.getContext('2d');
         this.#contextBuffer = this.canvasBuffer.getContext('2d', { willReadFrequently: true });
         this.#contextAlphaTest = this.canvasAlphaTest.getContext('2d', { willReadFrequently: true });
+
+        //Init canvas sizes
+        this.onResize();
 
         //Create ball
         this.#ball = new Ball();

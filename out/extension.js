@@ -41,6 +41,7 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const game_data_1 = require("./game-data");
 const models_1 = require("./models");
+const MAX_SUMMONED_POKEMONS = 7;
 //Extension
 let config = vscode.workspace.getConfiguration('pokemon-pets');
 let webview;
@@ -89,6 +90,12 @@ function loadGame() {
         //Save updated
         saveUpdated = true;
     }
+    else if (save.pets.length > MAX_SUMMONED_POKEMONS) {
+        //Trim pets list if there are too many
+        save.pets = save.pets.slice(0, MAX_SUMMONED_POKEMONS);
+        //Save updated
+        saveUpdated = true;
+    }
     //Invalid decoration list
     if (!Array.isArray(save.decoration)) {
         //Reset decoration list
@@ -125,7 +132,7 @@ function initGame() {
         value: save.money
     });
     //Load pets
-    for (const pet of save.pets)
+    for (const pet of save.pets.slice(0, MAX_SUMMONED_POKEMONS))
         loadPet(pet);
     //Load decor
     for (const decor of save.decoration)
@@ -180,11 +187,15 @@ function loadPet(pet) {
     });
 }
 function addPet(pet) {
+    //Max pets reached
+    if (save.pets.length >= MAX_SUMMONED_POKEMONS)
+        return false;
     //Add to list & save json
     save.pets.push(pet);
     saveGame();
     //load pet in webview
     loadPet(pet);
+    return true;
 }
 function removePet(index, saveFile) {
     //Remove from pets
@@ -247,6 +258,11 @@ function activate(context) {
     //Commands have to be defined in package.json in order to be added here
     //Add pet
     const commandAddPet = vscode.commands.registerCommand('pokemon-pets.addPet', async () => {
+        //Check max pets before opening selectors
+        if (save.pets.length >= MAX_SUMMONED_POKEMONS) {
+            vscode.window.showWarningMessage(`You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+            return;
+        }
         // Ask for a generation
         const generation = await vscode.window.showQuickPick(Object.keys(game_data_1.Pokemons), {
             title: 'Select a Pokémon generation',
@@ -290,7 +306,7 @@ function activate(context) {
         if (name == null)
             return;
         // Add Pokémon as pet
-        addPet({
+        const added = addPet({
             specie: pokemonData.name,
             name: name,
             color: generation,
@@ -298,6 +314,10 @@ function activate(context) {
             sprite: formData.sprite,
             spriteSize: formData.spriteSize,
         });
+        if (!added) {
+            vscode.window.showWarningMessage(`You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+            return;
+        }
         // New Pokémon!
         vscode.window.showInformationMessage(`Say hi to ${name} the ${formData.name}!`);
     });

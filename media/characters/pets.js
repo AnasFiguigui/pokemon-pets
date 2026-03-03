@@ -257,23 +257,23 @@ class PokemonAnimations {
             ),
             'moveDown': new Animation(
                 [[0, 0], [1, 0], [2, 0], [3, 0]],
-                5
+                3
             ),
             'moveRight': new Animation(
                 [[0, 1], [1, 1], [2, 1], [3, 1]],
-                5
+                3
             ),
             'moveUp': new Animation(
                 [[0, 2], [1, 2], [2, 2], [3, 2]],
-                5
+                3
             ),
             'moveLeft': new Animation(
                 [[0, 3], [1, 3], [2, 3], [3, 3]],
-                5
+                3
             ),
             'special': new Animation(
                 [[0, 5], [1, 5], [2, 5], [3, 5]],
-                5,
+                4,
                 { loop: false }
             ),
             'sleep': [
@@ -283,7 +283,7 @@ class PokemonAnimations {
                 ),
                 new Animation(
                     [[0, 6], [1, 6], [2, 6], [3, 6]],
-                    5,
+                    3,
                     { loop: false }
                 )
             ],
@@ -400,7 +400,7 @@ class PetAI extends AI {
         if (!this.#moodShow) return;
 
         //Auto lift mood depending on pokemon sprite size (32px or 48px)
-        const moodLift = this.character.size.y >= 48 ? 10 : 9;
+        const moodLift = this.character.size.y >= 48 ? 10 : 12;
 
         //Draw mood
         ctx.drawImage(
@@ -474,17 +474,14 @@ class PokemonCharacter extends Character {
         // Move towards random point
         this.ai.moveTowardsRandom();
 
-        // Add to pets list and objects for rendering
+        // Add to pets list
         Game.pets.push(this);
-        Game.objects.push(this);
     }
 
     remove() {
         super.remove();
         // Remove from pets list
         Game.pets.removeItem(this);
-        // Remove from objects list
-        Game.objects.removeItem(this);
     }
 
     // Clicks
