@@ -12,7 +12,17 @@ Celebrating the release of the new Pokémon game by keeping your favorite Pokém
 
 Vote for the next Pokémon to be added:
 
-The top 10 most voted Pokémon will be added to the extension.
+https://trello.com/b/c2UVCW13/next-pokemon
+
+If your Pokémon is not on the list, join the board as a member and create a new card:
+
+https://trello.com/invite/b/69a69027fb2fa3f5e91c9a77/ATTI583b65e193854c5295412e8d24384b75CBC4550F/next-pokemon
+
+Rules:
+
+- One Pokémon per card.
+- Search before creating a new card to avoid duplicates.
+- The top 10 most voted Pokémon will be added to the extension.
 
 ## Features
 
@@ -40,7 +50,8 @@ Then run: **Focus on Pokemon Pets View**.
 
 ## Contributing
 
-Issues and feature requests are welcome.
+- Issues and feature requests are welcome after the official release.
+- Open source after version 2.0
 
 ## License
 
