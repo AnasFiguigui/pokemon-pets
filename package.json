@@ -1,8 +1,8 @@
 {
     "name": "pokemon-pets",
-    "displayName": "Pokemon Pets",
+    "displayName": "Pokemon Pets (Beta)",
     "description": "Pokemon pets for VSCode ",
-    "version": "2.2.4",
+    "version": "0.9.0",
     "publisher": "Anasfiguigui",
     "author": {
         "name": "Anasfiguigui"
@@ -18,28 +18,14 @@
         "pokemon",
         "valley",
         "pokemon",
-        "pets",
-        "cat",
-        "cog",
-        "dino",
-        "duck",
-        "turtle",
-        "raccoon",
-        "goat",
-        "sheep",
-        "ostrich",
-        "pig",
-        "rabbit",
-        "chicken",
-        "cow",
-        "junimo"
+        "pets"
     ],
     "categories": [
         "Other"
     ],
     "repository": {
         "type": "github",
-        "url": "https://github.com/Anasfiguiguinzer/Pokemon-Pets"
+        "url": "https://github.com/Anasfiguigui/Pokemon-Pets"
     },
     "engines": {
         "vscode": "^1.92.0"
@@ -55,14 +41,8 @@
                     "default": "Grass",
                     "enum": [
                         "Grass",
-                        "Grass (Fall)",
-                        "Dirt",
                         "Sand",
-                        "Snow",
-                        "Light Wood",
-                        "Dark Wood",
-                        "Orange Wood",
-                        "Broken Wood"
+                        "Snow"
                     ],
                     "description": "The background theme for the window."
                 },
@@ -79,7 +59,7 @@
                 "pokemon-pets.monsters": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Toggles if monsters can spawn."
+                    "description": "Toggles if wild pokemons can spawn."
                 }
             }
         },
@@ -112,7 +92,7 @@
                 "command": "pokemon-pets.settings",
                 "title": "Pokemon Pets Settings",
                 "icon": {
-                    "light": "media/icons//light/settings.svg",
+                    "light": "media/icons/light/settings.svg",
                     "dark": "media/icons/dark/settings.svg"
                 }
             },

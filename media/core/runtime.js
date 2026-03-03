@@ -324,7 +324,7 @@ class Ball extends GameObject {
         config.name = 'Ball';
 
         //Size, rendering & animations
-        config.size = new Vec2(9, 18);
+        config.size = new Vec2(10, 20);
         config.image = `ball.png`;
         config.animations = {
             'bounce': new Animation(

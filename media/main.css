@@ -377,7 +377,7 @@ body[cursor="none"] {
 }
 
 #cursor {
-    --size: 9px;
+    --size: 16px;
     --bg-pos-x: 0;
     --bg-pos-y: 0;
 
@@ -399,13 +399,13 @@ body[cursor="none"] {
 }
 
 #cursor[icon="candy"] {
-    --bg-pos-x: calc(-12 * var(--size));
-    --bg-pos-y: calc(-10 * var(--size));
+    --bg-pos-x: calc(-3 * var(--size));
+    --bg-pos-y: calc(-3 * var(--size));
     opacity: 1;
 }
 
 #cursor[icon="ball"] {
-    --bg-pos-x: calc(-3 * var(--size));
-    --bg-pos-y: calc(-9 * var(--size));
+    --bg-pos-x: calc(-0 * var(--size));
+    --bg-pos-y: calc(-3 * var(--size));
     opacity: 1;
 }

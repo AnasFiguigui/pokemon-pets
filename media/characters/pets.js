@@ -296,27 +296,27 @@ class PokemonAnimations {
 class PetMoods {
 
     //Sprite size
-    static size = new Vec2(9);
+    static size = new Vec2(16);
 
     //Special moods
-    static get HEART() { return new Vec2(1, 3); }
+    static get HEART() { return new Vec2(2, 1); }
     static get RANDOM() { return PetMoods[PetMoods.#moods[Util.randomExclusive(PetMoods.#moods.length)]]; }
 
     //Normal moods
     static #moods = ['HAPPY', 'BLUSH', 'ASHAMED', 'CRY', 'MAD', 'IDK', 'PLEDGE', 'GIGACHAD', 'ALIEN', 'DEVIL', 'SILLY', 'MUSIC'];
 
-    static get HAPPY() { return new Vec2(0, 0); }
-    static get BLUSH() { return new Vec2(8, 0); }
-    static get ASHAMED() { return new Vec2(9, 0); }
-    static get CRY() { return new Vec2(13, 0); }
-    static get MAD() { return new Vec2(2, 1); }
-    static get IDK() { return new Vec2(5, 1); }
-    static get PLEDGE() { return new Vec2(8, 1); }
-    static get GIGACHAD() { return new Vec2(11, 1); }
-    static get ALIEN() { return new Vec2(1, 2); }
+    static get HAPPY() { return new Vec2(4, 0); }
+    static get BLUSH() { return new Vec2(4, 1); }
+    static get ASHAMED() { return new Vec2(5, 2); }
+    static get CRY() { return new Vec2(4, 2); }
+    static get MAD() { return new Vec2(6, 1); }
+    static get IDK() { return new Vec2(0, 2); }
+    static get PLEDGE() { return new Vec2(5, 1); }
+    static get GIGACHAD() { return new Vec2(6, 1); }
+    static get ALIEN() { return new Vec2(1, 1); }
     static get DEVIL() { return new Vec2(2, 2); }
-    static get SILLY() { return new Vec2(13, 1); }
-    static get MUSIC() { return new Vec2(6, 3); }
+    static get SILLY() { return new Vec2(0, 0); }
+    static get MUSIC() { return new Vec2(2, 0); }
 
 }
 
@@ -400,7 +400,7 @@ class PetAI extends AI {
         if (!this.#moodShow) return;
 
         //Auto lift mood depending on pokemon sprite size (32px or 48px)
-        const moodLift = this.character.size.y >= 48 ? 10 : 8;
+        const moodLift = this.character.size.y >= 48 ? 10 : 14;
 
         //Draw mood
         ctx.drawImage(
@@ -537,5 +537,3 @@ class Pokemon extends PokemonCharacter {
     }
 
 }
-
-//Animations
