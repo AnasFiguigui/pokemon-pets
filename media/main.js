@@ -128,6 +128,61 @@ function openBackpack() {
     Menus.toggle('backpack', true);
 }
 
+//Pokédex
+let pokedexData = []; // { name, specie, sprite, spriteSize, candyFed }
+
+function openPokedex() {
+    //Request fresh pet data from extension
+    vscode.postMessage({ type: 'request_pokedex' });
+}
+
+function renderPokedex() {
+    const content = document.getElementById('pokedexContent');
+    content.innerHTML = '';
+
+    if (pokedexData.length === 0) {
+        const empty = document.createElement('span');
+        empty.classList.add('pokedexEntry');
+        empty.innerText = 'No Pokémon yet';
+        empty.style.textAlign = 'center';
+        content.appendChild(empty);
+    } else {
+        for (const pet of pokedexData) {
+            const entry = document.createElement('div');
+            entry.classList.add('pokedexEntry');
+
+            //Sprite (32x32, vec 0,0)
+            const sprite = document.createElement('img');
+            const spriteName = (pet.sprite ?? pet.specie).toString().toLowerCase().replaceAll(' ', '_');
+            sprite.src = `${Game.mediaURI}sprites/pokemons/${spriteName}.png`;
+            sprite.alt = pet.name;
+            sprite.classList.add('pokedexSprite');
+            entry.appendChild(sprite);
+
+            //Info column
+            const info = document.createElement('div');
+            info.classList.add('pokedexInfo');
+
+            const nameEl = document.createElement('span');
+            nameEl.classList.add('pokedexName');
+            nameEl.innerText = pet.name;
+            info.appendChild(nameEl);
+
+            const level = Math.min(pet.candyFed ?? 0, 100);
+            const levelEl = document.createElement('span');
+            levelEl.classList.add('pokedexLevel');
+            levelEl.innerText = `Lv. ${level}`;
+            info.appendChild(levelEl);
+
+            entry.appendChild(info);
+            content.appendChild(entry);
+        }
+    }
+
+    content.scrollTop = 0;
+    Menus.toggle('pokedex', true);
+}
+
 function toggleActionDecor() {
     //Close actions menu
     Menus.close(); 
@@ -341,6 +396,10 @@ function handleGameMessage(message) {
                 pet.element.classList.add('evolving');
                 setTimeout(() => { pet.element.classList.remove('evolving'); }, 2000);
             }
+            break;
+        case 'pokedex':
+            pokedexData = Array.isArray(message.value) ? message.value : [];
+            renderPokedex();
             break;
         default:
             break;

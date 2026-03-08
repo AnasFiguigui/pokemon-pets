@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Decoration, Pet, Save } from './models';
 
-export const MAX_SUMMONED_POKEMONS = 7;
+export const MAX_SUMMONED_POKEMONS = 6;
 
 /** Default inventory data for new or missing saves. */
 function defaultInventory() {

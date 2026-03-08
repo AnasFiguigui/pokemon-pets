@@ -202,6 +202,17 @@ function handleWebviewMessage(message) {
         case 'remove_decor':
             saveManager.removeDecor(message.index);
             break;
+        case 'request_pokedex': {
+            const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+                name: p.name,
+                specie: p.specie,
+                sprite: p.sprite,
+                spriteSize: p.spriteSize,
+                candyFed: p.candyFed ?? 0,
+            }));
+            webview.postMessage({ type: 'pokedex', value: pets });
+            break;
+        }
     }
 }
 // ── Commands ────────────────────────────────────────────────────────────

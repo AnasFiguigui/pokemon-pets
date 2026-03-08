@@ -369,8 +369,8 @@ describe('SaveManager', () => {
 
     // ── MAX_SUMMONED_POKEMONS constant ──────────────────────────────────
 
-    it('exports MAX_SUMMONED_POKEMONS as 7', () => {
-        expect(MAX_SUMMONED_POKEMONS).toBe(7);
+    it('exports MAX_SUMMONED_POKEMONS as 6', () => {
+        expect(MAX_SUMMONED_POKEMONS).toBe(6);
     });
 
     // ── updateInventory ─────────────────────────────────────────────────

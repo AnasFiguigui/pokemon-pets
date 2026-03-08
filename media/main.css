@@ -210,7 +210,8 @@ body[cursor="none"] {
 
 /* Fixed size for store & backpack menus (not actions) */
 #store,
-#backpack {
+#backpack,
+#pokedex {
     width: 270px;
     height: 300px;
 }
@@ -532,4 +533,64 @@ body[cursor="none"] {
     100% {
         filter: brightness(1);
     }
+}
+
+/* Pokédex entry */
+.pokedexEntry {
+    /* Button reset */
+    appearance: none;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+
+    /* Spacing */
+    padding: 5px;
+
+    /* Layout */
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+
+    /* Visuals */
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px transparent;
+
+    /* Other */
+    cursor: default;
+}
+
+.pokedexEntry:hover {
+    background-color: #55121230;
+    box-shadow: inset 0 0 0 1px #55121255;
+}
+
+.pokedexSprite {
+    /* Size */
+    width: 32px;
+    height: 32px;
+
+    /* Visuals */
+    image-rendering: pixelated;
+    object-fit: none;
+    object-position: 0px 0px;
+}
+
+.pokedexInfo {
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 2px;
+}
+
+.pokedexName {
+    font-size: 16px;
+}
+
+.pokedexLevel {
+    font-size: 13px;
+    color: #888;
 }

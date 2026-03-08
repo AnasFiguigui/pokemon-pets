@@ -60,6 +60,10 @@
                         <img src="{media}sprites/ui/ball.png" alt="Poké Ball">
                         <span>Throw Poké Ball</span>
                     </button>
+                    <button type="button" class="menuButton" onclick="openPokedex();">
+                        <img src="{media}sprites/ui/candy.png" alt="Pokédex">
+                        <span>Pokédex</span>
+                    </button>
                     <button type="button" class="menuButton" onclick="openBackpack();">
                         <img src="{media}sprites/ui/candy.png" alt="Backpack">
                         <span>Backpack</span>
@@ -94,6 +98,17 @@
                 </div>
                 <div id="backpackContent" class="menuContent" scrollable>
                     <!-- Items populated by JS -->
+                </div>
+            </div>
+
+            <!-- Pokédex menu -->
+            <div id="pokedex" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+                <div class="menuTopBar">
+                    <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
+                    <button class="menuTopButton" onclick="Menus.close();">X</button>
+                </div>
+                <div id="pokedexContent" class="menuContent" scrollable>
+                    <!-- Pokédex entries populated by JS -->
                 </div>
             </div>
 
