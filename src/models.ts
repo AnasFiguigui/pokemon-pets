@@ -37,16 +37,14 @@ export type TelemetryData = {
 };
 
 export type Inventory = {
-    candy: number;
+    [consumableId: string]: number;
 };
 
 export class Save {
     public money: number = 0;
     public pets: Pet[] = [];
     public decoration: Decoration[] = [];
-    public inventory: Inventory = {
-        candy: 0,
-    };
+    public inventory: Inventory = {};
     public streak: StreakData = {
         currentStreak: 0,
         lastClaimDate: '',

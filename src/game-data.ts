@@ -3,12 +3,33 @@ export type PokemonForm = {
     sprite: string;
     spriteSize: 32 | 48;
     candyCost: number;  // Cumulative candy needed to reach this form (0 = base form)
+    requiredItem?: string; // Consumable ID required for this evolution (in addition to candy)
 };
 
 export type PokemonSpecies = {
     name: string;
     forms: PokemonForm[];
 };
+
+export type Consumable = {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+};
+
+export const Consumables: Consumable[] = [
+    { id: 'candy', name: 'Candy', price: 30, description: 'Feed to a Pokémon to help it grow.' },
+    { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.' },
+    { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.' },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.' },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, description: 'A stone that smells of fresh leaves.' },
+    { id: 'moon_stone', name: 'Moon Stone', price: 120, description: 'A stone that glows in moonlight.' },
+    { id: 'sun_stone', name: 'Sun Stone', price: 120, description: 'A stone that sparkles in sunlight.' },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.' },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.' },
+    { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.' },
+];
 
 export const WildPokemonSpecies: { specie: string; nightOnly: boolean }[] = [
     { specie: 'meowth', nightOnly: true },
@@ -29,7 +50,7 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
             forms: [
                 { name: 'Charmander', sprite: 'charmander', spriteSize: 32, candyCost: 0 },
                 { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyCost: 10 },
-                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25 },
+                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone' },
             ],
         },
         {

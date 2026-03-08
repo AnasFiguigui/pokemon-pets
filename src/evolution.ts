@@ -77,14 +77,14 @@ export class EvolutionService {
         // Check if evolution is possible
         if (nextFormIdx < species.forms.length) {
             const nextForm = species.forms[nextFormIdx];
-            if (pet.candyFed >= nextForm.candyCost) {
+            // Only evolve via candy if the form does NOT require a special item
+            if (!nextForm.requiredItem && pet.candyFed >= nextForm.candyCost) {
                 // Evolve!
                 pet.form = nextForm.name;
                 pet.sprite = nextForm.sprite;
                 pet.spriteSize = nextForm.spriteSize;
                 this.saveManager.saveGame();
 
-                // Calculate next evolution threshold
                 const furtherIdx = nextFormIdx + 1;
                 const nextEvolutionAt = furtherIdx < species.forms.length
                     ? species.forms[furtherIdx].candyCost
@@ -101,7 +101,6 @@ export class EvolutionService {
 
         this.saveManager.saveGame();
 
-        // Not evolved yet — return progress info
         const nextEvolutionAt = nextFormIdx < species.forms.length
             ? species.forms[nextFormIdx].candyCost
             : undefined;
@@ -110,6 +109,56 @@ export class EvolutionService {
             evolved: false,
             totalCandy: pet.candyFed,
             nextEvolutionAt,
+        };
+    }
+
+    /**
+     * Use a special item on a pet. Checks if the next evolution requires this item
+     * AND the pet has enough candy. If so, evolves the pet.
+     */
+    public useItem(petIndex: number, itemId: string): EvolutionResult {
+        const pet = this.saveManager.save.pets[petIndex];
+        if (!pet) {
+            return { evolved: false, totalCandy: 0 };
+        }
+
+        const species = this.findSpecies(pet);
+        if (!species) {
+            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
+        }
+
+        const currentIdx = this.getCurrentFormIndex(pet, species);
+        const nextFormIdx = currentIdx + 1;
+
+        if (nextFormIdx < species.forms.length) {
+            const nextForm = species.forms[nextFormIdx];
+            const candyFed = pet.candyFed ?? 0;
+
+            // Check if this form requires this specific item AND has enough candy
+            if (nextForm.requiredItem === itemId && candyFed >= nextForm.candyCost) {
+                // Evolve!
+                pet.form = nextForm.name;
+                pet.sprite = nextForm.sprite;
+                pet.spriteSize = nextForm.spriteSize;
+                this.saveManager.saveGame();
+
+                const furtherIdx = nextFormIdx + 1;
+                const nextEvolutionAt = furtherIdx < species.forms.length
+                    ? species.forms[furtherIdx].candyCost
+                    : undefined;
+
+                return {
+                    evolved: true,
+                    newForm: nextForm,
+                    totalCandy: candyFed,
+                    nextEvolutionAt,
+                };
+            }
+        }
+
+        return {
+            evolved: false,
+            totalCandy: pet.candyFed ?? 0,
         };
     }
 }

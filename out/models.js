@@ -6,9 +6,7 @@ class Save {
     money = 0;
     pets = [];
     decoration = [];
-    inventory = {
-        candy: 0,
-    };
+    inventory = {};
     streak = {
         currentStreak: 0,
         lastClaimDate: '',

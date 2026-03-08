@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Pokemons } from './game-data';
+import { Pokemons, Consumables } from './game-data';
 import { Decoration, Pet, PetItem, normalizePet } from './models';
 import { SaveManager, MAX_SUMMONED_POKEMONS } from './save-manager';
 import { WebViewProvider } from './webview-provider';
@@ -117,42 +117,70 @@ function handleWebviewMessage(message: any): void {
         case 'wild_pokemon_caught':
             telemetry.trackWildPokemonCaught();
             break;
-        case 'candy_fed': {
-            const inv = saveManager.save.inventory;
-            if (inv.candy <= 0) { break; } // No candy available
-            inv.candy--;
-            saveManager.saveGame();
-            webview.postMessage({ type: 'inventory', value: inv });
-            telemetry.trackCandyFed();
-            const petIndex = message.index as number;
-            if (typeof petIndex === 'number' && petIndex >= 0) {
-                const result = evolution.feedCandy(petIndex);
-                if (result.evolved && result.newForm) {
-                    const pet = saveManager.save.pets[petIndex];
-                    webview.postMessage({ type: 'remove_pet', index: petIndex });
-                    loadPet(pet);
-                    webview.postMessage({
-                        type: 'evolution',
-                        index: petIndex,
-                        name: pet.name,
-                        newForm: result.newForm.name,
-                    });
-                    telemetry.trackPokemonEvolved(pet.specie);
-                    vscode.window.showInformationMessage(
-                        `🎉 ${pet.name} evolved into ${result.newForm.name}!`,
-                    );
+        case 'use_consumable': {
+            const consumableId = message.consumableId as string;
+            if (!consumableId) { break; }
+            const currentCount = saveManager.getConsumableCount(consumableId);
+            if (currentCount <= 0) { break; }
+            saveManager.updateInventory(consumableId, currentCount - 1);
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+
+            // If it's candy, track and check evolution
+            if (consumableId === 'candy') {
+                telemetry.trackCandyFed();
+                const petIndex = message.index as number;
+                if (typeof petIndex === 'number' && petIndex >= 0) {
+                    const result = evolution.feedCandy(petIndex);
+                    if (result.evolved && result.newForm) {
+                        const pet = saveManager.save.pets[petIndex];
+                        webview.postMessage({ type: 'remove_pet', index: petIndex });
+                        loadPet(pet);
+                        webview.postMessage({
+                            type: 'evolution',
+                            index: petIndex,
+                            name: pet.name,
+                            newForm: result.newForm.name,
+                        });
+                        telemetry.trackPokemonEvolved(pet.specie);
+                        vscode.window.showInformationMessage(
+                            `🎉 ${pet.name} evolved into ${result.newForm.name}!`,
+                        );
+                    }
+                }
+            } else {
+                // Non-candy consumable: check if it triggers an evolution
+                const petIndex = message.index as number;
+                if (typeof petIndex === 'number' && petIndex >= 0) {
+                    const result = evolution.useItem(petIndex, consumableId);
+                    if (result.evolved && result.newForm) {
+                        const pet = saveManager.save.pets[petIndex];
+                        webview.postMessage({ type: 'remove_pet', index: petIndex });
+                        loadPet(pet);
+                        webview.postMessage({
+                            type: 'evolution',
+                            index: petIndex,
+                            name: pet.name,
+                            newForm: result.newForm.name,
+                        });
+                        telemetry.trackPokemonEvolved(pet.specie);
+                        vscode.window.showInformationMessage(
+                            `🎉 ${pet.name} evolved into ${result.newForm.name}!`,
+                        );
+                    }
                 }
             }
             break;
         }
-        case 'buy_candy': {
-            const cost = 30;
+        case 'buy_consumable': {
+            const itemId = message.consumableId as string;
+            const consumable = Consumables.find(c => c.id === itemId);
+            if (!consumable) { break; }
             const qty = (message.quantity as number) || 1;
-            const totalCost = cost * qty;
+            const totalCost = consumable.price * qty;
             if (saveManager.save.money < totalCost) { break; }
             saveManager.save.money -= totalCost;
-            saveManager.save.inventory.candy += qty;
-            saveManager.saveGame();
+            const prev = saveManager.getConsumableCount(itemId);
+            saveManager.updateInventory(itemId, prev + qty);
             webview.postMessage({ type: 'money', value: saveManager.save.money });
             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             telemetry.trackGoldSpent(totalCost);

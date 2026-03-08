@@ -190,7 +190,7 @@ describe('EvolutionService', () => {
             expect(result.totalCandy).toBe(1);
         });
 
-        it('Charizard gets spriteSize 48 on evolution', () => {
+        it('does not evolve Charmeleon to Charizard via candy (requires Fire Stone)', () => {
             const pet: Pet = {
                 name: 'Char', specie: 'Charmander', color: 'Generation 1',
                 form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 24,
@@ -199,9 +199,78 @@ describe('EvolutionService', () => {
 
             const result = evo.feedCandy(0);
 
+            expect(result.evolved).toBe(false);
+            expect(result.totalCandy).toBe(25);
+            expect(pet.form).toBe('Charmeleon'); // Still Charmeleon!
+        });
+    });
+
+    // ── useItem ─────────────────────────────────────────────────────────
+
+    describe('useItem', () => {
+        it('evolves Charmeleon to Charizard with Fire Stone when enough candy', () => {
+            const pet: Pet = {
+                name: 'Char', specie: 'Charmander', color: 'Generation 1',
+                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 25,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'fire_stone');
+
             expect(result.evolved).toBe(true);
             expect(result.newForm?.name).toBe('Charizard');
             expect(pet.spriteSize).toBe(48);
+        });
+
+        it('does not evolve with wrong item', () => {
+            const pet: Pet = {
+                name: 'Char', specie: 'Charmander', color: 'Generation 1',
+                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 25,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'water_stone');
+
+            expect(result.evolved).toBe(false);
+        });
+
+        it('does not evolve with right item but not enough candy', () => {
+            const pet: Pet = {
+                name: 'Char', specie: 'Charmander', color: 'Generation 1',
+                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 20,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'fire_stone');
+
+            expect(result.evolved).toBe(false);
+        });
+
+        it('returns safe result for invalid index', () => {
+            const result = evo.useItem(99, 'fire_stone');
+
+            expect(result.evolved).toBe(false);
+            expect(result.totalCandy).toBe(0);
+        });
+
+        it('returns safe result for unknown species', () => {
+            const pet: Pet = { name: 'Fake', specie: 'Fakemon', color: 'None', candyFed: 5 };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'fire_stone');
+
+            expect(result.evolved).toBe(false);
+        });
+
+        it('does not evolve a form that has no requiredItem', () => {
+            const pet = bulbasaurPet();
+            pet.candyFed = 10; // Enough for Ivysaur
+            sm.save.pets.push(pet);
+
+            // Ivysaur has no requiredItem, so fire_stone should not trigger evolution
+            const result = evo.useItem(0, 'fire_stone');
+
+            expect(result.evolved).toBe(false);
         });
     });
 });

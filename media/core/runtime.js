@@ -514,21 +514,38 @@ class Game {
         });
     };
 
-    //Candy (inventory)
-    static #candy = 0;
+    //Inventory
+    static #inventory = {};
     static #candyText = document.getElementById('candyText');
     static #candyBtn = document.getElementById('candyBtn');
 
-    static get candy() { return this.#candy; }
+    static get inventory() { return this.#inventory; }
 
-    static setCandy = (amount) => {
-        this.#candy = amount;
-        this.#candyText.innerText = `${amount}`;
-        //If no candy left and candy action is active, deactivate it
-        if (amount <= 0 && this.isAction(Action.CANDY)) {
-            this.setAction(Action.NONE);
+    static getItemCount = (id) => {
+        return this.#inventory[id] ?? 0;
+    };
+
+    static setInventory = (inv) => {
+        this.#inventory = inv ?? {};
+        //Update candy display in top bar
+        this.#candyText.innerText = `${this.getItemCount('candy')}`;
+        //If active consumable is out of stock, deactivate
+        if (this.#selectedConsumable && this.getItemCount(this.#selectedConsumable) <= 0) {
+            this.#selectedConsumable = null;
+            if (this.isAction(Action.CANDY)) {
+                this.setAction(Action.NONE);
+            }
             this.#candyBtn.removeAttribute('active');
         }
+    };
+
+    //Selected consumable for feeding
+    static #selectedConsumable = null;
+
+    static get selectedConsumable() { return this.#selectedConsumable; }
+
+    static setSelectedConsumable = (id) => {
+        this.#selectedConsumable = id;
     };
 
     //Current action being performed

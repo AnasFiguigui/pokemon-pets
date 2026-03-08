@@ -6,7 +6,7 @@ export const MAX_SUMMONED_POKEMONS = 7;
 
 /** Default inventory data for new or missing saves. */
 function defaultInventory() {
-    return { candy: 0 };
+    return {} as Record<string, number>;
 }
 
 /** Default streak data for new or missing saves. */
@@ -85,12 +85,17 @@ export class SaveManager {
         }
 
         // Validate inventory
-        if (typeof this.save.inventory !== 'object' || this.save.inventory === null) {
+        if (typeof this.save.inventory !== 'object' || this.save.inventory === null || Array.isArray(this.save.inventory)) {
             this.save.inventory = defaultInventory();
             saveUpdated = true;
-        } else if (typeof this.save.inventory.candy !== 'number') {
-            this.save.inventory.candy = 0;
-            saveUpdated = true;
+        } else {
+            // Ensure all values are non-negative numbers
+            for (const key of Object.keys(this.save.inventory)) {
+                if (typeof this.save.inventory[key] !== 'number' || this.save.inventory[key] < 0) {
+                    this.save.inventory[key] = 0;
+                    saveUpdated = true;
+                }
+            }
         }
 
         // Validate streak
@@ -165,10 +170,19 @@ export class SaveManager {
         this.saveGame();
     }
 
-    /** Updates the inventory and saves. */
-    public updateInventory(candy: number): void {
-        this.save.inventory.candy = Math.max(0, candy);
+    /** Updates a consumable count in the inventory and saves. */
+    public updateInventory(consumableId: string, amount: number): void {
+        this.save.inventory[consumableId] = Math.max(0, amount);
+        // Clean up zero entries
+        if (this.save.inventory[consumableId] === 0) {
+            delete this.save.inventory[consumableId];
+        }
         this.saveGame();
+    }
+
+    /** Gets the count of a specific consumable. */
+    public getConsumableCount(consumableId: string): number {
+        return this.save.inventory[consumableId] ?? 0;
     }
 
     /** Adds a decoration and saves. */

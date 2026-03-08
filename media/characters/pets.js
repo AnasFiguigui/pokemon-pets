@@ -394,26 +394,26 @@ class PetAI extends AI {
 
     //Click
     click() {
-        //Has candy?
-        if (Game.isAction(Action.CANDY)) {
-            //Check candy count
-            if (Game.candy <= 0) {
-                Game.showMessage('No candy!');
+        //Has consumable selected?
+        if (Game.isAction(Action.CANDY) && Game.selectedConsumable) {
+            const consumableId = Game.selectedConsumable;
+
+            //Check count
+            if (Game.getItemCount(consumableId) <= 0) {
+                Game.showMessage('None left!');
                 Game.setAction(Action.NONE);
-                const candyBtn = document.getElementById('candyBtn');
-                if (candyBtn) { candyBtn.removeAttribute('active'); }
+                Game.setSelectedConsumable(null);
                 return;
             }
 
-            //Consume candy
+            //Use consumable
             Game.setAction(Action.NONE);
-            const candyBtn = document.getElementById('candyBtn');
-            if (candyBtn) { candyBtn.removeAttribute('active'); }
+            Game.setSelectedConsumable(null);
 
-            //Notify extension about candy feeding (for evolution tracking)
+            //Notify extension
             const petIndex = Game.pets.indexOf(this.character);
             if (petIndex >= 0) {
-                vscode.postMessage({ type: 'candy_fed', index: petIndex });
+                vscode.postMessage({ type: 'use_consumable', consumableId: consumableId, index: petIndex });
             }
 
             //Set mood to heart

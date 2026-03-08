@@ -60,9 +60,9 @@
                         <img src="{media}sprites/ui/ball.png" alt="Poké Ball">
                         <span>Throw Poké Ball</span>
                     </button>
-                    <button type="button" class="menuButton" onclick="toggleActionCandy();">
-                        <img src="{media}sprites/ui/candy.png" alt="Candy">
-                        <span>Feed Candy</span>
+                    <button type="button" class="menuButton" onclick="openBackpack();">
+                        <img src="{media}sprites/ui/candy.png" alt="Backpack">
+                        <span>Backpack</span>
                     </button>
                     <button type="button" class="menuButton" onclick="openStoreMenu();">
                         <img src="{media}sprites/ui/house.png" alt="Item Shop">
@@ -86,13 +86,24 @@
                 </div>
             </div>
 
+            <!-- Backpack menu -->
+            <div id="backpack" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+                <div class="menuTopBar">
+                    <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
+                    <button class="menuTopButton" onclick="Menus.close();">X</button>
+                </div>
+                <div id="backpackContent" class="menuContent" scrollable>
+                    <!-- Items populated by JS -->
+                </div>
+            </div>
+
         </div>
 
         <!-- Top bar -->
         <div id="topBar">
             <img src="{media}sprites/ui/ball.png" alt="Gold" class="topBarIcon">
             <span id="moneyText">0</span>
-            <button type="button" id="candyBtn" class="topBarItem" onclick="toggleActionCandy();">
+            <button type="button" id="candyBtn" class="topBarItem" onclick="openBackpack();">
                 <img src="{media}sprites/ui/candy.png" alt="Candy" class="topBarIcon">
                 <span id="candyText">0</span>
             </button>

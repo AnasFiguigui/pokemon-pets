@@ -32,6 +32,20 @@ function showTopBarTemporary() {
     }, 3000);
 }
 
+//Consumable catalog (must match extension's Consumables array)
+const ConsumableCatalog = [
+    { id: 'candy', name: 'Candy', price: 30, description: 'Feed to a Pokémon to help it grow.' },
+    { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.' },
+    { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.' },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.' },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, description: 'A stone that smells of fresh leaves.' },
+    { id: 'moon_stone', name: 'Moon Stone', price: 120, description: 'A stone that glows in moonlight.' },
+    { id: 'sun_stone', name: 'Sun Stone', price: 120, description: 'A stone that sparkles in sunlight.' },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.' },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.' },
+    { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.' },
+];
+
 //Actions menu
 function toggleActionBall() {
     //Close actions menu & decor mode UI
@@ -44,27 +58,61 @@ function toggleActionBall() {
     Game.setAction(Game.isAction(Action.BALL) ? Action.NONE : Action.BALL);
 }
 
-function toggleActionCandy() {
-    //Close actions menu
-    Menus.close();
-
-    //Check if player has candy
-    if (Game.candy <= 0) {
-        Game.showMessage('No candy!');
+function selectConsumable(id) {
+    //Check if player has this item
+    if (Game.getItemCount(id) <= 0) {
+        Game.showMessage('None left!');
         return;
     }
 
-    //Toggle candy action
-    const newAction = Game.isAction(Action.CANDY) ? Action.NONE : Action.CANDY;
-    Game.setAction(newAction);
+    //Close menus
+    Menus.close();
 
-    //Update candy button active state
-    const candyBtn = document.getElementById('candyBtn');
-    if (newAction === Action.CANDY) {
-        candyBtn.setAttribute('active', '');
+    //Set selected consumable and toggle candy action
+    Game.setSelectedConsumable(id);
+    Game.setAction(Action.CANDY);
+}
+
+function openBackpack() {
+    //Get content container
+    const content = document.getElementById('backpackContent');
+    content.innerHTML = '';
+
+    //Get owned items
+    const inv = Game.inventory;
+    const ownedIds = Object.keys(inv).filter(id => inv[id] > 0);
+
+    if (ownedIds.length === 0) {
+        //Empty backpack
+        const empty = document.createElement('span');
+        empty.classList.add('menuButton');
+        empty.innerText = 'Empty';
+        empty.style.textAlign = 'center';
+        empty.style.cursor = 'default';
+        content.appendChild(empty);
     } else {
-        candyBtn.removeAttribute('active');
+        //List owned consumables
+        for (const id of ownedIds) {
+            const info = ConsumableCatalog.find(c => c.id === id);
+            const name = info ? info.name : Util.titleCase(id.replaceAll('_', ' '));
+            const count = inv[id];
+
+            const element = document.createElement('button');
+            element.type = 'button';
+            element.classList.add('menuButton');
+
+            const text = document.createElement('span');
+            text.innerText = `${name} x${count}`;
+            element.appendChild(text);
+
+            element.onclick = () => selectConsumable(id);
+            content.appendChild(element);
+        }
     }
+
+    //Show backpack
+    content.scrollTop = 0;
+    Menus.toggle('backpack', true);
 }
 
 function toggleActionDecor() {
@@ -105,14 +153,10 @@ function openStoreMenu() {
         backButton.onclick = () => Menus.toggle('actions', true);
     }
 
-    //Create candy item
-    const candyPrice = 30;
-    const candyElement = createStoreItem('Candy', candyPrice);
-    candyElement.onclick = () => {
-        if (Game.money < candyPrice) { return; }
-        vscode.postMessage({ type: 'buy_candy', quantity: 1 });
-    };
-    content.appendChild(candyElement);
+    //Create consumables category
+    const consumablesElement = createStoreItem('Consumables');
+    consumablesElement.onclick = () => openStoreConsumablesMenu();
+    content.appendChild(consumablesElement);
 
     //Create decoration categories
     for (const category of Object.keys(DecorationPreset)) {
@@ -202,6 +246,43 @@ function openStoreCategoryMenu(category) {
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
 }
+
+function openStoreConsumablesMenu() {
+    //Empty list
+    const content = document.getElementById('storeContent');
+    content.innerHTML = '';
+
+    //Top left back button goes to categories list
+    const backButton = document.getElementById('storeBackBtn');
+    if (backButton) {
+        backButton.innerText = 'Back';
+        backButton.onclick = openStoreMenu;
+    }
+
+    //Create consumable items from catalog
+    for (const item of ConsumableCatalog) {
+        const element = createStoreItem(item.name, item.price);
+
+        //Add description
+        const desc = document.createElement('span');
+        desc.style.fontSize = '12px';
+        desc.style.opacity = '0.7';
+        desc.innerText = item.description;
+        element.appendChild(desc);
+
+        //Add buy function
+        element.onclick = () => {
+            if (Game.money < item.price) { return; }
+            vscode.postMessage({ type: 'buy_consumable', consumableId: item.id, quantity: 1 });
+        };
+        content.appendChild(element);
+    }
+
+    //Scroll to top
+    content.scrollTop = 0;
+    setTimeout(() => { content.scrollTop = 0; }, 0);
+}
+
 //Messages from VSCode
 function handleGameMessage(message) {
     switch (message.type.toLowerCase()) {
@@ -222,7 +303,7 @@ function handleGameMessage(message) {
             break;
         case 'inventory':
             if (typeof message.value === 'object') {
-                Game.setCandy(message.value.candy ?? 0);
+                Game.setInventory(message.value);
             }
             break;
         case 'day_night':

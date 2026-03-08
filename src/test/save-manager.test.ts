@@ -14,7 +14,7 @@ function completeSave(overrides: Record<string, unknown> = {}): Record<string, u
         money: 0,
         pets: [],
         decoration: [],
-        inventory: { candy: 0 },
+        inventory: {},
         streak: { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 },
         telemetry: {
             pokemonAdded: {}, pokemonEvolved: {}, candyFed: 0,
@@ -303,15 +303,41 @@ describe('SaveManager', () => {
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
         });
 
-        it('sets candy and saves', () => {
-            manager.updateInventory(5);
+        it('sets a consumable count and saves', () => {
+            manager.updateInventory('candy', 5);
             expect(manager.save.inventory.candy).toBe(5);
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
-        it('clamps negative candy to zero', () => {
-            manager.updateInventory(-3);
-            expect(manager.save.inventory.candy).toBe(0);
+        it('clamps negative amount to zero and removes key', () => {
+            manager.updateInventory('candy', -3);
+            expect(manager.save.inventory.candy).toBeUndefined();
+        });
+
+        it('removes key when set to zero', () => {
+            manager.save.inventory.candy = 5;
+            manager.updateInventory('candy', 0);
+            expect(manager.save.inventory.candy).toBeUndefined();
+        });
+
+        it('supports multiple different consumables', () => {
+            manager.updateInventory('candy', 3);
+            manager.updateInventory('fire_stone', 1);
+            expect(manager.save.inventory.candy).toBe(3);
+            expect(manager.save.inventory.fire_stone).toBe(1);
+        });
+    });
+
+    // ── getConsumableCount ───────────────────────────────────────────────
+
+    describe('getConsumableCount', () => {
+        it('returns 0 for missing consumable', () => {
+            expect(manager.getConsumableCount('candy')).toBe(0);
+        });
+
+        it('returns the stored count', () => {
+            manager.save.inventory.fire_stone = 3;
+            expect(manager.getConsumableCount('fire_stone')).toBe(3);
         });
     });
 
@@ -326,7 +352,7 @@ describe('SaveManager', () => {
 
             manager.loadGame();
 
-            expect(manager.save.inventory).toEqual({ candy: 0 });
+            expect(manager.save.inventory).toEqual({});
         });
 
         it('resets inventory when not an object', () => {
@@ -337,11 +363,22 @@ describe('SaveManager', () => {
 
             manager.loadGame();
 
-            expect(manager.save.inventory).toEqual({ candy: 0 });
+            expect(manager.save.inventory).toEqual({});
         });
 
-        it('resets candy when not a number', () => {
-            const saveData = completeSave({ inventory: { candy: 'bad' } });
+        it('resets inventory when an array', () => {
+            const saveData = completeSave({ inventory: [1, 2] });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.inventory).toEqual({});
+        });
+
+        it('resets invalid consumable values to zero', () => {
+            const saveData = completeSave({ inventory: { candy: 'bad', fire_stone: -5 } });
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
@@ -349,16 +386,18 @@ describe('SaveManager', () => {
             manager.loadGame();
 
             expect(manager.save.inventory.candy).toBe(0);
+            expect(manager.save.inventory.fire_stone).toBe(0);
         });
 
-        it('preserves valid candy count', () => {
-            const saveData = completeSave({ inventory: { candy: 10 } });
+        it('preserves valid inventory', () => {
+            const saveData = completeSave({ inventory: { candy: 10, fire_stone: 2 } });
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
 
             manager.loadGame();
 
             expect(manager.save.inventory.candy).toBe(10);
+            expect(manager.save.inventory.fire_stone).toBe(2);
             expect(fs.writeFileSync).not.toHaveBeenCalled();
         });
     });
