@@ -90,6 +90,14 @@
                 }
             },
             {
+                "command": "pokemon-pets.toggleTopBar",
+                "title": "Toggle Gold & Candy",
+                "icon": {
+                    "light": "media/icons/light/add.svg",
+                    "dark": "media/icons/dark/add.svg"
+                }
+            },
+            {
                 "command": "pokemon-pets.actions",
                 "title": "Pokémon actions",
                 "icon": {
@@ -139,14 +147,19 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "pokemon-pets.actions",
+                    "command": "pokemon-pets.toggleTopBar",
                     "when": "view == pokemon-pets",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "pokemon-pets.settings",
+                    "command": "pokemon-pets.actions",
                     "when": "view == pokemon-pets",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "pokemon-pets.settings",
+                    "when": "view == pokemon-pets",
+                    "group": "navigation@4"
                 }
             ]
         },

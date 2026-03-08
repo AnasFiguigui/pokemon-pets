@@ -14,6 +14,7 @@ function completeSave(overrides: Record<string, unknown> = {}): Record<string, u
         money: 0,
         pets: [],
         decoration: [],
+        inventory: { candy: 0 },
         streak: { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 },
         telemetry: {
             pokemonAdded: {}, pokemonEvolved: {}, candyFed: 0,
@@ -293,5 +294,72 @@ describe('SaveManager', () => {
 
     it('exports MAX_SUMMONED_POKEMONS as 7', () => {
         expect(MAX_SUMMONED_POKEMONS).toBe(7);
+    });
+
+    // ── updateInventory ─────────────────────────────────────────────────
+
+    describe('updateInventory', () => {
+        beforeEach(() => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+        });
+
+        it('sets candy and saves', () => {
+            manager.updateInventory(5);
+            expect(manager.save.inventory.candy).toBe(5);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('clamps negative candy to zero', () => {
+            manager.updateInventory(-3);
+            expect(manager.save.inventory.candy).toBe(0);
+        });
+    });
+
+    // ── inventory validation in loadGame ─────────────────────────────────
+
+    describe('inventory validation', () => {
+        it('initializes inventory when missing from save', () => {
+            const saveData = { money: 0, pets: [], decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.inventory).toEqual({ candy: 0 });
+        });
+
+        it('resets inventory when not an object', () => {
+            const saveData = completeSave({ inventory: 'bad' });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.inventory).toEqual({ candy: 0 });
+        });
+
+        it('resets candy when not a number', () => {
+            const saveData = completeSave({ inventory: { candy: 'bad' } });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.inventory.candy).toBe(0);
+        });
+
+        it('preserves valid candy count', () => {
+            const saveData = completeSave({ inventory: { candy: 10 } });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(manager.save.inventory.candy).toBe(10);
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
     });
 });

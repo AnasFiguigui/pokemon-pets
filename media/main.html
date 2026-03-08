@@ -17,7 +17,7 @@
     </head>
 
     <!-- Content -->
-    <body media="{media}" hide>
+    <body media="{media}" hide style="display:none">
         <!-- Game -->
         <div id="background">
             <!-- Game canvas -->
@@ -86,10 +86,16 @@
                 </div>
             </div>
 
-            <!-- Money menu -->
-            <div id="money" class="menu" button show onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
-                <span id="moneyText">0G</span>
-            </div>
+        </div>
+
+        <!-- Top bar -->
+        <div id="topBar">
+            <img src="{media}sprites/ui/ball.png" alt="Gold" class="topBarIcon">
+            <span id="moneyText">0</span>
+            <button type="button" id="candyBtn" class="topBarItem" onclick="toggleActionCandy();">
+                <img src="{media}sprites/ui/candy.png" alt="Candy" class="topBarIcon">
+                <span id="candyText">0</span>
+            </button>
         </div>
 
         <!-- Cursor -->

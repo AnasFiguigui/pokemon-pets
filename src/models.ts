@@ -36,10 +36,17 @@ export type TelemetryData = {
     lastSessionDate: string;    // ISO date string (YYYY-MM-DD)
 };
 
+export type Inventory = {
+    candy: number;
+};
+
 export class Save {
     public money: number = 0;
     public pets: Pet[] = [];
     public decoration: Decoration[] = [];
+    public inventory: Inventory = {
+        candy: 0,
+    };
     public streak: StreakData = {
         currentStreak: 0,
         lastClaimDate: '',

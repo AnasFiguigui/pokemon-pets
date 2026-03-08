@@ -47,6 +47,7 @@ function initGame() {
     webview.postMessage({ type: 'scale', value: config.get('scale') });
     webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });
     webview.postMessage({ type: 'money', value: saveManager.save.money });
+    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     // Send day/night tint
     if (config.get('dayNightCycle', true)) {
         sendDayNightTint();
@@ -132,6 +133,13 @@ function handleWebviewMessage(message) {
             telemetry.trackWildPokemonCaught();
             break;
         case 'candy_fed': {
+            const inv = saveManager.save.inventory;
+            if (inv.candy <= 0) {
+                break;
+            } // No candy available
+            inv.candy--;
+            saveManager.saveGame();
+            webview.postMessage({ type: 'inventory', value: inv });
             telemetry.trackCandyFed();
             const petIndex = message.index;
             if (typeof petIndex === 'number' && petIndex >= 0) {
@@ -150,6 +158,21 @@ function handleWebviewMessage(message) {
                     vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
                 }
             }
+            break;
+        }
+        case 'buy_candy': {
+            const cost = 30;
+            const qty = message.quantity || 1;
+            const totalCost = cost * qty;
+            if (saveManager.save.money < totalCost) {
+                break;
+            }
+            saveManager.save.money -= totalCost;
+            saveManager.save.inventory.candy += qty;
+            saveManager.saveGame();
+            webview.postMessage({ type: 'money', value: saveManager.save.money });
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+            telemetry.trackGoldSpent(totalCost);
             break;
         }
         case 'move_decor':
@@ -340,7 +363,10 @@ function activate(context) {
     });
     // Register commands
     context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.actions', () => {
+        webview.postMessage({ type: 'show_topbar' });
         webview.postMessage({ type: 'actions' });
+    }), vscode.commands.registerCommand('pokemon-pets.toggleTopBar', () => {
+        webview.postMessage({ type: 'toggle_topbar' });
     }), vscode.commands.registerCommand('pokemon-pets.settings', () => {
         vscode.commands.executeCommand('workbench.action.openSettings', '@ext:Anasfiguigui.pokemon-pets');
     }), vscode.commands.registerCommand('pokemon-pets.openSaveFile', () => {

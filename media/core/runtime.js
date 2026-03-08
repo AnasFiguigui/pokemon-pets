@@ -502,7 +502,7 @@ class Game {
 
     static setMoney = (amount) => {
         this.#money = amount;
-        this.#moneyText.innerText = `Gold: ${amount}`;
+        this.#moneyText.innerText = `${amount}`;
     };
 
     static addMoney = (amount) => {
@@ -512,6 +512,23 @@ class Game {
             type: 'money', 
             value: this.money 
         });
+    };
+
+    //Candy (inventory)
+    static #candy = 0;
+    static #candyText = document.getElementById('candyText');
+    static #candyBtn = document.getElementById('candyBtn');
+
+    static get candy() { return this.#candy; }
+
+    static setCandy = (amount) => {
+        this.#candy = amount;
+        this.#candyText.innerText = `${amount}`;
+        //If no candy left and candy action is active, deactivate it
+        if (amount <= 0 && this.isAction(Action.CANDY)) {
+            this.setAction(Action.NONE);
+            this.#candyBtn.removeAttribute('active');
+        }
     };
 
     //Current action being performed

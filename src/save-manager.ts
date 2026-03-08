@@ -4,6 +4,11 @@ import { Decoration, Pet, Save } from './models';
 
 export const MAX_SUMMONED_POKEMONS = 7;
 
+/** Default inventory data for new or missing saves. */
+function defaultInventory() {
+    return { candy: 0 };
+}
+
 /** Default streak data for new or missing saves. */
 function defaultStreak() {
     return { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 };
@@ -79,6 +84,15 @@ export class SaveManager {
             saveUpdated = true;
         }
 
+        // Validate inventory
+        if (typeof this.save.inventory !== 'object' || this.save.inventory === null) {
+            this.save.inventory = defaultInventory();
+            saveUpdated = true;
+        } else if (typeof this.save.inventory.candy !== 'number') {
+            this.save.inventory.candy = 0;
+            saveUpdated = true;
+        }
+
         // Validate streak
         if (typeof this.save.streak !== 'object' || this.save.streak === null) {
             this.save.streak = defaultStreak();
@@ -148,6 +162,12 @@ export class SaveManager {
     /** Updates the money balance and saves. */
     public updateMoney(amount: number): void {
         this.save.money = amount;
+        this.saveGame();
+    }
+
+    /** Updates the inventory and saves. */
+    public updateInventory(candy: number): void {
+        this.save.inventory.candy = Math.max(0, candy);
         this.saveGame();
     }
 

@@ -27,7 +27,7 @@ body {
 
     /* Vars */
     --scale: 1;
-    --text: #551215;
+    --text: #383838;
 }
 
 body[hide] {
@@ -377,15 +377,53 @@ body[cursor="none"] {
     color: #c0220d;
 }
 
-/* Money menu */
-#money {
+/* Top bar */
+#topBar {
     /* Layout */
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
 
     /* Other */
-    cursor: unset;
+    cursor: default;
+    pointer-events: auto;
+
+    /* Text */
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+#topBar[visible] {
+    display: flex;
+}
+
+.topBarIcon {
+    width: 14px;
+    height: 14px;
+    image-rendering: pixelated;
+}
+
+.topBarItem {
+    /* Button reset */
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+}
+
+.topBarItem:hover {
+    filter: brightness(1.2);
+}
+
+#candyBtn[active] {
+    filter: brightness(1.4) drop-shadow(0 0 2px #fff);
 }
 
 #decor {

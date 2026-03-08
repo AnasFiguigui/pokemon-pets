@@ -396,8 +396,19 @@ class PetAI extends AI {
     click() {
         //Has candy?
         if (Game.isAction(Action.CANDY)) {
+            //Check candy count
+            if (Game.candy <= 0) {
+                Game.showMessage('No candy!');
+                Game.setAction(Action.NONE);
+                const candyBtn = document.getElementById('candyBtn');
+                if (candyBtn) { candyBtn.removeAttribute('active'); }
+                return;
+            }
+
             //Consume candy
             Game.setAction(Action.NONE);
+            const candyBtn = document.getElementById('candyBtn');
+            if (candyBtn) { candyBtn.removeAttribute('active'); }
 
             //Notify extension about candy feeding (for evolution tracking)
             const petIndex = Game.pets.indexOf(this.character);

@@ -1,6 +1,37 @@
 //VSCode API
 const vscode = acquireVsCodeApi();
 
+//Top bar toggle
+let topBarVisible = false;
+let topBarTimer = null;
+
+function setTopBarVisible(visible) {
+    topBarVisible = visible;
+    const topBar = document.getElementById('topBar');
+    if (visible) {
+        topBar.setAttribute('visible', '');
+    } else {
+        topBar.removeAttribute('visible');
+    }
+}
+
+function showTopBarTemporary() {
+    //Show top bar
+    const topBar = document.getElementById('topBar');
+    topBar.setAttribute('visible', '');
+
+    //Clear any existing timer
+    if (topBarTimer) { clearTimeout(topBarTimer); }
+
+    //Hide after 3 seconds (only if not toggled on permanently)
+    topBarTimer = setTimeout(() => {
+        if (!topBarVisible) {
+            topBar.removeAttribute('visible');
+        }
+        topBarTimer = null;
+    }, 3000);
+}
+
 //Actions menu
 function toggleActionBall() {
     //Close actions menu & decor mode UI
@@ -17,8 +48,23 @@ function toggleActionCandy() {
     //Close actions menu
     Menus.close();
 
+    //Check if player has candy
+    if (Game.candy <= 0) {
+        Game.showMessage('No candy!');
+        return;
+    }
+
     //Toggle candy action
-    Game.setAction(Game.isAction(Action.CANDY) ? Action.NONE : Action.CANDY);
+    const newAction = Game.isAction(Action.CANDY) ? Action.NONE : Action.CANDY;
+    Game.setAction(newAction);
+
+    //Update candy button active state
+    const candyBtn = document.getElementById('candyBtn');
+    if (newAction === Action.CANDY) {
+        candyBtn.setAttribute('active', '');
+    } else {
+        candyBtn.removeAttribute('active');
+    }
 }
 
 function toggleActionDecor() {
@@ -58,6 +104,15 @@ function openStoreMenu() {
         backButton.innerText = 'Back';
         backButton.onclick = () => Menus.toggle('actions', true);
     }
+
+    //Create candy item
+    const candyPrice = 30;
+    const candyElement = createStoreItem('Candy', candyPrice);
+    candyElement.onclick = () => {
+        if (Game.money < candyPrice) { return; }
+        vscode.postMessage({ type: 'buy_candy', quantity: 1 });
+    };
+    content.appendChild(candyElement);
 
     //Create decoration categories
     for (const category of Object.keys(DecorationPreset)) {
@@ -152,6 +207,7 @@ function handleGameMessage(message) {
     switch (message.type.toLowerCase()) {
         case 'init':
             document.body.removeAttribute('hide');
+            document.body.style.display = '';
             break;
         case 'reset':
             for (const pet of Game.pets) { Game.objects.removeItem(pet); }
@@ -163,6 +219,11 @@ function handleGameMessage(message) {
             break;
         case 'money':
             Game.setMoney(message.value);
+            break;
+        case 'inventory':
+            if (typeof message.value === 'object') {
+                Game.setCandy(message.value.candy ?? 0);
+            }
             break;
         case 'day_night':
             Game.background.style.filter = message.value;
@@ -248,10 +309,18 @@ function handleSpawnMessage(message) {
 }
 
 function handleMenuMessage(message) {
-    if (message.type.toLowerCase() === 'actions') {
-        if (Game.isAction(Action.BALL) || Game.isAction(Action.CANDY)) { Game.setAction(Action.NONE); }
-        Menus.toggle('actions');
-        document.getElementById('actionsContent').scrollTop = 0;
+    switch (message.type.toLowerCase()) {
+        case 'actions':
+            if (Game.isAction(Action.BALL) || Game.isAction(Action.CANDY)) { Game.setAction(Action.NONE); }
+            Menus.toggle('actions');
+            document.getElementById('actionsContent').scrollTop = 0;
+            break;
+        case 'toggle_topbar':
+            setTopBarVisible(!topBarVisible);
+            break;
+        case 'show_topbar':
+            if (!topBarVisible) { showTopBarTemporary(); }
+            break;
     }
 }
 
