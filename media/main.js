@@ -34,16 +34,16 @@ function showTopBarTemporary() {
 
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
-    { id: 'candy', name: 'Candy', price: 30, description: 'Feed to a Pokémon to help it grow.' },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.' },
-    { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.' },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.' },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, description: 'A stone that smells of fresh leaves.' },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, description: 'A stone that glows in moonlight.' },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, description: 'A stone that sparkles in sunlight.' },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.' },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.' },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.' },
+    { id: 'candy', name: 'Candy', price: 30, spriteOffset: { x: 0, y: 32 } },
+    { id: 'fire_stone', name: 'Fire Stone', price: 100, spriteOffset: { x: 16, y: 32 } },
+    { id: 'water_stone', name: 'Water Stone', price: 100, spriteOffset: { x: 32, y: 32 } },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, spriteOffset: { x: 48, y: 32 } },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, spriteOffset: { x: 64, y: 32 } },
+    { id: 'moon_stone', name: 'Moon Stone', price: 120, spriteOffset: { x: 80, y: 32 } },
+    { id: 'sun_stone', name: 'Sun Stone', price: 120, spriteOffset: { x: 96, y: 32 } },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, spriteOffset: { x: 112, y: 32 } },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, spriteOffset: { x: 128, y: 32 } },
+    { id: 'ice_stone', name: 'Ice Stone', price: 100, spriteOffset: { x: 144, y: 32 } },
 ];
 
 //Actions menu
@@ -155,6 +155,10 @@ function openStoreMenu() {
 
     //Create consumables category
     const consumablesElement = createStoreItem('Consumables');
+    const consumablesIcon = document.createElement('img');
+    consumablesIcon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+    consumablesIcon.alt = 'Consumables';
+    consumablesElement.prepend(consumablesIcon);
     consumablesElement.onclick = () => openStoreConsumablesMenu();
     content.appendChild(consumablesElement);
 
@@ -162,6 +166,10 @@ function openStoreMenu() {
     for (const category of Object.keys(DecorationPreset)) {
         //Create item element
         const element = createStoreItem(category);
+        const icon = document.createElement('img');
+        icon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+        icon.alt = category;
+        element.prepend(icon);
         element.onclick = () => openStoreCategoryMenu(category);
         content.appendChild(element);
     }
@@ -259,16 +267,20 @@ function openStoreConsumablesMenu() {
         backButton.onclick = openStoreMenu;
     }
 
-    //Create consumable items from catalog
+    //Create consumable items from catalog (styled like decoration presets)
     for (const item of ConsumableCatalog) {
         const element = createStoreItem(item.name, item.price);
 
-        //Add description
-        const desc = document.createElement('span');
-        desc.style.fontSize = '12px';
-        desc.style.opacity = '0.7';
-        desc.innerText = item.description;
-        element.appendChild(desc);
+        //Add sprite image (using decoration sprite sheet temporarily)
+        const imgBox = document.createElement('div');
+        const img = document.createElement('div');
+        img.style.setProperty('--image', `url('./sprites/decoration.png')`);
+        img.style.setProperty('--width', '16px');
+        img.style.setProperty('--height', '16px');
+        img.style.setProperty('--scale', `${50 / 16}`);
+        img.style.setProperty('--spriteOffset', `${-item.spriteOffset.x}px ${-item.spriteOffset.y}px`);
+        imgBox.prepend(img);
+        element.prepend(imgBox);
 
         //Add buy function
         element.onclick = () => {
@@ -515,6 +527,24 @@ document.onmouseleave = event => {
 
 //Start game loop
 Game.start();
+
+//Show top bar while any menu is open (if not permanently visible)
+Menus.onOpen = () => {
+    if (!topBarVisible) {
+        document.getElementById('topBar').setAttribute('visible', '');
+    }
+};
+
+//Hide top bar when all menus close (deferred so menu-to-menu navigation keeps it visible)
+Menus.onClose = () => {
+    if (!topBarVisible) {
+        setTimeout(() => {
+            if (!Menus.current) {
+                document.getElementById('topBar').removeAttribute('visible');
+            }
+        }, 0);
+    }
+};
 
 //Tell VSCode the game was loaded
 vscode.postMessage({ type: 'init' });

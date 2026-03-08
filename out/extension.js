@@ -393,7 +393,6 @@ function activate(context) {
     });
     // Register commands
     context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.actions', () => {
-        webview.postMessage({ type: 'show_topbar' });
         webview.postMessage({ type: 'actions' });
     }), vscode.commands.registerCommand('pokemon-pets.toggleTopBar', () => {
         webview.postMessage({ type: 'toggle_topbar' });

@@ -267,17 +267,25 @@ class Menus {
             menu.setAttribute('show', '');
             this.#current = name;
             this.#backdrop.setAttribute('show', '');
+            if (typeof this.onOpen === 'function') { this.onOpen(name); }
         } else {
             //Hide menu
             menu.removeAttribute('show');
             this.#current = undefined;
             this.#backdrop.removeAttribute('show');
+            if (typeof this.onClose === 'function') { this.onClose(name); }
         }
     }
 
     static close() {
         this.toggle(this.current, false);
     }
+
+    //Optional callback when a menu is closed
+    static onClose = null;
+
+    //Optional callback when a menu is opened
+    static onOpen = null;
 
 }
 

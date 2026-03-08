@@ -208,6 +208,13 @@ body[cursor="none"] {
     display: flex;
 }
 
+/* Fixed size for store & backpack menus (not actions) */
+#store,
+#backpack {
+    width: 270px;
+    height: 300px;
+}
+
 .menu[button] {
     /* Button reset */
     appearance: none;

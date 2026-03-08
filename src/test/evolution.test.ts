@@ -272,5 +272,71 @@ describe('EvolutionService', () => {
 
             expect(result.evolved).toBe(false);
         });
+
+        it('evolves Eevee to Vaporeon with Water Stone', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 25,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'water_stone');
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Vaporeon');
+            expect(pet.form).toBe('Vaporeon');
+        });
+
+        it('evolves Eevee to Flareon with Fire Stone', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 25,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'fire_stone');
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Flareon');
+            expect(pet.form).toBe('Flareon');
+        });
+
+        it('evolves Eevee to Glaceon with Ice Stone', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 25,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'ice_stone');
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Glaceon');
+        });
+
+        it('does not evolve Eevee without enough candy', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 10,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'water_stone');
+
+            expect(result.evolved).toBe(false);
+        });
+
+        it('does not evolve Eevee with candy alone (no stone)', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 24,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.feedCandy(0);
+
+            expect(result.evolved).toBe(false);
+            expect(pet.form).toBe('Eevee');
+        });
     });
 });

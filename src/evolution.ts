@@ -113,8 +113,9 @@ export class EvolutionService {
     }
 
     /**
-     * Use a special item on a pet. Checks if the next evolution requires this item
-     * AND the pet has enough candy. If so, evolves the pet.
+     * Use a special item on a pet. Scans all forms after the current one for a
+     * form that requires this item AND where the pet has enough candy.
+     * Supports branching evolutions (e.g. Eevee → multiple stone evolutions).
      */
     public useItem(petIndex: number, itemId: string): EvolutionResult {
         const pet = this.saveManager.save.pets[petIndex];
@@ -128,37 +129,29 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
-        const nextFormIdx = currentIdx + 1;
+        const candyFed = pet.candyFed ?? 0;
 
-        if (nextFormIdx < species.forms.length) {
-            const nextForm = species.forms[nextFormIdx];
-            const candyFed = pet.candyFed ?? 0;
-
-            // Check if this form requires this specific item AND has enough candy
-            if (nextForm.requiredItem === itemId && candyFed >= nextForm.candyCost) {
+        // Scan all forms after the current one for a matching requiredItem
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const form = species.forms[i];
+            if (form.requiredItem === itemId && candyFed >= form.candyCost) {
                 // Evolve!
-                pet.form = nextForm.name;
-                pet.sprite = nextForm.sprite;
-                pet.spriteSize = nextForm.spriteSize;
+                pet.form = form.name;
+                pet.sprite = form.sprite;
+                pet.spriteSize = form.spriteSize;
                 this.saveManager.saveGame();
-
-                const furtherIdx = nextFormIdx + 1;
-                const nextEvolutionAt = furtherIdx < species.forms.length
-                    ? species.forms[furtherIdx].candyCost
-                    : undefined;
 
                 return {
                     evolved: true,
-                    newForm: nextForm,
+                    newForm: form,
                     totalCandy: candyFed,
-                    nextEvolutionAt,
                 };
             }
         }
 
         return {
             evolved: false,
-            totalCandy: pet.candyFed ?? 0,
+            totalCandy: candyFed,
         };
     }
 }

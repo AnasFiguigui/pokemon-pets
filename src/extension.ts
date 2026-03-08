@@ -409,7 +409,6 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand),
         vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand),
         vscode.commands.registerCommand('pokemon-pets.actions', () => {
-            webview.postMessage({ type: 'show_topbar' });
             webview.postMessage({ type: 'actions' });
         }),
         vscode.commands.registerCommand('pokemon-pets.toggleTopBar', () => {

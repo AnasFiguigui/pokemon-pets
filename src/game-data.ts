@@ -61,6 +61,20 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
                 { name: 'Blastoise', sprite: 'blastoise', spriteSize: 32, candyCost: 25 },
             ],
         },
+        {
+            name: 'Eevee',
+            forms: [
+                { name: 'Eevee', sprite: 'eevee', spriteSize: 32, candyCost: 0 },
+                { name: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32, candyCost: 25, requiredItem: 'water_stone' },
+                { name: 'Jolteon', sprite: 'jolteon', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
+                { name: 'Flareon', sprite: 'flareon', spriteSize: 32, candyCost: 25, requiredItem: 'fire_stone' },
+                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredItem: 'sun_stone' },
+                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredItem: 'moon_stone' },
+                { name: 'Leafeon', sprite: 'leafeon', spriteSize: 32, candyCost: 25, requiredItem: 'leaf_stone' },
+                { name: 'Glaceon', sprite: 'glaceon', spriteSize: 32, candyCost: 25, requiredItem: 'ice_stone' },
+                { name: 'Sylveon', sprite: 'sylveon', spriteSize: 32, candyCost: 25, requiredItem: 'shiny_stone' },
+            ],
+        },
     ],
 
     // 'generation 2': [
