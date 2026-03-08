@@ -35,44 +35,44 @@ export class TelemetryService {
         if (!this.enabled) { return; }
         const t = this.saveManager.save.telemetry;
         t.pokemonAdded[specie] = (t.pokemonAdded[specie] ?? 0) + 1;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackPokemonEvolved(specie: string): void {
         if (!this.enabled) { return; }
         const t = this.saveManager.save.telemetry;
         t.pokemonEvolved[specie] = (t.pokemonEvolved[specie] ?? 0) + 1;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackCandyFed(): void {
         if (!this.enabled) { return; }
         this.saveManager.save.telemetry.candyFed++;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackWildPokemonCaught(): void {
         if (!this.enabled) { return; }
         this.saveManager.save.telemetry.wildPokemonCaught++;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackDecorationPlaced(): void {
         if (!this.enabled) { return; }
         this.saveManager.save.telemetry.decorationsPlaced++;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackGoldEarned(amount: number): void {
         if (!this.enabled) { return; }
         this.saveManager.save.telemetry.goldEarned += amount;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackGoldSpent(amount: number): void {
         if (!this.enabled) { return; }
         this.saveManager.save.telemetry.goldSpent += amount;
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     public trackSession(): void {
@@ -80,7 +80,7 @@ export class TelemetryService {
         const t = this.saveManager.save.telemetry;
         t.sessionsCount++;
         t.lastSessionDate = new Date().toISOString().slice(0, 10);
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
     }
 
     /** Returns a human-readable summary string for the stats command. */

@@ -67,7 +67,7 @@ export class EvolutionService {
 
         const species = this.findSpecies(pet);
         if (!species) {
-            this.saveManager.saveGame();
+            this.saveManager.scheduleSave();
             return { evolved: false, totalCandy: pet.candyFed };
         }
 
@@ -83,7 +83,7 @@ export class EvolutionService {
                 pet.form = nextForm.name;
                 pet.sprite = nextForm.sprite;
                 pet.spriteSize = nextForm.spriteSize;
-                this.saveManager.saveGame();
+                this.saveManager.scheduleSave();
 
                 const furtherIdx = nextFormIdx + 1;
                 const nextEvolutionAt = furtherIdx < species.forms.length
@@ -99,7 +99,7 @@ export class EvolutionService {
             }
         }
 
-        this.saveManager.saveGame();
+        this.saveManager.scheduleSave();
 
         const nextEvolutionAt = nextFormIdx < species.forms.length
             ? species.forms[nextFormIdx].candyCost
@@ -139,7 +139,7 @@ export class EvolutionService {
                 pet.form = form.name;
                 pet.sprite = form.sprite;
                 pet.spriteSize = form.spriteSize;
-                this.saveManager.saveGame();
+                this.saveManager.scheduleSave();
 
                 return {
                     evolved: true,

@@ -31,12 +31,21 @@ Rules:
 - Pet moods and interactions (including candy and pokéball actions).
 - Wild Pokémon spawn system with generic/automated animation handling.
 - In-game store and decoration mode (move/sell/place decor).
+- **Consumables & Backpack** — 10 items including Candy and 9 Evolution Stones.
+- **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
+- **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.
+- **Daily coding streaks** — Earn gold bonuses for consecutive coding days.
+- **Import / Export saves** — Backup and restore your save via clipboard.
+- **Local stats** — Opt-in local telemetry (nothing sent externally).
+- **8-direction movement** — Pokémon walk in all directions with matching sprites.
 
 ## Settings
 
 - `pokemon-pets.background`: farm background theme
 - `pokemon-pets.scale`: pet scale (`Small`, `Medium`, `Big`)
 - `pokemon-pets.wild`: toggles wild Pokémon spawning
+- `pokemon-pets.dayNightCycle`: toggles the day/night visual tinting
+- `pokemon-pets.telemetry`: toggles local stats tracking
 
 ## Where to find it
 

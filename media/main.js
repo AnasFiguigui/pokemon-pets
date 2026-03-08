@@ -99,7 +99,20 @@ function openBackpack() {
 
             const element = document.createElement('button');
             element.type = 'button';
-            element.classList.add('menuButton');
+            element.classList.add('menuButton', 'storeButton');
+
+            //Add consumable icon
+            if (info) {
+                const imgBox = document.createElement('div');
+                const img = document.createElement('div');
+                img.style.setProperty('--image', `url('./sprites/decoration.png')`);
+                img.style.setProperty('--width', '16px');
+                img.style.setProperty('--height', '16px');
+                img.style.setProperty('--scale', `${50 / 16}`);
+                img.style.setProperty('--spriteOffset', `${-info.spriteOffset.x}px ${-info.spriteOffset.y}px`);
+                imgBox.prepend(img);
+                element.appendChild(imgBox);
+            }
 
             const text = document.createElement('span');
             text.innerText = `${name} x${count}`;

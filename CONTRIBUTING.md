@@ -23,11 +23,15 @@ Press **F5** in VS Code to launch the Extension Development Host.
 
 ```
 src/                  TypeScript source (VS Code extension)
-  extension.ts        Entry point – activation, commands
-  save-manager.ts     Save/load logic, pet & decoration management
+  extension.ts        Entry point – activation, commands, message handling
+  save-manager.ts     Save/load logic with debounced writes
   webview-provider.ts Webview panel provider
   models.ts           Shared types and helpers
-  game-data.ts        Pokémon species & form data
+  game-data.ts        Pokémon species, forms & consumable data
+  evolution.ts        Candy feeding & item-based evolution logic
+  telemetry.ts        Opt-in local stats tracker
+  day-night.ts        Day/night cycle tinting & wild Pokémon selection
+  streak.ts           Daily coding streak rewards
   test/               Unit tests (Vitest)
 media/                Webview assets (HTML, CSS, JS, sprites)
 out/                  Compiled output (auto-generated)

@@ -9,6 +9,7 @@ class Decoration extends GameObject {
     #snap = 16;
     #moving = false;
     #movingOffset = new Vec2();
+    #dirty = false;     // Position changed during drag, needs saving
 
     get moving() { return this.#moving; }
 
@@ -48,13 +49,7 @@ class Decoration extends GameObject {
         if (snappedPos.equals(this.pos)) return;
 
         this.moveTo(snappedPos, { ignoreWalls: true });
-
-        vscode.postMessage({
-            type: 'move_decor',
-            index: Game.decoration.indexOf(this),
-            x: snappedPos.x,
-            y: snappedPos.y
-        });
+        this.#dirty = true;
     }
 
     mouseDown(pos) {
@@ -93,6 +88,15 @@ class Decoration extends GameObject {
     }
 
     stopDragging() {
+        if (this.#dirty) {
+            vscode.postMessage({
+                type: 'move_decor',
+                index: Game.decoration.indexOf(this),
+                x: this.pos.x,
+                y: this.pos.y
+            });
+            this.#dirty = false;
+        }
         this.#moving = false;
     }
 

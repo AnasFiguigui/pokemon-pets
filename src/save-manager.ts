@@ -28,6 +28,10 @@ export class SaveManager {
     private readonly savePath: string;
     public save: Save;
 
+    /** Debounce timer for batching rapid saves into a single disk write. */
+    private saveTimer: ReturnType<typeof setTimeout> | undefined;
+    private static readonly SAVE_DELAY_MS = 500;
+
     constructor(storageFolder: string) {
         this.storageFolder = storageFolder;
         this.savePath = path.join(storageFolder, 'save.json');
@@ -115,9 +119,27 @@ export class SaveManager {
         }
     }
 
-    /** Writes the current save state to disk. */
+    /** Writes the current save state to disk immediately. Use for critical saves (shutdown, import). */
     public saveGame(): void {
+        clearTimeout(this.saveTimer);
+        this.saveTimer = undefined;
         fs.writeFileSync(this.savePath, JSON.stringify(this.save, null, 4));
+    }
+
+    /** Schedules a debounced save. Multiple rapid calls coalesce into a single disk write. */
+    public scheduleSave(): void {
+        if (this.saveTimer !== undefined) { return; }
+        this.saveTimer = setTimeout(() => {
+            this.saveTimer = undefined;
+            fs.writeFileSync(this.savePath, JSON.stringify(this.save, null, 4));
+        }, SaveManager.SAVE_DELAY_MS);
+    }
+
+    /** Flushes any pending debounced save to disk immediately. */
+    public flushSave(): void {
+        if (this.saveTimer !== undefined) {
+            this.saveGame();
+        }
     }
 
     /** Migrates the old pets.json file into the current save. */
@@ -149,7 +171,7 @@ export class SaveManager {
         }
 
         this.save.pets.push(pet);
-        this.saveGame();
+        this.scheduleSave();
         return true;
     }
 
@@ -160,14 +182,14 @@ export class SaveManager {
         }
 
         const [removed] = this.save.pets.splice(index, 1);
-        this.saveGame();
+        this.scheduleSave();
         return removed;
     }
 
     /** Updates the money balance and saves. */
     public updateMoney(amount: number): void {
         this.save.money = amount;
-        this.saveGame();
+        this.scheduleSave();
     }
 
     /** Updates a consumable count in the inventory and saves. */
@@ -177,7 +199,7 @@ export class SaveManager {
         if (this.save.inventory[consumableId] === 0) {
             delete this.save.inventory[consumableId];
         }
-        this.saveGame();
+        this.scheduleSave();
     }
 
     /** Gets the count of a specific consumable. */
@@ -188,7 +210,7 @@ export class SaveManager {
     /** Adds a decoration and saves. */
     public addDecor(decor: Decoration): void {
         this.save.decoration.push(decor);
-        this.saveGame();
+        this.scheduleSave();
     }
 
     /** Moves a decoration to a new position and saves. */
@@ -197,13 +219,13 @@ export class SaveManager {
         if (decoration) {
             decoration.x = x;
             decoration.y = y;
-            this.saveGame();
+            this.scheduleSave();
         }
     }
 
     /** Removes the decoration at the given index and saves. */
     public removeDecor(index: number): void {
         this.save.decoration.splice(index, 1);
-        this.saveGame();
+        this.scheduleSave();
     }
 }

@@ -143,45 +143,27 @@ function handleWebviewMessage(message) {
             }
             saveManager.updateInventory(consumableId, currentCount - 1);
             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            // If it's candy, track and check evolution
             if (consumableId === 'candy') {
                 telemetry.trackCandyFed();
-                const petIndex = message.index;
-                if (typeof petIndex === 'number' && petIndex >= 0) {
-                    const result = evolution.feedCandy(petIndex);
-                    if (result.evolved && result.newForm) {
-                        const pet = saveManager.save.pets[petIndex];
-                        webview.postMessage({ type: 'remove_pet', index: petIndex });
-                        loadPet(pet);
-                        webview.postMessage({
-                            type: 'evolution',
-                            index: petIndex,
-                            name: pet.name,
-                            newForm: result.newForm.name,
-                        });
-                        telemetry.trackPokemonEvolved(pet.specie);
-                        vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
-                    }
-                }
             }
-            else {
-                // Non-candy consumable: check if it triggers an evolution
-                const petIndex = message.index;
-                if (typeof petIndex === 'number' && petIndex >= 0) {
-                    const result = evolution.useItem(petIndex, consumableId);
-                    if (result.evolved && result.newForm) {
-                        const pet = saveManager.save.pets[petIndex];
-                        webview.postMessage({ type: 'remove_pet', index: petIndex });
-                        loadPet(pet);
-                        webview.postMessage({
-                            type: 'evolution',
-                            index: petIndex,
-                            name: pet.name,
-                            newForm: result.newForm.name,
-                        });
-                        telemetry.trackPokemonEvolved(pet.specie);
-                        vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
-                    }
+            // Check evolution (candy uses feedCandy, other items use useItem)
+            const petIndex = message.index;
+            if (typeof petIndex === 'number' && petIndex >= 0) {
+                const result = consumableId === 'candy'
+                    ? evolution.feedCandy(petIndex)
+                    : evolution.useItem(petIndex, consumableId);
+                if (result.evolved && result.newForm) {
+                    const pet = saveManager.save.pets[petIndex];
+                    webview.postMessage({ type: 'remove_pet', index: petIndex });
+                    loadPet(pet);
+                    webview.postMessage({
+                        type: 'evolution',
+                        index: petIndex,
+                        name: pet.name,
+                        newForm: result.newForm.name,
+                    });
+                    telemetry.trackPokemonEvolved(pet.specie);
+                    vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
                 }
             }
             break;
@@ -197,7 +179,7 @@ function handleWebviewMessage(message) {
             if (saveManager.save.money < totalCost) {
                 break;
             }
-            saveManager.save.money -= totalCost;
+            saveManager.updateMoney(saveManager.save.money - totalCost);
             const prev = saveManager.getConsumableCount(itemId);
             saveManager.updateInventory(itemId, prev + qty);
             webview.postMessage({ type: 'money', value: saveManager.save.money });
@@ -244,15 +226,25 @@ async function addPetCommand() {
         return;
     }
     const pokemonData = game_data_1.Pokemons[generation][selectedPokemon.index];
-    const formItems = pokemonData.forms.map((form, idx) => new models_1.PetItem(idx, form.name, form.candyCost > 0 ? `${form.candyCost} candy` : 'Base form'));
-    const selectedForm = await vscode.window.showQuickPick(formItems, {
-        title: `Select a form for ${pokemonData.name}`,
-        placeHolder: 'Form',
-    });
-    if (selectedForm === undefined) {
-        return;
+    // Only allow adding base forms (candyCost === 0); evolutions are earned in-game
+    const baseForms = pokemonData.forms
+        .map((form, idx) => ({ form, idx }))
+        .filter(({ form }) => form.candyCost === 0);
+    let formData;
+    if (baseForms.length === 1) {
+        formData = baseForms[0].form;
     }
-    const formData = pokemonData.forms[selectedForm.index];
+    else {
+        const formItems = baseForms.map(({ form, idx }) => new models_1.PetItem(idx, form.name, 'Base form'));
+        const selectedForm = await vscode.window.showQuickPick(formItems, {
+            title: `Select a form for ${pokemonData.name}`,
+            placeHolder: 'Form',
+        });
+        if (selectedForm === undefined) {
+            return;
+        }
+        formData = pokemonData.forms[selectedForm.index];
+    }
     const tmpname = formData.name;
     const name = await vscode.window.showInputBox({
         title: 'Choose a name for your Pokémon',
@@ -350,7 +342,7 @@ function activate(context) {
     const reward = streakService.claimDaily();
     if (reward) {
         saveManager.save.money += reward.gold;
-        saveManager.saveGame();
+        saveManager.scheduleSave();
         telemetry.trackGoldEarned(reward.gold);
         setTimeout(() => {
             vscode.window.showInformationMessage(reward.message);
@@ -366,7 +358,7 @@ function activate(context) {
         startDayNightTimer();
     }
     // Listen for configuration changes
-    vscode.workspace.onDidChangeConfiguration(event => {
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         config = vscode.workspace.getConfiguration('pokemon-pets');
         if (event.affectsConfiguration('pokemon-pets.background')) {
             webview.postMessage({ type: 'background', value: config.get('background') });
@@ -390,7 +382,7 @@ function activate(context) {
                 webview.postMessage({ type: 'day_night', value: 'none', timeOfDay: 'day' });
             }
         }
-    });
+    }));
     // Register commands
     context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.actions', () => {
         webview.postMessage({ type: 'actions' });
@@ -407,6 +399,7 @@ function activate(context) {
     }), vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand), vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand), vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand));
 }
 function deactivate() {
+    saveManager.flushSave();
     stopDayNightTimer();
     console.log('Pokemon Pets is now deactivated 😿');
 }

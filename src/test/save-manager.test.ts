@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { SaveManager, MAX_SUMMONED_POKEMONS } from '../save-manager';
@@ -168,7 +168,7 @@ describe('SaveManager', () => {
     // ── saveGame ────────────────────────────────────────────────────────
 
     describe('saveGame', () => {
-        it('writes prettified JSON to disk', () => {
+        it('writes prettified JSON to disk immediately', () => {
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
             manager.save.money = 100;
 
@@ -183,18 +183,78 @@ describe('SaveManager', () => {
         });
     });
 
+    // ── scheduleSave / flushSave ────────────────────────────────────────
+
+    describe('scheduleSave', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('writes to disk after the debounce delay', () => {
+            manager.save.money = 42;
+            manager.scheduleSave();
+
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+            vi.runAllTimers();
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+        });
+
+        it('coalesces multiple rapid calls into a single write', () => {
+            manager.scheduleSave();
+            manager.scheduleSave();
+            manager.scheduleSave();
+
+            vi.runAllTimers();
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+        });
+
+        it('flushSave writes immediately if a save is pending', () => {
+            manager.scheduleSave();
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+
+            manager.flushSave();
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+        });
+
+        it('flushSave does nothing when no save is pending', () => {
+            manager.flushSave();
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+
+        it('saveGame clears a pending scheduled save', () => {
+            manager.scheduleSave();
+            manager.saveGame();
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+
+            vi.runAllTimers();
+            // Still only 1 call — the scheduled save was cleared
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+        });
+    });
+
     // ── addPet ──────────────────────────────────────────────────────────
 
     describe('addPet', () => {
         beforeEach(() => {
+            vi.useFakeTimers();
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
         });
 
-        it('adds a pet and saves', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('adds a pet and schedules a save', () => {
             const pet: Pet = { name: 'Spark', specie: 'Pikachu', color: 'gen1' };
             expect(manager.addPet(pet)).toBe(true);
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('Spark');
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
@@ -216,6 +276,7 @@ describe('SaveManager', () => {
 
     describe('removePet', () => {
         beforeEach(() => {
+            vi.useFakeTimers();
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
             manager.save.pets = [
                 { name: 'A', specie: 'SA', color: 'C' },
@@ -223,11 +284,16 @@ describe('SaveManager', () => {
             ];
         });
 
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('removes and returns the pet at the given index', () => {
             const removed = manager.removePet(0);
             expect(removed?.name).toBe('A');
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('B');
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
@@ -245,11 +311,14 @@ describe('SaveManager', () => {
     // ── updateMoney ─────────────────────────────────────────────────────
 
     describe('updateMoney', () => {
-        it('sets money and saves', () => {
+        it('sets money and schedules a save', () => {
+            vi.useFakeTimers();
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
             manager.updateMoney(999);
             expect(manager.save.money).toBe(999);
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
+            vi.useRealTimers();
         });
     });
 
@@ -259,21 +328,28 @@ describe('SaveManager', () => {
         const decor: Decoration = { x: 10, y: 20, category: 'plant', name: 'tree' };
 
         beforeEach(() => {
+            vi.useFakeTimers();
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
         });
 
-        it('addDecor pushes and saves', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('addDecor pushes and schedules a save', () => {
             manager.addDecor(decor);
             expect(manager.save.decoration).toHaveLength(1);
             expect(manager.save.decoration[0]).toEqual(decor);
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
-        it('moveDecor updates position and saves', () => {
+        it('moveDecor updates position and schedules a save', () => {
             manager.save.decoration.push({ ...decor });
             manager.moveDecor(0, 50, 60);
             expect(manager.save.decoration[0].x).toBe(50);
             expect(manager.save.decoration[0].y).toBe(60);
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
@@ -282,10 +358,11 @@ describe('SaveManager', () => {
             expect(fs.writeFileSync).not.toHaveBeenCalled();
         });
 
-        it('removeDecor removes and saves', () => {
+        it('removeDecor removes and schedules a save', () => {
             manager.save.decoration.push({ ...decor });
             manager.removeDecor(0);
             expect(manager.save.decoration).toHaveLength(0);
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
     });
@@ -300,12 +377,18 @@ describe('SaveManager', () => {
 
     describe('updateInventory', () => {
         beforeEach(() => {
+            vi.useFakeTimers();
             vi.mocked(fs.writeFileSync).mockImplementation(() => {});
         });
 
-        it('sets a consumable count and saves', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('sets a consumable count and schedules a save', () => {
             manager.updateInventory('candy', 5);
             expect(manager.save.inventory.candy).toBe(5);
+            vi.runAllTimers();
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 

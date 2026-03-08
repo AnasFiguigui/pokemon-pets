@@ -9,6 +9,8 @@ function makeSaveManager(): SaveManager {
     return {
         save,
         saveGame: () => {},
+        scheduleSave: () => {},
+        flushSave: () => {},
     } as unknown as SaveManager;
 }
 

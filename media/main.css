@@ -284,11 +284,15 @@ body[cursor="none"] {
     padding-right: 5px;
 
     /* Visuals */
-    scrollbar-color: var(--text) transparent;
+    scrollbar-width: none;  /* Firefox */
 
     /* Other */
     overflow-y: scroll;
-    overflow-x: auto;
+    overflow-x: hidden;
+}
+
+.menuContent[scrollable]::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Edge */
 }
 
 .menuButton {
