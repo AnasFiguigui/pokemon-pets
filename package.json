@@ -1,8 +1,8 @@
 {
     "name": "pokemon-pets",
     "displayName": "Pokemon Pets (Beta)",
-    "description": "Pokemon pets for VSCode ",
-    "version": "0.9.0",
+    "description": "Pokemon pets for VSCode",
+    "version": "0.9.3",
     "publisher": "Anasfiguigui",
     "author": {
         "name": "Anasfiguigui"
@@ -17,14 +17,13 @@
     "keywords": [
         "pokemon",
         "valley",
-        "pokemon",
         "pets"
     ],
     "categories": [
         "Other"
     ],
     "repository": {
-        "type": "github",
+        "type": "git",
         "url": "https://github.com/Anasfiguigui/Pokemon-Pets"
     },
     "engines": {
@@ -59,7 +58,7 @@
                 "pokemon-pets.wild": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Toggles if wild pokemons can spawn."
+                    "description": "Toggles if wild Pokémon can spawn."
                 }
             }
         },
@@ -133,9 +132,9 @@
             "explorer": [
                 {
                     "id": "pokemon-pets",
-                    "name": "Pokemon Pets ",
+                    "name": "Pokemon Pets",
                     "icon": "media/icons/icon.png",
-                    "contextualTitle": "Pokemon pets for VSCode ",
+                    "contextualTitle": "Pokemon pets for VSCode",
                     "type": "webview"
                 }
             ]
@@ -146,7 +145,10 @@
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src --ext ts"
+        "lint": "eslint src --ext ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
     },
     "devDependencies": {
         "@types/mocha": "^10.0.7",
@@ -157,6 +159,7 @@
         "@vscode/test-cli": "^0.0.9",
         "@vscode/test-electron": "^2.4.0",
         "eslint": "^8.57.0",
-        "typescript": "5.5.4"
+        "typescript": "5.5.4",
+        "vitest": "^4.0.18"
     }
 }

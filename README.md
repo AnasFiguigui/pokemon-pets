@@ -49,10 +49,36 @@ If it is not visible:
 
 Then run: **Focus on Pokemon Pets View**.
 
+## Development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+
+- [VS Code](https://code.visualstudio.com/)
+
+### Getting Started
+
+```bash
+git clone https://github.com/Anasfiguigui/Pokemon-Pets.git
+cd Pokemon-Pets
+npm install
+```
+
+Press **F5** in VS Code to launch the Extension Development Host.
+
+### Scripts
+
+| Command                 | Description                    |
+| ----------------------- | ------------------------------ |
+| `npm run compile`       | Compile TypeScript             |
+| `npm run watch`         | Watch & compile                |
+| `npm run lint`          | Lint TypeScript source         |
+| `npm test`              | Run unit tests                 |
+| `npm run test:coverage` | Run tests with coverage report |
+
 ## Contributing
 
-- Issues and feature requests are welcome after the official release.
-- Open source after version 2.0
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

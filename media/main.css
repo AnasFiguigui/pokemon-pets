@@ -20,7 +20,7 @@ body {
     image-rendering: pixelated;
 
     /* Text */
-    font-family: Pokemon;
+    font-family: Pokemon, sans-serif;
     color: var(--text);
     font-size: 19px;
     user-select: none;
@@ -47,7 +47,7 @@ body[cursor="none"] {
 
     /* Visuals */
     background-repeat: repeat;
-    background: url(./sprites/backgrounds/grass.png);
+    background-image: url(./sprites/backgrounds/grass.png);
 
     /* Other */
     transform-origin: 0% 0%;
@@ -56,35 +56,35 @@ body[cursor="none"] {
 }
 
 #background[background="grass (fall)"] {
-    background: url(./sprites/backgrounds/grass_fall.png);
+    background-image: url(./sprites/backgrounds/grass_fall.png);
 }
 
 #background[background="sand"] {
-    background: url(./sprites/backgrounds/sand.png);
+    background-image: url(./sprites/backgrounds/sand.png);
 }
 
 #background[background="dirt"] {
-    background: url(./sprites/backgrounds/dirt.png);
+    background-image: url(./sprites/backgrounds/dirt.png);
 }
 
 #background[background="snow"] {
-    background: url(./sprites/backgrounds/snow.png);
+    background-image: url(./sprites/backgrounds/snow.png);
 }
 
 #background[background="light wood"] {
-    background: url(./sprites/backgrounds/wood_light.png);
+    background-image: url(./sprites/backgrounds/wood_light.png);
 }
 
 #background[background="dark wood"] {
-    background: url(./sprites/backgrounds/wood_dark.png);
+    background-image: url(./sprites/backgrounds/wood_dark.png);
 }
 
 #background[background="orange wood"] {
-    background: url(./sprites/backgrounds/wood_orange.png);
+    background-image: url(./sprites/backgrounds/wood_orange.png);
 }
 
 #background[background="broken wood"] {
-    background: url(./sprites/backgrounds/wood_broken.png);
+    background-image: url(./sprites/backgrounds/wood_broken.png);
 }
 
 /* Game canvas */
@@ -209,6 +209,14 @@ body[cursor="none"] {
 }
 
 .menu[button] {
+    /* Button reset */
+    appearance: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    padding: 0;
+
     /* Size */
     width: max-content;
     height: max-content;
@@ -240,7 +248,7 @@ body[cursor="none"] {
     border: none;
     background: transparent;
     color: var(--text);
-    font-family: Pokemon;
+    font-family: Pokemon, sans-serif;
     font-size: 16px;
     cursor: pointer;
     padding: 0 2px;
@@ -277,11 +285,20 @@ body[cursor="none"] {
 }
 
 .menuButton {
+    /* Button reset */
+    appearance: none;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+
     /* Spacing */
     padding: 5px;
 
     /* Layout */
     display: flex;
+    width: 100%;
     align-items: center;
     gap: 8px;
 

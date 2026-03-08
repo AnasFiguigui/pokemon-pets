@@ -7,7 +7,7 @@ class WildPokemonAnimations {
     static get DEFAULT() { 
         return {
             'idle': new Animation(
-                WildPokemonAnimations.frames(4),
+                WildPokemonAnimations.frames(8),
                 4,
                 { loop: true },
             ),
@@ -15,34 +15,49 @@ class WildPokemonAnimations {
                 WildPokemonAnimations.frames(0),
                 4,
             ),
-            'moveRight': new Animation(
+            'moveDownRight': new Animation(
                 WildPokemonAnimations.frames(1),
                 4,
             ),
-            'moveLeft': new Animation(
+            'moveRight': new Animation(
+                WildPokemonAnimations.frames(2),
+                4,
+            ),
+            'moveUpRight': new Animation(
                 WildPokemonAnimations.frames(3),
                 4,
             ),
             'moveUp': new Animation(
-                WildPokemonAnimations.frames(2),
+                WildPokemonAnimations.frames(4),
+                4,
+            ),
+            'moveUpLeft': new Animation(
+                WildPokemonAnimations.frames(5),
+                4,
+            ),
+            'moveLeft': new Animation(
+                WildPokemonAnimations.frames(6),
+                4,
+            ),
+            'moveDownLeft': new Animation(
+                WildPokemonAnimations.frames(7),
                 4,
             ),
             'special': new Animation(
-                WildPokemonAnimations.frames(5),
+                WildPokemonAnimations.frames(9),
                 4,
                 { loop: false },
             ),
-        } 
-    };
+        }; 
+    }
 }
-
 //AI
 class WildPokemonAI extends AI {
 
     //State
     constructor(config) { 
         //Fix config & disable sleep
-        if (typeof config !== 'object') config = {};
+        if (typeof config !== 'object') { config = {}; }
         config.canSleep = false;
         
         //Base AI
@@ -52,7 +67,7 @@ class WildPokemonAI extends AI {
     //Click
     click() {
         //Alredy clicked
-        if (this.state == AI.SPECIAL) return;
+        if (this.state === AI.SPECIAL) { return; }
 
         //Give money to player
         Game.addMoney(60 + 5 * Util.randomInclusive(8)); //60 - 100 gold
@@ -86,8 +101,8 @@ class WildPokemonCharacter extends Character {
         //Add name & image to config
         config.name = Util.titleCase(specie);
         config.image = `wild-pokemons/${specie.toLowerCase()}.png`;
-        if (typeof config.size !== 'object') config.size = new Vec2(32);
-        if (typeof config.animations !== 'object') config.animations = WildPokemonAnimations.DEFAULT;
+        if (typeof config.size !== 'object') { config.size = new Vec2(32); }
+        if (typeof config.animations !== 'object') { config.animations = WildPokemonAnimations.DEFAULT; }
         
         //Create character
         super(config, new WildPokemonAI(config_ai));

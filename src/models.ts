@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import type { QuickPickItem } from 'vscode';
 
 export type Pet = {
     name: string;
@@ -10,19 +10,19 @@ export type Pet = {
 };
 
 export type Decoration = {
-    x: 0;
-    y: 0;
+    x: number;
+    y: number;
     category: string;
     name: string;
 };
 
 export class Save {
     public money: number = 0;
-    public pets: Array<Pet> = new Array<Pet>();
-    public decoration: Array<Decoration> = new Array<Decoration>();
+    public pets: Pet[] = [];
+    public decoration: Decoration[] = [];
 }
 
-export class PetItem implements vscode.QuickPickItem {
+export class PetItem implements QuickPickItem {
     public index: number;
     public label: string;
     public description: string;
@@ -32,4 +32,14 @@ export class PetItem implements vscode.QuickPickItem {
         this.label = name;
         this.description = description;
     }
+}
+
+/** Normalizes optional pet fields for webview rendering. */
+export function normalizePet(pet: Pet): { form: string; sprite: string; spriteSize: 32 | 48 } {
+    const form = typeof pet.form === 'string' ? pet.form : pet.specie;
+    const sprite = typeof pet.sprite === 'string'
+        ? pet.sprite
+        : form.toLowerCase().replaceAll(' ', '_');
+    const spriteSize: 32 | 48 = pet.spriteSize === 48 ? 48 : 32;
+    return { form, sprite, spriteSize };
 }

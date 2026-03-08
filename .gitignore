@@ -1,6 +1,15 @@
 # Node.js modules
 node_modules/
 
+# Compiled output
+out/
+
+# Build artifacts
+*.vsix
+
+# Coverage reports
+coverage/
+
 # VS Code specific files
 .vscode-test/
 .vscode-test-web/

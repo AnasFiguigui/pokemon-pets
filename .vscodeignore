@@ -6,6 +6,11 @@ src/**
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json
+**/vitest.config.ts
+**/jsconfig.json
 **/*.map
 **/*.ts
 **/.vscode-test.*
+coverage/**
+.editorconfig
+CONTRIBUTING.md

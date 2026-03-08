@@ -8,14 +8,14 @@ class Vec2 {
     //Constructor
     constructor(x, y) {
         //Init from Vec2
-        if (typeof x == 'object') {
+        if (typeof x === 'object') {
             y = x.y;
             x = x.x;
         }
 
         //Init from numbers
-        this.x = typeof x == 'number' ? x : 0;
-        this.y = typeof y == 'number' ? y : this.x;
+        this.x = typeof x === 'number' ? x : 0;
+        this.y = typeof y === 'number' ? y : this.x;
     }
 
     //Functions
@@ -24,42 +24,47 @@ class Vec2 {
     }
 
     equals(v) {
-        return this.x == v.x && this.y == v.y;
+        return this.x === v.x && this.y === v.y;
     }
 
     add(n) {
-        if (typeof n === 'object')
+        if (typeof n === 'object') {
             return new Vec2(this.x + n.x, this.y + n.y);
-        else
+        } else {
             return new Vec2(this.x + n, this.y + n);
+        }
     }
 
     sub(n) {
-        if (typeof n === 'object')
+        if (typeof n === 'object') {
             return new Vec2(this.x - n.x, this.y - n.y);
-        else
+        } else {
             return new Vec2(this.x - n, this.y - n);
+        }
     }
 
     mult(n) {
-        if (typeof n === 'object')
+        if (typeof n === 'object') {
             return new Vec2(this.x * n.x, this.y * n.y);
-        else
+        } else {
             return new Vec2(this.x * n, this.y * n);
+        }
     }
 
     div(n) {
-        if (typeof n === 'object')
+        if (typeof n === 'object') {
             return new Vec2(this.x / n.x, this.y / n.y);
-        else
+        } else {
             return new Vec2(this.x / n, this.y / n);
+        }
     }
 
     mod(n) {
-        if (typeof n === 'object')
+        if (typeof n === 'object') {
             return new Vec2(this.x % n.x, this.y % n.y);
-        else
+        } else {
             return new Vec2(this.x % n, this.y % n);
+        }
     }
 
     toInt() {
@@ -86,11 +91,8 @@ class Timer {
     #active = false;
     #end = 0;
 
-    get justFinished() { return this.#active && Game.frames == this.#end; }
+    get justFinished() { return this.#active && Game.frames === this.#end; }
     get finished() { return this.#active && Game.frames >= this.#end; }
-
-    //Constructor
-    constructor() { }
 
     //Functions
     count(frames) {
@@ -113,7 +115,9 @@ class Timeout {
     //Constructor
     constructor(fun, duration) {
         this.#fun = fun;
-        if (typeof duration === 'number') this.wait(duration);
+        if (typeof duration === 'number') {
+            this.wait(duration);
+        }
     }
 
     //Functions
@@ -151,33 +155,35 @@ class Util {
         const distance = Math.abs(diff);
 
         //Move towards target
-        return (distance < delta ? target : current + diff / distance * delta)
+        return (distance < delta ? target : current + diff / distance * delta);
     }
         
     static titleCase(str) {
         const parts = str.toLowerCase().split(' ');
-        for (var i = 0; i < parts.length; i++) parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
+        for (let i = 0; i < parts.length; i++) {
+            parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
+        }
         return parts.join(' ');
     }
 
 }
 
 //Array extensions
-Array.prototype.removeAt = function(index) {
+Array.prototype.removeAt = function(index) { // NOSONAR - intentional prototype extension used throughout codebase
     const elem = this[index];
     this.splice(index, 1);
     return elem;
-}
+};
 
-Array.prototype.removeItem = function(elem) {
+Array.prototype.removeItem = function(elem) { // NOSONAR - intentional prototype extension used throughout codebase
     const index = this.indexOf(elem);
     this.splice(index, 1);
     return index;
-}
+};
 
-Array.prototype.isEmpty = function() {
-    return this.length == 0;
-}
+Array.prototype.isEmpty = function() { // NOSONAR - intentional prototype extension used throughout codebase
+    return this.length === 0;
+};
 
 //Actions
 class Action {
@@ -218,7 +224,7 @@ class Cursor {
         this.#element.setAttribute('icon', icon);
 
         //Toggle real cursor
-        document.body.setAttribute('cursor', icon != Action.NONE ? 'none' : '');
+        document.body.setAttribute('cursor', icon === Action.NONE ? '' : 'none');
     }
 
 }
@@ -236,18 +242,18 @@ class Menus {
 
     static toggle(name, show) {
         //Invalid name
-        if (typeof name !== 'string') return;
+        if (typeof name !== 'string') { return; }
         
         //Get menu
         const menu = document.getElementById(name);
-        if (!menu) return;
+        if (!menu) { return; }
 
         //Fix show
         const isVisible = menu.hasAttribute('show');
         if (typeof show !== 'boolean') {
             //Invalid value -> Toggle menu visibility
             show = !isVisible;
-        } else if (show == isVisible) {
+        } else if (show === isVisible) {
             //Same state -> Return
             return;
         }
@@ -287,7 +293,7 @@ class DecorMode {
     static get action() { return this.#action; }
 
     static isAction(action) { 
-        return this.action == action;
+        return this.action === action;
     }
 
     static setAction(action) {
@@ -305,10 +311,11 @@ class DecorMode {
     }
 
     static toggleAction() {
-        if (this.isAction(DecorMode.ACTION_MOVE))
+        if (this.isAction(DecorMode.ACTION_MOVE)) {
             this.setAction(DecorMode.ACTION_SELL);
-        else
+        } else {
             this.setAction(DecorMode.ACTION_MOVE);
+        }
     }
 
     //UI
@@ -319,7 +326,7 @@ class DecorMode {
 
     static showOverlay(show) {
         //Fix args
-        if (typeof show !== 'boolean') show = !this.#overlay.hasAttribute('show');
+        if (typeof show !== 'boolean') { show = !this.#overlay.hasAttribute('show'); }
 
         //Toggle
         if (show) {
@@ -334,7 +341,7 @@ class DecorMode {
     //Mode
     static toggle(show) {
         //Fix args
-        if (typeof show !== 'boolean') show = !Game.isAction(Action.DECOR);
+        if (typeof show !== 'boolean') { show = !Game.isAction(Action.DECOR); }
 
         //Toggle
         if (show) {
@@ -351,7 +358,7 @@ class DecorMode {
             Game.setAction(Action.DECOR);
         } else {
             //Stop dragging all
-            for (const decoration of Game.decoration) decoration.stopDragging();
+            for (const decoration of Game.decoration) { decoration.stopDragging(); }
 
             //Exit decor mode
             Game.setAction(Action.NONE);

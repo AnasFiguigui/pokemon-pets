@@ -29,9 +29,9 @@ class Animation {
 
         //Check config
         if (typeof config === 'object') {
-            if (typeof config.loop === 'boolean') this.#loop = config.loop;
-            if (typeof config.flip === 'boolean') this.#flip = config.flip;
-            if (typeof config.pixelOffset === 'boolean') this.#pixelOffset = config.pixelOffset;
+            if (typeof config.loop === 'boolean') { this.#loop = config.loop; }
+            if (typeof config.flip === 'boolean') { this.#flip = config.flip; }
+            if (typeof config.pixelOffset === 'boolean') { this.#pixelOffset = config.pixelOffset; }
         }
 
         //Reset current info
@@ -63,7 +63,7 @@ class Animation {
                 } else {
                     //Next frame
                     this.#frame++;
-                    if (this.#frame >= this.#frames.length) this.#frame = 0;
+                    if (this.#frame >= this.#frames.length) { this.#frame = 0; }
                 }
             }
         }
@@ -122,33 +122,38 @@ class GameObject {
 
     //Constructor
     constructor(config = {}) {
-        //Check config
-        if (typeof config === 'object') {
-            //Object
-            if (typeof config.active === 'boolean') this.#active = config.active;
-            if (typeof config.name === 'string') this.#name = config.name;
-
-            //Position & size
-            if (typeof config.pos === 'object') this.#pos = config.pos;
-            if (typeof config.size === 'object') this.#size = config.size;
-
-            //Clicks
-            if (typeof config.clickable === 'boolean') this.#clickable = config.clickable;
-
-            //Rendering (sorting)
-            if (typeof config.sortingLayer === 'number') this.#sortingLayer = config.sortingLayer;
-
-            //Rendering (sprite sheet)
-            if (typeof config.image === 'string') this.#image.src = `${Game.mediaURI}sprites/${config.image}`;
-            if (typeof config.spriteOffset === 'object') this.#spriteOffset = config.spriteOffset;
-            if (typeof config.spriteSheetOffset === 'object') this.#spriteSheetOffset = config.spriteSheetOffset;
-
-            //Animation
-            if (typeof config.animations === 'object') this.#animations = config.animations;
-        }
+        //Apply config
+        this.#applyConfig(config);
 
         //Add to game objects list
         Game.objects.push(this);
+    }
+
+    #applyConfig(config) {
+        //Check config
+        if (typeof config !== 'object') { return; }
+
+        //Object
+        if (typeof config.active === 'boolean') { this.#active = config.active; }
+        if (typeof config.name === 'string') { this.#name = config.name; }
+
+        //Position & size
+        if (typeof config.pos === 'object') { this.#pos = config.pos; }
+        if (typeof config.size === 'object') { this.#size = config.size; }
+
+        //Clicks
+        if (typeof config.clickable === 'boolean') { this.#clickable = config.clickable; }
+
+        //Rendering (sorting)
+        if (typeof config.sortingLayer === 'number') { this.#sortingLayer = config.sortingLayer; }
+
+        //Rendering (sprite sheet)
+        if (typeof config.image === 'string') { this.#image.src = `${Game.mediaURI}sprites/${config.image}`; }
+        if (typeof config.spriteOffset === 'object') { this.#spriteOffset = config.spriteOffset; }
+        if (typeof config.spriteSheetOffset === 'object') { this.#spriteSheetOffset = config.spriteSheetOffset; }
+
+        //Animation
+        if (typeof config.animations === 'object') { this.#animations = config.animations; }
     }
 
     remove() {
@@ -158,7 +163,7 @@ class GameObject {
 
     setActive(active) {
         //Invalid value
-        if (typeof active !== 'boolean') return;
+        if (typeof active !== 'boolean') { return; }
 
         //Set active
         this.#active = active;
@@ -167,19 +172,19 @@ class GameObject {
     //Update
     update() {
         //Update animation sprite offset
-        if (this.#animation) this.#spriteOffset = this.#animation.update().mult(this.#animation.pixelOffset ? new Vec2(1) : this.size);
+        if (this.#animation) { this.#spriteOffset = this.#animation.update().mult(this.#animation.pixelOffset ? new Vec2(1) : this.size); }
     }
 
     //Clicks
     isValidMousePos(pos) {
         //Not clickable
-        if (!this.clickable) return false;
+        if (!this.clickable) { return false; }
 
         //Check if clicked inside bounding box
-        if (!this.isPosInBounds(pos)) return false;
+        if (!this.isPosInBounds(pos)) { return false; }
 
         //Check if clicked on transparent pixel
-        if (!this.isPosInSprite(pos, Game.canvasAlphaTest, Game.contextAlphaTest)) return false;
+        if (!this.isPosInSprite(pos, Game.canvasAlphaTest, Game.contextAlphaTest)) { return false; }
 
         //Valid 
         return true;
@@ -209,7 +214,7 @@ class GameObject {
 
     checkMouseDown(clickPos) {
         //Check if mouse pos is valid
-        if (!this.isValidMousePos(clickPos)) return false;
+        if (!this.isValidMousePos(clickPos)) { return false; }
         
         //Mouse down event
         return this.mouseDown(clickPos);
@@ -217,7 +222,7 @@ class GameObject {
 
     checkMouseUp(clickPos) {
         //Check if mouse pos is valid
-        if (!this.isValidMousePos(clickPos)) return false;
+        if (!this.isValidMousePos(clickPos)) { return false; }
         
         //Click event
         return this.mouseUp(clickPos);
@@ -245,7 +250,7 @@ class GameObject {
         ctx.translate(pos.x, pos.y);
 
         //Flip sprite
-        if (this.animation && this.animation.flip) {
+        if (this.animation?.flip) {
             ctx.translate(this.size.x, 0);
             ctx.scale(-1, 1);
         }
@@ -270,17 +275,17 @@ class GameObject {
     //Animations
     animate(name, force) {
         //Not an animation
-        if (typeof this.animations[name] !== 'object') return;
+        if (typeof this.animations[name] !== 'object') { return; }
 
         //Fix force animation
-        if (typeof force !== 'boolean') force = false;
+        if (typeof force !== 'boolean') { force = false; }
 
         //Get animation
         let animation = this.animations[name];
-        if (Array.isArray(animation)) animation = animation[Util.randomExclusive(animation.length)];
+        if (Array.isArray(animation)) { animation = animation[Util.randomExclusive(animation.length)]; }
 
         //Change current animation & reset it
-        if (animation == this.animation && !force) return;
+        if (animation === this.animation && !force) { return; }
         this.#animation = animation;
         this.animation.reset();
     }
@@ -349,7 +354,7 @@ class Ball extends GameObject {
     onReached() {
         //Tell pokemons to stop moving towards the ball
         for (const pokemon of Game.pets) {
-            if (pokemon.ai.state == PetAI.MOVE_BALL) {
+            if (pokemon.ai.state === PetAI.MOVE_BALL) {
                 pokemon.ai.setState(AI.IDLE);
             }
         }
@@ -378,12 +383,12 @@ class Game {
 
     static setScale = (scale) => {
         //Invalid value
-        if (typeof scale !== 'number') return;
+        if (typeof scale !== 'number') { return; }
 
         //Update scale
         this.#scale = scale;
         this.onResize();
-    }
+    };
 
     static onResize = () => {
         //Update game window size
@@ -397,20 +402,20 @@ class Game {
         this.canvasBuffer.height = this.windowSize.y;
 
         //Fit all pokemons & wild pokemons on screen
-        this.pets.forEach(pokemon => pokemon.moveTo(pokemon.pos))
-        this.wildPokemons.forEach(wildPokemon => wildPokemon.moveTo(wildPokemon.pos))
-    }
+        this.pets.forEach(pokemon => pokemon.moveTo(pokemon.pos));
+        this.wildPokemons.forEach(wildPokemon => wildPokemon.moveTo(wildPokemon.pos));
+    };
 
     //Update
     static #fps = 20;    //Game framerate
     static #frames = 0;  //Frames since game start
 
-    static get fps() { return this.#fps }
-    static get frames() { return this.#frames }
+    static get fps() { return this.#fps; }
+    static get frames() { return this.#frames; }
 
     static update = () => {
         //Check if window size changed
-        if (this.windowSize.x != window.innerWidth || this.windowSize.y != window.innerHeight) this.onResize();
+        if (this.windowSize.x !== window.innerWidth || this.windowSize.y !== window.innerHeight) { this.onResize(); }
 
         //Next frame
         this.#frames++;
@@ -418,12 +423,12 @@ class Game {
         //Update objects
         for (const obj of this.objects) {
             //Not active
-            if (!obj.active) continue;
+            if (!obj.active) { continue; }
 
             //Draw object
             obj.update();
         }
-    }
+    };
 
     //Rendering
     static #background = document.getElementById('background');
@@ -455,10 +460,10 @@ class Game {
         //Draw objects
         for (const obj of this.objects) {
             //Not active
-            if (!obj.active) continue;
+            if (!obj.active) { continue; }
 
             //Check if in decor mode and object is not decor
-            if (inDecorMode && !obj.isDecoration) continue;
+            if (inDecorMode && !obj.isDecoration) { continue; }
 
             //Draw object
             obj.draw(this.contextBuffer);
@@ -467,7 +472,7 @@ class Game {
         //Draw double bufffer into real canvas
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.drawImage(this.canvasBuffer, 0, 0);
-    }
+    };
 
     //Game objects
     static #objects = [];    //List of all the game objects (gets sorted every frame to check clicks and render back-to-front)
@@ -486,8 +491,8 @@ class Game {
 
     static sortObjects = () => {
         //Sort objects back-to-front
-        this.objects.sort((a, b) => { return a.sortingLayer != b.sortingLayer ? a.sortingLayer - b.sortingLayer : a.sortingOrder - b.sortingOrder; }); 
-    }
+        this.objects.sort((a, b) => { return a.sortingLayer === b.sortingLayer ? a.sortingOrder - b.sortingOrder : a.sortingLayer - b.sortingLayer; }); 
+    };
 
     //Money
     static #money = 0;
@@ -498,7 +503,7 @@ class Game {
     static setMoney = (amount) => {
         this.#money = amount;
         this.#moneyText.innerText = `Gold: ${amount}`;
-    }
+    };
 
     static addMoney = (amount) => {
         this.setMoney(this.money + amount);
@@ -507,7 +512,7 @@ class Game {
             type: 'money', 
             value: this.money 
         });
-    }
+    };
 
     //Current action being performed
     static #action = Action.NONE;
@@ -515,8 +520,8 @@ class Game {
     static get action() { return this.#action; };
 
     static isAction = (action) => { 
-        return this.action == action;
-    }
+        return this.action === action;
+    };
 
     static setAction = (action) => {
         //Update action & cursor
@@ -526,7 +531,7 @@ class Game {
         //Close menus & toggle decor mode overlay
         Menus.close();
         DecorMode.showOverlay(this.isAction(Action.DECOR));
-    }
+    };
 
     //Messages
     static showMessage = (content, isLong = false) => {
@@ -534,12 +539,12 @@ class Game {
         const message = document.createElement('span');
         message.classList.add('message');
         message.innerText = content;
-        if (isLong) message.setAttribute('long', '');
+        if (isLong) { message.setAttribute('long', ''); }
         document.getElementById('messages').appendChild(message);
 
         //Set timeout to remove message element
         setTimeout(() => message.remove(), isLong ? 3000 : 2000);
-    }
+    };
 
     //Game loop
     static #deltaAccumulation = 0;
@@ -548,7 +553,7 @@ class Game {
 
     static gameLoop = (timestamp) => {
         //Check if last frame timestamp is init
-        if (!this.#lastFrameTimestamp) this.#lastFrameTimestamp = timestamp;
+        if (!this.#lastFrameTimestamp) { this.#lastFrameTimestamp = timestamp; }
 
         //Calculate delta accumulation
         this.#deltaAccumulation += timestamp - this.#lastFrameTimestamp;
@@ -559,7 +564,7 @@ class Game {
         const updates = Math.floor(this.#deltaAccumulation / interval);
 
         //Perform updates
-        for (let update = 0; update < updates; update++) this.update();
+        for (let update = 0; update < updates; update++) { this.update(); }
 
         //Draw once per loop
         this.draw();
@@ -569,7 +574,7 @@ class Game {
 
         //Keep the loop going
         this.#animationFrame = requestAnimationFrame(this.gameLoop);
-    }
+    };
 
     static start = () => {
         //Init canvas contexts
@@ -586,6 +591,6 @@ class Game {
         //Start game loop
         cancelAnimationFrame(this.#animationFrame);
         this.#animationFrame = requestAnimationFrame(this.gameLoop);
-    }
+    };
 
 }

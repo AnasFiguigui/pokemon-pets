@@ -2,9 +2,9 @@
 class AI {
 
     //States
-    static get IDLE() { return 'idle' };
-    static get MOVE() { return 'move' };
-    static get SPECIAL() { return 'special' };
+    static get IDLE() { return 'idle'; }
+    static get MOVE() { return 'move'; }
+    static get SPECIAL() { return 'special'; }
 
     //AI info
     #character;
@@ -39,19 +39,19 @@ class AI {
     //Constructor
     constructor(config) {
         //No config
-        if (typeof config !== 'object') return;
+        if (typeof config !== 'object') { return; }
 
         //Idle config
-        if (typeof config.idleDurationBase == 'number') this.#idleDurationBase = config.idleDurationBase;
-        if (typeof config.idleDurationVariation == 'number') this.#idleDurationVariation = config.idleDurationVariation;
+        if (typeof config.idleDurationBase === 'number') { this.#idleDurationBase = config.idleDurationBase; }
+        if (typeof config.idleDurationVariation === 'number') { this.#idleDurationVariation = config.idleDurationVariation; }
 
         //Sleep config
-        if (typeof config.canSleep == 'boolean') this.#canSleep = config.canSleep;
-        if (typeof config.sleepDurationBase == 'number') this.#sleepDurationBase = config.sleepDurationBase;
-        if (typeof config.sleepDurationVariation == 'number') this.#sleepDurationVariation = config.sleepDurationVariation;
+        if (typeof config.canSleep === 'boolean') { this.#canSleep = config.canSleep; }
+        if (typeof config.sleepDurationBase === 'number') { this.#sleepDurationBase = config.sleepDurationBase; }
+        if (typeof config.sleepDurationVariation === 'number') { this.#sleepDurationVariation = config.sleepDurationVariation; }
 
         //Special config
-        if (typeof config.specialDuration == 'number') this.#specialDuration = config.specialDuration;
+        if (typeof config.specialDuration === 'number') { this.#specialDuration = config.specialDuration; }
     }
 
     assign(character) {
@@ -60,27 +60,32 @@ class AI {
     }
 
     //Click
-    click() {}
+    click() {
+        // Base implementation - overridden in subclasses
+    }
 
     //Movement
     _moveTowardsMovePos() {
         //Move position out of bounds -> Create a new one
         if (this.#movePos.x > this.character.maxPosX || this.#movePos.y > this.character.maxPosY) {
             this.moveTowards(this.character.randomPoint);
-            return true
+            return true;
         }
 
-        //Try to move
-        if (this.#movePos.x < this.character.pos.x)
-            return this.moveLeft();
-        else if (this.#movePos.x > this.character.pos.x)
-            return this.moveRight();
-        else if (this.#movePos.y < this.character.pos.y)
-            return this.moveUp();
-        else if (this.#movePos.y > this.character.pos.y)
-            return this.moveDown();
-        else
-            return false
+        //Calculate direction
+        const dx = this.#movePos.x - this.character.pos.x;
+        const dy = this.#movePos.y - this.character.pos.y;
+
+        //Try to move (prefer diagonal when both axes differ)
+        if (dx < 0 && dy < 0) { return this.moveUpLeft(); }
+        if (dx > 0 && dy < 0) { return this.moveUpRight(); }
+        if (dx < 0 && dy > 0) { return this.moveDownLeft(); }
+        if (dx > 0 && dy > 0) { return this.moveDownRight(); }
+        if (dx < 0) { return this.moveLeft(); }
+        if (dx > 0) { return this.moveRight(); }
+        if (dy < 0) { return this.moveUp(); }
+        if (dy > 0) { return this.moveDown(); }
+        return false;
     }
 
     moveTowards(point) {
@@ -116,27 +121,47 @@ class AI {
         return this.character.moveTo(new Vec2(this.character.pos.x, this.character.pos.y + 1));
     }
 
+    moveDownRight() {
+        this.character.animate('moveDownRight');
+        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y + 1));
+    }
+
+    moveUpRight() {
+        this.character.animate('moveUpRight');
+        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y - 1));
+    }
+
+    moveUpLeft() {
+        this.character.animate('moveUpLeft');
+        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y - 1));
+    }
+
+    moveDownLeft() {
+        this.character.animate('moveDownLeft');
+        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y + 1));
+    }
+
     //State
     update() {
         //Run on update for current state
         const onUpdate = this[`onUpdate_${this.state}`];
-        if (typeof onUpdate === 'function') onUpdate.call(this);
+        if (typeof onUpdate === 'function') { onUpdate.call(this); }
     }
 
     setState(newState) {
         //Not a valid state
-        if (typeof newState !== 'string') return;
+        if (typeof newState !== 'string') { return; }
 
         //Run on end for old state
         const onEnd = this[`onEnd_${this.state}`];
-        if (typeof onEnd === 'function') onEnd.call(this);
+        if (typeof onEnd === 'function') { onEnd.call(this); }
 
         //Set state
         this.#state = newState;
 
         //Run on start for new state
         const onStart = this[`onStart_${this.state}`];
-        if (typeof onStart === 'function') onStart.call(this);
+        if (typeof onStart === 'function') { onStart.call(this); }
     }
 
     //State: IDLE
@@ -153,7 +178,7 @@ class AI {
 
     onUpdate_idle() {
         //Timer didn't finish
-        if (!this.timer.finished) return;
+        if (!this.timer.finished) { return; }
 
         //Reset timer
         this.timer.reset();
@@ -177,7 +202,7 @@ class AI {
     //State: MOVE
     onUpdate_move() {
         //Try to move
-        if (this._moveTowardsMovePos()) return;
+        if (this._moveTowardsMovePos()) { return; }
 
         //Didn't move -> Point reached, animate idle
         this.setState(AI.IDLE);
@@ -194,7 +219,7 @@ class AI {
 
     onUpdate_special() {
         //Timer didn't finish
-        if (!this.timer.finished) return;
+        if (!this.timer.finished) { return; }
 
         //Reset timer
         this.timer.reset();
@@ -222,8 +247,8 @@ class Character extends GameObject {
         super(config);
 
         //Assign AI
-        this.#ai = ai
-        ai.assign(this)
+        this.#ai = ai;
+        ai.assign(this);
 
         //Respawn character
         this.respawn();
@@ -251,7 +276,7 @@ class PokemonAnimations {
     static get DEFAULT() {
         return {
             'idle': new Animation(
-                [[0, 4], [1, 4], [2, 4], [3, 4]],
+                [[0, 8], [1, 8], [2, 8], [3, 8]],
                 5,
                 { loop: false }
             ),
@@ -259,30 +284,46 @@ class PokemonAnimations {
                 [[0, 0], [1, 0], [2, 0], [3, 0]],
                 3
             ),
-            'moveRight': new Animation(
+            'moveDownRight': new Animation(
                 [[0, 1], [1, 1], [2, 1], [3, 1]],
                 3
             ),
-            'moveUp': new Animation(
+            'moveRight': new Animation(
                 [[0, 2], [1, 2], [2, 2], [3, 2]],
                 3
             ),
-            'moveLeft': new Animation(
+            'moveUpRight': new Animation(
                 [[0, 3], [1, 3], [2, 3], [3, 3]],
                 3
             ),
-            'special': new Animation(
+            'moveUp': new Animation(
+                [[0, 4], [1, 4], [2, 4], [3, 4]],
+                3
+            ),
+            'moveUpLeft': new Animation(
                 [[0, 5], [1, 5], [2, 5], [3, 5]],
+                3
+            ),
+            'moveLeft': new Animation(
+                [[0, 6], [1, 6], [2, 6], [3, 6]],
+                3
+            ),
+            'moveDownLeft': new Animation(
+                [[0, 7], [1, 7], [2, 7], [3, 7]],
+                3
+            ),
+            'special': new Animation(
+                [[0, 9], [1, 9], [2, 9], [3, 9]],
                 4,
                 { loop: false }
             ),
             'sleep': [
                 new Animation(
-                    [[0, 7], [1, 7]],
+                    [[0, 11], [1, 11]],
                     30
                 ),
                 new Animation(
-                    [[0, 6], [1, 6], [2, 6], [3, 6]],
+                    [[0, 10], [1, 10], [2, 10], [3, 10]],
                     3,
                     { loop: false }
                 )
@@ -323,7 +364,7 @@ class PetMoods {
 class PetAI extends AI {
 
     //States
-    static get MOVE_BALL() { return 'moveball' };
+    static get MOVE_BALL() { return 'moveball'; }
 
     //Moods
     #moodSprite = new Image();
@@ -341,14 +382,14 @@ class PetAI extends AI {
         //Check config
         if (typeof config === 'object') {
             //Mood elevation
-            if (typeof config.moodElevation === 'number') this.#moodElevation = config.moodElevation;
+            if (typeof config.moodElevation === 'number') { this.#moodElevation = config.moodElevation; }
         }
 
         //Init moods sprite
         this.#moodSprite.src = `${Game.mediaURI}sprites/emotes.png`;
 
         //Random mood
-        this.#setRandomMood()
+        this.#setRandomMood();
     }
 
     //Click
@@ -359,7 +400,7 @@ class PetAI extends AI {
             Game.setAction(Action.NONE);
 
             //Set mood to heart
-            this.#setHeartMood()
+            this.#setHeartMood();
         }
 
         //Show mood
@@ -397,7 +438,7 @@ class PetAI extends AI {
 
     drawMood(ctx) {
         //Mood is hidden
-        if (!this.#moodShow) return;
+        if (!this.#moodShow) { return; }
 
         //Auto lift mood depending on pokemon sprite size (32px or 48px)
         const moodLift = this.character.size.y >= 48 ? 10 : 12;
@@ -418,22 +459,22 @@ class PetAI extends AI {
 
     //Movement
     moveTowards(point, towardsBall) {
-        super.moveTowards(point)
+        super.moveTowards(point);
 
         //Move towards ball
-        if (towardsBall) this.setState(PetAI.MOVE_BALL);
+        if (towardsBall) { this.setState(PetAI.MOVE_BALL); }
     }
 
     //State: MOVING or MOVING_BALL
     onUpdate_moveball() {
         //Try to move
-        if (this._moveTowardsMovePos()) return;
+        if (this._moveTowardsMovePos()) { return; }
 
         //Didn't move -> Point reached, notify game that the ball was reached
-        Game.ball.onReached()
+        Game.ball.onReached();
 
         //Set mood to heart & show mood
-        this.#setHeartMood()
+        this.#setHeartMood();
         this.showMood();
 
         //Animate special
@@ -461,8 +502,8 @@ class PokemonCharacter extends Character {
             : specie.toLowerCase().replaceAll(' ', '_');
         const spriteSize = typeof config.spriteSize === 'number' ? config.spriteSize : 32;
         config.image = `pokemons/${spriteName}.png`;
-        if (typeof config.size !== 'object') config.size = new Vec2(spriteSize);
-        if (typeof config.animations !== 'object') config.animations = PokemonAnimations.DEFAULT;
+        if (typeof config.size !== 'object') { config.size = new Vec2(spriteSize); }
+        if (typeof config.animations !== 'object') { config.animations = PokemonAnimations.DEFAULT; }
 
         // Create character
         super(config, new PetAI(config_ai));

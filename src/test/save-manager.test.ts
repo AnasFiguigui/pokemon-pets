@@ -1,0 +1,281 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { SaveManager, MAX_SUMMONED_POKEMONS } from '../save-manager';
+import type { Pet, Decoration } from '../models';
+
+vi.mock('node:fs');
+
+const STORAGE = path.join('mock', 'storage');
+
+describe('SaveManager', () => {
+    let manager: SaveManager;
+
+    beforeEach(() => {
+        vi.resetAllMocks();
+        manager = new SaveManager(STORAGE);
+    });
+
+    // ── constructor ─────────────────────────────────────────────────────
+
+    it('initializes with an empty save', () => {
+        expect(manager.save.money).toBe(0);
+        expect(manager.save.pets).toEqual([]);
+        expect(manager.save.decoration).toEqual([]);
+    });
+
+    it('returns the save path containing save.json', () => {
+        expect(manager.getSavePath()).toContain('save.json');
+    });
+
+    // ── loadGame ────────────────────────────────────────────────────────
+
+    describe('loadGame', () => {
+        it('creates storage folder when it does not exist', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(false);
+            vi.mocked(fs.mkdirSync).mockReturnValue(undefined as any);
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(fs.mkdirSync).toHaveBeenCalledWith(STORAGE, { recursive: true });
+        });
+
+        it('loads a valid save file', () => {
+            const saveData = {
+                money: 250,
+                pets: [{ name: 'A', specie: 'B', color: 'C' }],
+                decoration: [],
+            };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(manager.save.money).toBe(250);
+            expect(manager.save.pets).toHaveLength(1);
+            expect(manager.save.decoration).toEqual([]);
+        });
+
+        it('does not write file when nothing changed', () => {
+            const saveData = { money: 0, pets: [], decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+
+        it('resets on corrupt save file and writes new save', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue('NOT JSON');
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.money).toBe(0);
+            expect(manager.save.pets).toEqual([]);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('resets money if not a number', () => {
+            const saveData = { money: 'invalid', pets: [], decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.money).toBe(0);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('trims pets when over the maximum', () => {
+            const pets = Array.from({ length: 10 }, (_, i) => ({
+                name: `Pet${i}`,
+                specie: 'S',
+                color: 'C',
+            }));
+            const saveData = { money: 0, pets, decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('resets pets if not an array', () => {
+            const saveData = { money: 0, pets: 'bad', decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.pets).toEqual([]);
+        });
+
+        it('resets decoration if not an array', () => {
+            const saveData = { money: 0, pets: [], decoration: null };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.decoration).toEqual([]);
+        });
+
+        it('keeps valid pets at exactly the maximum count', () => {
+            const pets = Array.from({ length: MAX_SUMMONED_POKEMONS }, (_, i) => ({
+                name: `Pet${i}`,
+                specie: 'S',
+                color: 'C',
+            }));
+            const saveData = { money: 0, pets, decoration: [] };
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            // No trimming needed → no write
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── saveGame ────────────────────────────────────────────────────────
+
+    describe('saveGame', () => {
+        it('writes prettified JSON to disk', () => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+            manager.save.money = 100;
+
+            manager.saveGame();
+
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+            const writtenPath = vi.mocked(fs.writeFileSync).mock.calls[0][0];
+            const writtenData = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+
+            expect(String(writtenPath)).toContain('save.json');
+            expect(JSON.parse(writtenData).money).toBe(100);
+        });
+    });
+
+    // ── addPet ──────────────────────────────────────────────────────────
+
+    describe('addPet', () => {
+        beforeEach(() => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+        });
+
+        it('adds a pet and saves', () => {
+            const pet: Pet = { name: 'Spark', specie: 'Pikachu', color: 'gen1' };
+            expect(manager.addPet(pet)).toBe(true);
+            expect(manager.save.pets).toHaveLength(1);
+            expect(manager.save.pets[0].name).toBe('Spark');
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('rejects when at max capacity', () => {
+            manager.save.pets = Array.from({ length: MAX_SUMMONED_POKEMONS }, (_, i) => ({
+                name: `P${i}`,
+                specie: 'S',
+                color: 'C',
+            }));
+
+            const pet: Pet = { name: 'Extra', specie: 'S', color: 'C' };
+            expect(manager.addPet(pet)).toBe(false);
+            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── removePet ───────────────────────────────────────────────────────
+
+    describe('removePet', () => {
+        beforeEach(() => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+            manager.save.pets = [
+                { name: 'A', specie: 'SA', color: 'C' },
+                { name: 'B', specie: 'SB', color: 'C' },
+            ];
+        });
+
+        it('removes and returns the pet at the given index', () => {
+            const removed = manager.removePet(0);
+            expect(removed?.name).toBe('A');
+            expect(manager.save.pets).toHaveLength(1);
+            expect(manager.save.pets[0].name).toBe('B');
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('returns undefined for a positive out-of-range index', () => {
+            expect(manager.removePet(5)).toBeUndefined();
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+
+        it('returns undefined for a negative index', () => {
+            expect(manager.removePet(-1)).toBeUndefined();
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── updateMoney ─────────────────────────────────────────────────────
+
+    describe('updateMoney', () => {
+        it('sets money and saves', () => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+            manager.updateMoney(999);
+            expect(manager.save.money).toBe(999);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+    });
+
+    // ── Decoration management ───────────────────────────────────────────
+
+    describe('decoration management', () => {
+        const decor: Decoration = { x: 10, y: 20, category: 'plant', name: 'tree' };
+
+        beforeEach(() => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+        });
+
+        it('addDecor pushes and saves', () => {
+            manager.addDecor(decor);
+            expect(manager.save.decoration).toHaveLength(1);
+            expect(manager.save.decoration[0]).toEqual(decor);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('moveDecor updates position and saves', () => {
+            manager.save.decoration.push({ ...decor });
+            manager.moveDecor(0, 50, 60);
+            expect(manager.save.decoration[0].x).toBe(50);
+            expect(manager.save.decoration[0].y).toBe(60);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('moveDecor does nothing for an invalid index', () => {
+            manager.moveDecor(99, 1, 2);
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+
+        it('removeDecor removes and saves', () => {
+            manager.save.decoration.push({ ...decor });
+            manager.removeDecor(0);
+            expect(manager.save.decoration).toHaveLength(0);
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+    });
+
+    // ── MAX_SUMMONED_POKEMONS constant ──────────────────────────────────
+
+    it('exports MAX_SUMMONED_POKEMONS as 7', () => {
+        expect(MAX_SUMMONED_POKEMONS).toBe(7);
+    });
+});

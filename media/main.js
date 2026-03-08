@@ -1,5 +1,5 @@
 //VSCode API
-const vscode = acquireVsCodeApi()
+const vscode = acquireVsCodeApi();
 
 //Actions menu
 function toggleActionBall() {
@@ -7,7 +7,7 @@ function toggleActionBall() {
     Menus.close();
 
     //Ball is visible -> Remove it
-    if (Game.ball.active) Game.ball.onReached();
+    if (Game.ball.active) { Game.ball.onReached(); }
     
     //Toggle ball action
     Game.setAction(Game.isAction(Action.BALL) ? Action.NONE : Action.BALL);
@@ -41,7 +41,7 @@ function createStoreItem(name, price) {
     element.append(text);
 
     //Add price to text
-    if (typeof price === 'number') text.innerHTML += `<br><span class="storeButtonMoney" ${price > Game.money ? 'expensive' : ''}>${price}G</span>`;
+    if (typeof price === 'number') { text.innerHTML += `<br><span class="storeButtonMoney" ${price > Game.money ? 'expensive' : ''}>${price}G</span>`; }
 
     //Return element
     return element;
@@ -99,21 +99,21 @@ function openStoreCategoryMenu(category) {
         //Add image to element
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
-        img.style.setProperty('--image', `url('./sprites/decoration.png')`)
-        img.style.setProperty('--width', `${preset.size.x}px`)
-        img.style.setProperty('--height', `${preset.size.y}px`)
-        img.style.setProperty('--scale', `${50 / Math.max(preset.size.x, preset.size.y)}`)
-        img.style.setProperty('--spriteOffset', `${-preset.spriteOffset.x}px ${-preset.spriteOffset.y}px`)
+        img.style.setProperty('--image', `url('./sprites/decoration.png')`);
+        img.style.setProperty('--width', `${preset.size.x}px`);
+        img.style.setProperty('--height', `${preset.size.y}px`);
+        img.style.setProperty('--scale', `${50 / Math.max(preset.size.x, preset.size.y)}`);
+        img.style.setProperty('--spriteOffset', `${-preset.spriteOffset.x}px ${-preset.spriteOffset.y}px`);
         imgBox.prepend(img);
         element.prepend(imgBox);
 
         //Add buy function
         element.onclick = () => {
             //Check if decoration price is valid
-            if (typeof preset.price !== 'number') return;
+            if (typeof preset.price !== 'number') { return; }
 
             //Check if player has enough money
-            if (Game.money < preset.price) return;
+            if (Game.money < preset.price) { return; }
 
             //Consume money
             Game.addMoney(-preset.price);
@@ -140,7 +140,7 @@ function openStoreCategoryMenu(category) {
                 category: category,
                 name: name
             });
-        }
+        };
     }
 
     //Scroll to top
@@ -148,51 +148,32 @@ function openStoreCategoryMenu(category) {
     setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
 }
 //Messages from VSCode
-window.addEventListener('message', event => {
-    //The JSON data sent by the extension
-    const message = event.data;
-
-    //Check message type
+function handleGameMessage(message) {
     switch (message.type.toLowerCase()) {
-        //
-        // Game
-        //
-
-        //Init game
         case 'init':
             document.body.removeAttribute('hide');
             break;
-    
-        //Reset game
         case 'reset':
-            //Remove pets
-            for (const pet of Game.pets) Game.objects.removeItem(pet);
+            for (const pet of Game.pets) { Game.objects.removeItem(pet); }
             Game.pets = [];
-
-            //Remove decor
-            for (const decor of Game.decoration) Game.objects.removeItem(decor);
+            for (const decor of Game.decoration) { Game.objects.removeItem(decor); }
             Game.decoration = [];
-
-            //Close menus & exit decor mode
             Menus.close();
             DecorMode.toggle(false);
             break;
-
-        //Init money
-        case 'money': 
+        case 'money':
             Game.setMoney(message.value);
             break;
+        default:
+            break;
+    }
+}
 
-        //
-        // Settings
-        //
-
-        //Update background
+function handleSettingsMessage(message) {
+    switch (message.type.toLowerCase()) {
         case 'background':
             Game.background.setAttribute('background', message.value.toLowerCase());
             break;
-
-        //Update scale
         case 'scale':
             switch (message.value.toLowerCase()) {
                 case 'small':
@@ -208,27 +189,21 @@ window.addEventListener('message', event => {
             }
             document.body.style.setProperty('--scale', Game.scale);
             break;
-    
-        //Update wild pokemons toggle
         case 'wild_pokemons':
-            //Clear wild pokemons
-            for (const wildPokemon of Game.wildPokemons) wildPokemon.remove();
-            
-            //Toggle spawner
+            for (const wildPokemon of Game.wildPokemons) { wildPokemon.remove(); }
             if (message.value) {
-                //Toggle on
-                Game.wildPokemonSpawner.wait(10 * 1000); // Increased spawn rate (was 30s)
+                Game.wildPokemonSpawner.wait(10 * 1000);
             } else {
-                //Toggle off
                 Game.wildPokemonSpawner.stop();
             }
             break;
+        default:
+            break;
+    }
+}
 
-        //
-        // Game objects
-        //
-
-        //Spawn a pokemon/decor/wild pokemon
+function handleSpawnMessage(message) {
+    switch (message.type.toLowerCase()) {
         case 'spawn_pokemon':
         case 'spawn_pet': {
             const name = message.name;
@@ -237,177 +212,148 @@ window.addEventListener('message', event => {
             const form = (message.form ?? message.specie).toString();
             const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
             const spriteSize = message.spriteSize === 48 ? 48 : 32;
-
-            new Pokemon(name, specie, generation, form, sprite, spriteSize);
+            new Pokemon(name, specie, generation, form, sprite, spriteSize); // NOSONAR - constructor registers in Game.pets
             break;
         }
-        
         case 'spawn_decor': {
-            const pos = new Vec2(message.x, message.y)
+            const pos = new Vec2(message.x, message.y);
             const category = message.category.toUpperCase().replaceAll(' ', '_');
             const name = message.name.toUpperCase().replaceAll(' ', '_');
-            new Decoration(DecorationPreset[category][name], { pos: pos });
+            new Decoration(DecorationPreset[category][name], { pos: pos }); // NOSONAR - constructor registers in Game.decoration
             break;
         }
-        
         case 'spawn_wild_pokemon': {
             const specie = message.specie.toLowerCase();
-            new WildPokemon(specie);
+            new WildPokemon(specie); // NOSONAR - constructor registers in Game.wildPokemons
             break;
         }
-
-        //Remove a pokemon
         case 'remove_pokemon':
         case 'remove_pet':
             Game.pets[message.index].remove();
             break;
-
-        //
-        // Menus
-        //
-
-        //Toggle actions menu
-        case 'actions':
-            //Stop ball/candy action
-            if (Game.isAction(Action.BALL) || Game.isAction(Action.CANDY)) Game.setAction(Action.NONE);
-
-            //Show actions menu
-            Menus.toggle('actions');
-
-            //Scroll to the top
-            document.getElementById('actionsContent').scrollTop = 0;
+        default:
             break;
     }
-})
+}
+
+function handleMenuMessage(message) {
+    if (message.type.toLowerCase() === 'actions') {
+        if (Game.isAction(Action.BALL) || Game.isAction(Action.CANDY)) { Game.setAction(Action.NONE); }
+        Menus.toggle('actions');
+        document.getElementById('actionsContent').scrollTop = 0;
+    }
+}
+
+window.addEventListener('message', event => { // NOSONAR - VS Code webview; extension host origin differs from webview origin
+    const message = event.data;
+    handleGameMessage(message);
+    handleSettingsMessage(message);
+    handleSpawnMessage(message);
+    handleMenuMessage(message);
+});
 
 //Cursor events
+function handleDecorMouseDown(pos) {
+    //Sort objects
+    Game.sortObjects();
+
+    //Check to drag decoration from nearest to farthest object
+    for (let i = Game.objects.length - 1; i >= 0; i--) {
+        const obj = Game.objects[i];
+        if (!obj.isDecoration) { continue; }
+        if (obj.checkMouseDown(pos)) { break; }
+    }
+}
+
 document.body.onmousedown = event => {
     //Menu open -> Ignore click
-    if (Menus.current) return;
+    if (Menus.current) { return; }
 
     //Get scaled mouse position
     const pos = Cursor.posScaled;
 
     //Perform action
-    switch (Game.action) {
-        //Decor mode
-        case Action.DECOR: {
-            //Sort objects
+    if (Game.action === Action.DECOR) {
+        handleDecorMouseDown(pos);
+    }
+};
+
+function handleDecorMouseUp(pos) {
+    switch (DecorMode.action) {
+        case DecorMode.ACTION_MOVE:
+            for (const decoration of Game.decoration) { decoration.stopDragging(); }
+            break;
+        case DecorMode.ACTION_SELL:
             Game.sortObjects();
-
-            //Check to drag decoration from nearest to farthest object
             for (let i = Game.objects.length - 1; i >= 0; i--) {
-                //Get object
                 const obj = Game.objects[i];
-
-                //Check if its decoration
-                if (!obj.isDecoration) continue;
-
-                //Check event
-                if (obj.checkMouseDown(pos)) break;
+                if (!obj.isDecoration) { continue; }
+                if (obj.checkMouseUp(pos)) { break; }
             }
             break;
+    }
+}
+
+function handleBallMouseUp(pos) {
+    Game.ball.moveTo(pos.sub(Game.ball.size.mult(0.5, 1).toInt()));
+    Game.ball.setActive(true);
+    for (const pokemon of Game.pets) {
+        if (typeof pokemon.moveTowardsBall === 'function') {
+            pokemon.moveTowardsBall(pos);
+        } else if (pokemon.ai && typeof pokemon.ai.moveTowards === 'function') {
+            pokemon.ai.moveTowards(pos, true);
         }
     }
+    Game.setAction(Action.NONE);
+}
+
+function handleDefaultMouseUp(pos) {
+    Game.sortObjects();
+    for (let i = Game.objects.length - 1; i >= 0; i--) {
+        const obj = Game.objects[i];
+        if (obj.checkMouseUp(pos)) { break; }
+    }
+    Game.setAction(Action.NONE);
 }
 
 document.body.onmouseup = event => {
     //Menu open -> Ignore click
-    if (Menus.current) return;
+    if (Menus.current) { return; }
 
     //Get scaled mouse position
     const pos = Cursor.posScaled;
 
     //Perform action
     switch (Game.action) {
-        //Decor mode
-        case Action.DECOR: {
-            //Check decor action
-            switch (DecorMode.action) {
-                //Move
-                case DecorMode.ACTION_MOVE:
-                    //Stop moving all
-                    for (const decoration of Game.decoration) decoration.stopDragging();
-                    break;
-
-                //Sell
-                case DecorMode.ACTION_SELL:
-                    //Sort objects
-                    Game.sortObjects();
-
-                    //Check to click decoration from nearest to farthest object
-                    for (let i = Game.objects.length - 1; i >= 0; i--) {
-                        //Get object
-                        const obj = Game.objects[i];
-
-                        //Check if its decoration
-                        if (!obj.isDecoration) continue;
-
-                        //Check event
-                        if (obj.checkMouseUp(pos)) break;
-                    }
-                    break;
-            }
+        case Action.DECOR:
+            handleDecorMouseUp(pos);
             break;
-        }
-
-        //Place ball
-        case Action.BALL: {
-            //Move ball
-            Game.ball.moveTo(pos.sub(Game.ball.size.mult(0.5, 1).toInt()));
-            Game.ball.setActive(true);
-
-            //Move all pokemons towards ball
-            for (const pokemon of Game.pets) {
-                if (typeof pokemon.moveTowardsBall === 'function') {
-                    pokemon.moveTowardsBall(pos);
-                } else if (pokemon.ai && typeof pokemon.ai.moveTowards === 'function') {
-                    pokemon.ai.moveTowards(pos, true);
-                }
-            }
-
-            //Clear current action
-            Game.setAction(Action.NONE);
+        case Action.BALL:
+            handleBallMouseUp(pos);
             break;
-        }
-
-        //Other
         default:
-            //Sort objects
-            Game.sortObjects();
-
-            //Check for clicks from nearest to farthest object
-            for (let i = Game.objects.length - 1; i >= 0; i--) {
-                //Get object
-                const obj = Game.objects[i];
-
-                //Check event
-                if (obj.checkMouseUp(pos)) break;
-            }
-            
-            //Clear current action
-            Game.setAction(Action.NONE);
+            handleDefaultMouseUp(pos);
             break;
     }
-}
+};
 
 document.onmousemove = event => {
     //Mouse moved -> Update cursor position
-    Cursor.moveTo(new Vec2(event.clientX, event.clientY))
-}
+    Cursor.moveTo(new Vec2(event.clientX, event.clientY));
+};
 
 document.onmouseenter = event => {
     //Mouse entered screen -> Show cursor
-    Cursor.setIcon(Game.action)
-}
+    Cursor.setIcon(Game.action);
+};
 
 document.onmouseleave = event => {
     //Mouse left screen -> Hide cursor
-    Cursor.setIcon(Action.NONE)
-}
+    Cursor.setIcon(Action.NONE);
+};
 
 //Start game loop
 Game.start();
 
 //Tell VSCode the game was loaded
-vscode.postMessage({ type: 'init' })
+vscode.postMessage({ type: 'init' });
