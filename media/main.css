@@ -464,3 +464,23 @@ body[cursor="none"] {
     --bg-pos-y: calc(-3 * var(--size));
     opacity: 1;
 }
+
+/* Evolution animation */
+.evolving {
+    animation: evolve-glow 2s ease-in-out;
+}
+
+@keyframes evolve-glow {
+    0% {
+        filter: brightness(1);
+    }
+    30% {
+        filter: brightness(3) saturate(0);
+    }
+    60% {
+        filter: brightness(3) saturate(0);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}

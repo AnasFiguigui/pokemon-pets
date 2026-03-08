@@ -4,6 +4,20 @@ import { Decoration, Pet, Save } from './models';
 
 export const MAX_SUMMONED_POKEMONS = 7;
 
+/** Default streak data for new or missing saves. */
+function defaultStreak() {
+    return { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 };
+}
+
+/** Default telemetry data for new or missing saves. */
+function defaultTelemetry() {
+    return {
+        pokemonAdded: {}, pokemonEvolved: {}, candyFed: 0,
+        wildPokemonCaught: 0, decorationsPlaced: 0,
+        goldEarned: 0, goldSpent: 0, sessionsCount: 0, lastSessionDate: '',
+    };
+}
+
 export class SaveManager {
     private readonly storageFolder: string;
     private readonly savePath: string;
@@ -62,6 +76,18 @@ export class SaveManager {
         // Validate decoration
         if (!Array.isArray(this.save.decoration)) {
             this.save.decoration = [];
+            saveUpdated = true;
+        }
+
+        // Validate streak
+        if (typeof this.save.streak !== 'object' || this.save.streak === null) {
+            this.save.streak = defaultStreak();
+            saveUpdated = true;
+        }
+
+        // Validate telemetry
+        if (typeof this.save.telemetry !== 'object' || this.save.telemetry === null) {
+            this.save.telemetry = defaultTelemetry();
             saveUpdated = true;
         }
 

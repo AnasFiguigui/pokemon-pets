@@ -6,6 +6,23 @@ class Save {
     money = 0;
     pets = [];
     decoration = [];
+    streak = {
+        currentStreak: 0,
+        lastClaimDate: '',
+        longestStreak: 0,
+        totalRewardsClaimed: 0,
+    };
+    telemetry = {
+        pokemonAdded: {},
+        pokemonEvolved: {},
+        candyFed: 0,
+        wildPokemonCaught: 0,
+        decorationsPlaced: 0,
+        goldEarned: 0,
+        goldSpent: 0,
+        sessionsCount: 0,
+        lastSessionDate: '',
+    };
 }
 exports.Save = Save;
 class PetItem {

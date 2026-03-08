@@ -8,6 +8,22 @@ vi.mock('node:fs');
 
 const STORAGE = path.join('mock', 'storage');
 
+/** Creates a complete save object with all required fields to avoid migration writes. */
+function completeSave(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+        money: 0,
+        pets: [],
+        decoration: [],
+        streak: { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 },
+        telemetry: {
+            pokemonAdded: {}, pokemonEvolved: {}, candyFed: 0,
+            wildPokemonCaught: 0, decorationsPlaced: 0,
+            goldEarned: 0, goldSpent: 0, sessionsCount: 0, lastSessionDate: '',
+        },
+        ...overrides,
+    };
+}
+
 describe('SaveManager', () => {
     let manager: SaveManager;
 
@@ -58,7 +74,7 @@ describe('SaveManager', () => {
         });
 
         it('does not write file when nothing changed', () => {
-            const saveData = { money: 0, pets: [], decoration: [] };
+            const saveData = completeSave();
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
 
@@ -136,7 +152,7 @@ describe('SaveManager', () => {
                 specie: 'S',
                 color: 'C',
             }));
-            const saveData = { money: 0, pets, decoration: [] };
+            const saveData = completeSave({ pets });
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
 

@@ -7,6 +7,7 @@ export type Pet = {
     form?: string;
     sprite?: string;
     spriteSize?: 32 | 48;
+    candyFed?: number;
 };
 
 export type Decoration = {
@@ -16,10 +17,46 @@ export type Decoration = {
     name: string;
 };
 
+export type StreakData = {
+    currentStreak: number;
+    lastClaimDate: string;      // ISO date string (YYYY-MM-DD)
+    longestStreak: number;
+    totalRewardsClaimed: number;
+};
+
+export type TelemetryData = {
+    pokemonAdded: { [specie: string]: number };
+    pokemonEvolved: { [specie: string]: number };
+    candyFed: number;
+    wildPokemonCaught: number;
+    decorationsPlaced: number;
+    goldEarned: number;
+    goldSpent: number;
+    sessionsCount: number;
+    lastSessionDate: string;    // ISO date string (YYYY-MM-DD)
+};
+
 export class Save {
     public money: number = 0;
     public pets: Pet[] = [];
     public decoration: Decoration[] = [];
+    public streak: StreakData = {
+        currentStreak: 0,
+        lastClaimDate: '',
+        longestStreak: 0,
+        totalRewardsClaimed: 0,
+    };
+    public telemetry: TelemetryData = {
+        pokemonAdded: {},
+        pokemonEvolved: {},
+        candyFed: 0,
+        wildPokemonCaught: 0,
+        decorationsPlaced: 0,
+        goldEarned: 0,
+        goldSpent: 0,
+        sessionsCount: 0,
+        lastSessionDate: '',
+    };
 }
 
 export class PetItem implements QuickPickItem {

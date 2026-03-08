@@ -61,15 +61,18 @@ describe('WildPokemonSpecies', () => {
         expect(WildPokemonSpecies.length).toBeGreaterThan(0);
     });
 
-    it('contains only non-empty lowercase strings', () => {
-        for (const species of WildPokemonSpecies) {
-            expect(typeof species).toBe('string');
-            expect(species.length).toBeGreaterThan(0);
-            expect(species).toBe(species.toLowerCase());
+    it('contains only valid species entries', () => {
+        for (const entry of WildPokemonSpecies) {
+            expect(typeof entry).toBe('object');
+            expect(typeof entry.specie).toBe('string');
+            expect(entry.specie.length).toBeGreaterThan(0);
+            expect(entry.specie).toBe(entry.specie.toLowerCase());
+            expect(typeof entry.nightOnly).toBe('boolean');
         }
     });
 
     it('has no duplicates', () => {
-        expect(new Set(WildPokemonSpecies).size).toBe(WildPokemonSpecies.length);
+        const names = WildPokemonSpecies.map(e => e.specie);
+        expect(new Set(names).size).toBe(WildPokemonSpecies.length);
     });
 });

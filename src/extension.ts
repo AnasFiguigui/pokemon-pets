@@ -1,12 +1,20 @@
 import * as vscode from 'vscode';
-import { WildPokemonSpecies, Pokemons } from './game-data';
+import { Pokemons } from './game-data';
 import { Decoration, Pet, PetItem, normalizePet } from './models';
 import { SaveManager, MAX_SUMMONED_POKEMONS } from './save-manager';
 import { WebViewProvider } from './webview-provider';
+import { TelemetryService } from './telemetry';
+import { EvolutionService } from './evolution';
+import { DayNightCycle } from './day-night';
+import { StreakService } from './streak';
 
 let config = vscode.workspace.getConfiguration('pokemon-pets');
 let webview: WebViewProvider;
 let saveManager: SaveManager;
+let telemetry: TelemetryService;
+let evolution: EvolutionService;
+let streakService: StreakService;
+let dayNightInterval: ReturnType<typeof setInterval> | undefined;
 
 // ── Game Initialization ─────────────────────────────────────────────────
 
@@ -15,6 +23,11 @@ function initGame(): void {
     webview.postMessage({ type: 'scale', value: config.get('scale') });
     webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });
     webview.postMessage({ type: 'money', value: saveManager.save.money });
+
+    // Send day/night tint
+    if (config.get<boolean>('dayNightCycle', true)) {
+        sendDayNightTint();
+    }
 
     for (const pet of saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS)) {
         loadPet(pet);
@@ -51,6 +64,26 @@ function loadDecor(decor: Decoration): void {
     });
 }
 
+// ── Day/Night Cycle ─────────────────────────────────────────────────────
+
+function sendDayNightTint(): void {
+    const timeOfDay = DayNightCycle.getTimeOfDay();
+    const tint = DayNightCycle.getTint(timeOfDay);
+    webview.postMessage({ type: 'day_night', value: tint, timeOfDay });
+}
+
+function startDayNightTimer(): void {
+    stopDayNightTimer();
+    dayNightInterval = setInterval(() => sendDayNightTint(), 60_000);
+}
+
+function stopDayNightTimer(): void {
+    if (dayNightInterval !== undefined) {
+        clearInterval(dayNightInterval);
+        dayNightInterval = undefined;
+    }
+}
+
 // ── Webview Message Handler ─────────────────────────────────────────────
 
 function handleWebviewMessage(message: any): void {
@@ -64,12 +97,46 @@ function handleWebviewMessage(message: any): void {
         case 'init':
             initGame();
             break;
-        case 'money':
-            saveManager.updateMoney(message.value);
+        case 'money': {
+            const oldMoney = saveManager.save.money;
+            const newMoney = message.value as number;
+            saveManager.updateMoney(newMoney);
+            const diff = newMoney - oldMoney;
+            if (diff > 0) { telemetry.trackGoldEarned(diff); }
+            else if (diff < 0) { telemetry.trackGoldSpent(Math.abs(diff)); }
             break;
+        }
         case 'spawn_wild_pokemon': {
-            const specie = WildPokemonSpecies[Math.floor(Math.random() * WildPokemonSpecies.length)];
-            webview.postMessage({ type: 'spawn_wild_pokemon', specie });
+            const specie = DayNightCycle.pickWildPokemon();
+            if (specie) {
+                webview.postMessage({ type: 'spawn_wild_pokemon', specie });
+            }
+            break;
+        }
+        case 'wild_pokemon_caught':
+            telemetry.trackWildPokemonCaught();
+            break;
+        case 'candy_fed': {
+            telemetry.trackCandyFed();
+            const petIndex = message.index as number;
+            if (typeof petIndex === 'number' && petIndex >= 0) {
+                const result = evolution.feedCandy(petIndex);
+                if (result.evolved && result.newForm) {
+                    const pet = saveManager.save.pets[petIndex];
+                    webview.postMessage({ type: 'remove_pet', index: petIndex });
+                    loadPet(pet);
+                    webview.postMessage({
+                        type: 'evolution',
+                        index: petIndex,
+                        name: pet.name,
+                        newForm: result.newForm.name,
+                    });
+                    telemetry.trackPokemonEvolved(pet.specie);
+                    vscode.window.showInformationMessage(
+                        `🎉 ${pet.name} evolved into ${result.newForm.name}!`,
+                    );
+                }
+            }
             break;
         }
         case 'move_decor':
@@ -82,6 +149,7 @@ function handleWebviewMessage(message: any): void {
                 category: message.category,
                 name: message.name,
             });
+            telemetry.trackDecorationPlaced();
             break;
         case 'remove_decor':
             saveManager.removeDecor(message.index);
@@ -116,7 +184,7 @@ async function addPetCommand(): Promise<void> {
     const pokemonData = Pokemons[generation][selectedPokemon.index];
 
     const formItems = pokemonData.forms.map((form, idx) =>
-        new PetItem(idx, form.name, ''),
+        new PetItem(idx, form.name, form.candyCost > 0 ? `${form.candyCost} candy` : 'Base form'),
     );
     const selectedForm = await vscode.window.showQuickPick(formItems, {
         title: `Select a form for ${pokemonData.name}`,
@@ -142,6 +210,7 @@ async function addPetCommand(): Promise<void> {
         form: formData.name,
         sprite: formData.sprite,
         spriteSize: formData.spriteSize,
+        candyFed: formData.candyCost,
     };
 
     const added = saveManager.addPet(pet);
@@ -153,6 +222,7 @@ async function addPetCommand(): Promise<void> {
     }
 
     loadPet(pet);
+    telemetry.trackPokemonAdded(pokemonData.name);
     vscode.window.showInformationMessage(`Say hi to ${name} the ${formData.name}!`);
 }
 
@@ -173,6 +243,51 @@ async function removePetCommand(): Promise<void> {
     vscode.window.showInformationMessage('Bye ' + selected.label + '!');
 }
 
+async function exportSaveCommand(): Promise<void> {
+    const saveJson = JSON.stringify(saveManager.save, null, 2);
+    await vscode.env.clipboard.writeText(saveJson);
+    vscode.window.showInformationMessage('Save data copied to clipboard!');
+}
+
+async function importSaveCommand(): Promise<void> {
+    const confirm = await vscode.window.showWarningMessage(
+        'This will replace your current save with data from the clipboard. Continue?',
+        { modal: true },
+        'Import',
+    );
+    if (confirm !== 'Import') { return; }
+
+    const clipText = await vscode.env.clipboard.readText();
+    try {
+        const imported = JSON.parse(clipText);
+        if (typeof imported !== 'object' || imported === null) {
+            throw new Error('Invalid save format');
+        }
+        saveManager.save = imported;
+        saveManager.saveGame();
+        saveManager.loadGame();
+
+        webview.postMessage({ type: 'reset' });
+        initGame();
+        vscode.window.showInformationMessage('Save imported successfully! 🎉');
+    } catch {
+        vscode.window.showErrorMessage('Failed to import save — invalid JSON or format.');
+    }
+}
+
+function showStatsCommand(): void {
+    if (!telemetry.isEnabled()) {
+        vscode.window.showInformationMessage(
+            'Telemetry is disabled. Enable it in settings: pokemon-pets.telemetry',
+        );
+        return;
+    }
+    const summary = telemetry.getSummary();
+    const streak = streakService.getData();
+    const fullSummary = summary + `\nCoding streak: ${streak.currentStreak} days (best: ${streak.longestStreak})`;
+    vscode.window.showInformationMessage(fullSummary, { modal: true });
+}
+
 // ── Activation / Deactivation ───────────────────────────────────────────
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -182,12 +297,38 @@ export function activate(context: vscode.ExtensionContext): void {
     saveManager = new SaveManager(context.globalStorageUri.fsPath);
     saveManager.loadGame();
 
+    // Initialize services
+    const telemetryEnabled = config.get<boolean>('telemetry', false);
+    telemetry = new TelemetryService(saveManager, telemetryEnabled);
+    evolution = new EvolutionService(saveManager);
+    streakService = new StreakService(saveManager);
+
+    // Track session
+    telemetry.trackSession();
+
+    // Claim daily streak reward
+    const reward = streakService.claimDaily();
+    if (reward) {
+        saveManager.save.money += reward.gold;
+        saveManager.saveGame();
+        telemetry.trackGoldEarned(reward.gold);
+        setTimeout(() => {
+            vscode.window.showInformationMessage(reward.message);
+            webview.postMessage({ type: 'money', value: saveManager.save.money });
+        }, 2000);
+    }
+
     // Initialize webview provider
     webview = new WebViewProvider(context);
     webview.setMessageHandler(handleWebviewMessage);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(WebViewProvider.viewType, webview),
     );
+
+    // Start day/night cycle timer
+    if (config.get<boolean>('dayNightCycle', true)) {
+        startDayNightTimer();
+    }
 
     // Listen for configuration changes
     vscode.workspace.onDidChangeConfiguration(event => {
@@ -201,6 +342,18 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         if (event.affectsConfiguration('pokemon-pets.wild')) {
             webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });
+        }
+        if (event.affectsConfiguration('pokemon-pets.telemetry')) {
+            telemetry.setEnabled(config.get<boolean>('telemetry', false));
+        }
+        if (event.affectsConfiguration('pokemon-pets.dayNightCycle')) {
+            if (config.get<boolean>('dayNightCycle', true)) {
+                sendDayNightTint();
+                startDayNightTimer();
+            } else {
+                stopDayNightTimer();
+                webview.postMessage({ type: 'day_night', value: 'none', timeOfDay: 'day' });
+            }
         }
     });
 
@@ -222,9 +375,13 @@ export function activate(context: vscode.ExtensionContext): void {
             saveManager.loadGame();
             initGame();
         }),
+        vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand),
+        vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand),
+        vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand),
     );
 }
 
 export function deactivate(): void {
+    stopDayNightTimer();
     console.log('Pokemon Pets is now deactivated 😿');
 }

@@ -59,6 +59,16 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Toggles if wild Pokémon can spawn."
+                },
+                "pokemon-pets.dayNightCycle": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enables the day/night cycle that tints the background based on the time of day."
+                },
+                "pokemon-pets.telemetry": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable local telemetry to track your personal stats (Pokémon added, candy fed, gold earned, etc.). All data stays in your save file — nothing is sent externally."
                 }
             }
         },
@@ -102,6 +112,18 @@
             {
                 "command": "pokemon-pets.reloadSaveFile",
                 "title": "Pokemon Pets: Reload save file"
+            },
+            {
+                "command": "pokemon-pets.exportSave",
+                "title": "Pokemon Pets: Export save to clipboard"
+            },
+            {
+                "command": "pokemon-pets.importSave",
+                "title": "Pokemon Pets: Import save from clipboard"
+            },
+            {
+                "command": "pokemon-pets.showStats",
+                "title": "Pokemon Pets: Show stats"
             }
         ],
         "menus": {

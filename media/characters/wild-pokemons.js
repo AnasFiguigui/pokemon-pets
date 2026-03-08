@@ -72,6 +72,9 @@ class WildPokemonAI extends AI {
         //Give money to player
         Game.addMoney(60 + 5 * Util.randomInclusive(8)); //60 - 100 gold
 
+        //Notify extension about the catch (for telemetry)
+        vscode.postMessage({ type: 'wild_pokemon_caught' });
+
         //Wait to spawn a new wild pokemon
         Game.wildPokemonSpawner.wait(30 * 1000);
 

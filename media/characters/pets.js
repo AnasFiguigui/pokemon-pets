@@ -399,6 +399,12 @@ class PetAI extends AI {
             //Consume candy
             Game.setAction(Action.NONE);
 
+            //Notify extension about candy feeding (for evolution tracking)
+            const petIndex = Game.pets.indexOf(this.character);
+            if (petIndex >= 0) {
+                vscode.postMessage({ type: 'candy_fed', index: petIndex });
+            }
+
             //Set mood to heart
             this.#setHeartMood();
         }

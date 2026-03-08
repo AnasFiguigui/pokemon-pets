@@ -2,6 +2,7 @@ export type PokemonForm = {
     name: string;
     sprite: string;
     spriteSize: 32 | 48;
+    candyCost: number;  // Cumulative candy needed to reach this form (0 = base form)
 };
 
 export type PokemonSpecies = {
@@ -9,11 +10,8 @@ export type PokemonSpecies = {
     forms: PokemonForm[];
 };
 
-export const WildPokemonSpecies: string[] = [
-    // 'beedrill',
-    'meowth',
-    // 'golbat',
-    // 'rattata',
+export const WildPokemonSpecies: { specie: string; nightOnly: boolean }[] = [
+    { specie: 'meowth', nightOnly: true },
 ];
 
 export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
@@ -21,25 +19,25 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
         {
             name: 'Bulbasaur',
             forms: [
-                { name: 'Bulbasaur', sprite: 'bulbasaur', spriteSize: 32 },
-                { name: 'Ivysaur', sprite: 'ivysaur', spriteSize: 32 },
-                { name: 'Venusaur', sprite: 'venusaur', spriteSize: 32 },
+                { name: 'Bulbasaur', sprite: 'bulbasaur', spriteSize: 32, candyCost: 0 },
+                { name: 'Ivysaur', sprite: 'ivysaur', spriteSize: 32, candyCost: 10 },
+                { name: 'Venusaur', sprite: 'venusaur', spriteSize: 32, candyCost: 25 },
             ],
         },
         {
             name: 'Charmander',
             forms: [
-                { name: 'Charmander', sprite: 'charmander', spriteSize: 32 },
-                { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32 },
-                { name: 'Charizard', sprite: 'charizard', spriteSize: 48 },
+                { name: 'Charmander', sprite: 'charmander', spriteSize: 32, candyCost: 0 },
+                { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyCost: 10 },
+                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25 },
             ],
         },
         {
             name: 'Squirtle',
             forms: [
-                { name: 'Squirtle', sprite: 'squirtle', spriteSize: 32 },
-                { name: 'Wartortle', sprite: 'wartortle', spriteSize: 32 },
-                { name: 'Blastoise', sprite: 'blastoise', spriteSize: 32 },
+                { name: 'Squirtle', sprite: 'squirtle', spriteSize: 32, candyCost: 0 },
+                { name: 'Wartortle', sprite: 'wartortle', spriteSize: 32, candyCost: 10 },
+                { name: 'Blastoise', sprite: 'blastoise', spriteSize: 32, candyCost: 25 },
             ],
         },
     ],

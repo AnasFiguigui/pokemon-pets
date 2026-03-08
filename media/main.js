@@ -164,6 +164,17 @@ function handleGameMessage(message) {
         case 'money':
             Game.setMoney(message.value);
             break;
+        case 'day_night':
+            Game.background.style.filter = message.value;
+            break;
+        case 'evolution':
+            //Visual sparkle effect on the evolved pet
+            if (typeof message.index === 'number' && Game.pets[message.index]) {
+                const pet = Game.pets[message.index];
+                pet.element.classList.add('evolving');
+                setTimeout(() => { pet.element.classList.remove('evolving'); }, 2000);
+            }
+            break;
         default:
             break;
     }
