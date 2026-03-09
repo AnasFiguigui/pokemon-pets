@@ -14,7 +14,7 @@ exports.Consumables = [
     { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.' },
 ];
 exports.WildPokemonSpecies = [
-    { specie: 'meowth', nightOnly: true },
+    { specie: 'meowth', nightOnly: false },
 ];
 exports.Pokemons = {
     'generation 1': [

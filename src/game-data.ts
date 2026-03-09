@@ -32,7 +32,7 @@ export const Consumables: Consumable[] = [
 ];
 
 export const WildPokemonSpecies: { specie: string; nightOnly: boolean }[] = [
-    { specie: 'meowth', nightOnly: true },
+    { specie: 'meowth', nightOnly: false },
 ];
 
 export const Pokemons: { [generation: string]: PokemonSpecies[] } = {

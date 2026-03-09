@@ -99,6 +99,9 @@ function stopDayNightTimer() {
 }
 // ── Webview Message Handler ─────────────────────────────────────────────
 function handleWebviewMessage(message) {
+    if (typeof message?.type !== 'string') {
+        return;
+    }
     switch (message.type.toLowerCase()) {
         case 'error':
             vscode.window.showErrorMessage(message.text);
@@ -126,6 +129,10 @@ function handleWebviewMessage(message) {
             const specie = day_night_1.DayNightCycle.pickWildPokemon();
             if (specie) {
                 webview.postMessage({ type: 'spawn_wild_pokemon', specie });
+            }
+            else {
+                // No eligible species right now — tell webview to retry later
+                webview.postMessage({ type: 'retry_wild_spawn' });
             }
             break;
         }
@@ -339,7 +346,27 @@ async function importSaveCommand() {
         if (typeof imported !== 'object' || imported === null) {
             throw new Error('Invalid save format');
         }
-        saveManager.save = imported;
+        // Only accept known Save fields to prevent excess property injection
+        const sanitized = new models_1.Save();
+        if (typeof imported.money === 'number') {
+            sanitized.money = imported.money;
+        }
+        if (Array.isArray(imported.pets)) {
+            sanitized.pets = imported.pets;
+        }
+        if (Array.isArray(imported.decoration)) {
+            sanitized.decoration = imported.decoration;
+        }
+        if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
+            sanitized.inventory = imported.inventory;
+        }
+        if (typeof imported.streak === 'object' && imported.streak !== null && !Array.isArray(imported.streak)) {
+            sanitized.streak = imported.streak;
+        }
+        if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
+            sanitized.telemetry = imported.telemetry;
+        }
+        saveManager.save = sanitized;
         saveManager.saveGame();
         saveManager.loadGame();
         webview.postMessage({ type: 'reset' });
@@ -387,6 +414,11 @@ function activate(context) {
     // Initialize webview provider
     webview = new webview_provider_1.WebViewProvider(context);
     webview.setMessageHandler(handleWebviewMessage);
+    webview.setVisibilityHandler(() => {
+        if (config.get('dayNightCycle', true)) {
+            sendDayNightTint();
+        }
+    });
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(webview_provider_1.WebViewProvider.viewType, webview));
     // Start day/night cycle timer
     if (config.get('dayNightCycle', true)) {

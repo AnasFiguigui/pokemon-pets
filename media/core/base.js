@@ -177,7 +177,7 @@ Array.prototype.removeAt = function(index) { // NOSONAR - intentional prototype 
 
 Array.prototype.removeItem = function(elem) { // NOSONAR - intentional prototype extension used throughout codebase
     const index = this.indexOf(elem);
-    this.splice(index, 1);
+    if (index !== -1) { this.splice(index, 1); }
     return index;
 };
 

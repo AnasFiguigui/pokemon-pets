@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Pokemons, Consumables } from './game-data';
-import { Decoration, Pet, PetItem, normalizePet } from './models';
+import { Decoration, Pet, PetItem, Save, normalizePet } from './models';
 import { SaveManager, MAX_SUMMONED_POKEMONS } from './save-manager';
 import { WebViewProvider } from './webview-provider';
 import { TelemetryService } from './telemetry';
@@ -88,6 +88,7 @@ function stopDayNightTimer(): void {
 // ── Webview Message Handler ─────────────────────────────────────────────
 
 function handleWebviewMessage(message: any): void {
+    if (typeof message?.type !== 'string') { return; }
     switch (message.type.toLowerCase()) {
         case 'error':
             vscode.window.showErrorMessage(message.text);
@@ -111,6 +112,9 @@ function handleWebviewMessage(message: any): void {
             const specie = DayNightCycle.pickWildPokemon();
             if (specie) {
                 webview.postMessage({ type: 'spawn_wild_pokemon', specie });
+            } else {
+                // No eligible species right now — tell webview to retry later
+                webview.postMessage({ type: 'retry_wild_spawn' });
             }
             break;
         }
@@ -337,7 +341,23 @@ async function importSaveCommand(): Promise<void> {
         if (typeof imported !== 'object' || imported === null) {
             throw new Error('Invalid save format');
         }
-        saveManager.save = imported;
+
+        // Only accept known Save fields to prevent excess property injection
+        const sanitized = new Save();
+        if (typeof imported.money === 'number') { sanitized.money = imported.money; }
+        if (Array.isArray(imported.pets)) { sanitized.pets = imported.pets; }
+        if (Array.isArray(imported.decoration)) { sanitized.decoration = imported.decoration; }
+        if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
+            sanitized.inventory = imported.inventory;
+        }
+        if (typeof imported.streak === 'object' && imported.streak !== null && !Array.isArray(imported.streak)) {
+            sanitized.streak = imported.streak;
+        }
+        if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
+            sanitized.telemetry = imported.telemetry;
+        }
+
+        saveManager.save = sanitized;
         saveManager.saveGame();
         saveManager.loadGame();
 
@@ -395,6 +415,11 @@ export function activate(context: vscode.ExtensionContext): void {
     // Initialize webview provider
     webview = new WebViewProvider(context);
     webview.setMessageHandler(handleWebviewMessage);
+    webview.setVisibilityHandler(() => {
+        if (config.get<boolean>('dayNightCycle', true)) {
+            sendDayNightTint();
+        }
+    });
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(WebViewProvider.viewType, webview),
     );

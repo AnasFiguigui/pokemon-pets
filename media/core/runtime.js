@@ -199,12 +199,14 @@ class GameObject {
         //Get relative click position
         const relPos = pos.sub(this.pos);  
 
-        //Change canvas size to match object size
-        canvas.width = this.size.x;
-        canvas.height = this.size.y;
+        //Resize canvas only when needed (avoids GPU flush)
+        if (canvas.width < this.size.x || canvas.height < this.size.y) {
+            canvas.width = Math.max(canvas.width, this.size.x);
+            canvas.height = Math.max(canvas.height, this.size.y);
+        }
         
         //Clear canvas & draw object at origin
-        ctx.clearRect(0, 0, this.size.x, this.size.y);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.draw(ctx, { pos: new Vec2() });
 
         //Get pixel at pos & check alpha

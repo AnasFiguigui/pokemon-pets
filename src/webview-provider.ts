@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 export type MessageHandler = (message: any) => void;
+export type VisibilityHandler = () => void;
 
 export class WebViewProvider implements vscode.WebviewViewProvider {
 
@@ -8,12 +9,18 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
 
     private view?: vscode.WebviewView;
     private messageHandler?: MessageHandler;
+    private visibilityHandler?: VisibilityHandler;
 
     constructor(private readonly context: vscode.ExtensionContext) {}
 
     /** Registers a callback invoked for every webview message. */
     public setMessageHandler(handler: MessageHandler): void {
         this.messageHandler = handler;
+    }
+
+    /** Registers a callback invoked when the view becomes visible. */
+    public setVisibilityHandler(handler: VisibilityHandler): void {
+        this.visibilityHandler = handler;
     }
 
     /** Sends a message to the webview. */
@@ -35,6 +42,12 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
         webview.onDidReceiveMessage(message => {
             this.messageHandler?.(message);
         });
+
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible) {
+                this.visibilityHandler?.();
+            }
+        });
     }
 
     private async getHtmlContent(webview: vscode.Webview): Promise<string> {
@@ -42,9 +55,8 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
         const fileData = await vscode.workspace.fs.readFile(htmlPath);
         const htmlContent = new TextDecoder().decode(fileData);
 
-        return htmlContent.replaceAll(
-            '{media}',
-            `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`,
-        );
+        return htmlContent
+            .replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`)
+            .replaceAll('{cspSource}', webview.cspSource);
     }
 }

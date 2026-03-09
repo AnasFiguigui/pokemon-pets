@@ -51,10 +51,10 @@ describe('DayNightCycle', () => {
     // ── pickWildPokemon ─────────────────────────────────────────────────
 
     describe('pickWildPokemon', () => {
-        it('returns undefined during the day when no daytime pokemon exist', () => {
-            // Currently only meowth exists and it's nightOnly
+        it('returns a pokemon during the day', () => {
             const result = DayNightCycle.pickWildPokemon(new Date('2025-06-01T12:00:00'));
-            expect(result).toBeUndefined();
+            expect(typeof result).toBe('string');
+            expect(result?.length).toBeGreaterThan(0);
         });
 
         it('returns a string during the night', () => {
@@ -63,16 +63,16 @@ describe('DayNightCycle', () => {
             expect(result?.length).toBeGreaterThan(0);
         });
 
-        it('does not return nightOnly pokemon during the day', () => {
-            // Run enough trials to have confidence
-            for (let i = 0; i < 100; i++) {
+        it('returns meowth during the day (not nightOnly)', () => {
+            const results = new Set<string>();
+            for (let i = 0; i < 200; i++) {
                 const result = DayNightCycle.pickWildPokemon(new Date('2025-06-01T12:00:00'));
-                expect(result).not.toBe('meowth');
+                if (result) { results.add(result); }
             }
+            expect(results.has('meowth')).toBe(true);
         });
 
-        it('can return nightOnly pokemon during the night', () => {
-            // Seed: try many times — meowth should appear at least once at night
+        it('can return meowth during the night', () => {
             const results = new Set<string>();
             for (let i = 0; i < 200; i++) {
                 const result = DayNightCycle.pickWildPokemon(new Date('2025-06-01T23:00:00'));

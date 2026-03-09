@@ -5,10 +5,14 @@ class Decoration extends GameObject {
     #price = 0;
     #isLamp = false;
     #lightRadius = 0;
+    #daySpriteY = 0;
+    #nightSpriteY = 0;
     
     get price() { return this.#price; }
     get isLamp() { return this.#isLamp; }
     get lightRadius() { return this.#lightRadius; }
+    get daySpriteY() { return this.#daySpriteY; }
+    get nightSpriteY() { return this.#nightSpriteY; }
 
     #snap = 16;
     #moving = false;
@@ -24,12 +28,21 @@ class Decoration extends GameObject {
         if (typeof preset.price === 'number') this.#price = preset.price;
         if (preset.isLamp === true) this.#isLamp = true;
         if (typeof preset.lightRadius === 'number') this.#lightRadius = preset.lightRadius;
+        if (typeof preset.spriteOffset === 'object') this.#daySpriteY = preset.spriteOffset.y;
+        if (typeof preset.nightSpriteOffsetY === 'number') this.#nightSpriteY = preset.nightSpriteOffsetY;
+
+        // Apply night sprite immediately if night overlay is active
+        if (this.#isLamp && nightOverlayActive) {
+            this.spriteOffset.y = this.#nightSpriteY;
+        }
 
         Game.decoration.push(this);
+        if (this.#isLamp) { lampMaskDirty = true; }
     }
 
     remove() {
         super.remove();
+        if (this.#isLamp) { lampMaskDirty = true; }
 
         const index = Game.decoration.removeItem(this);
 
@@ -56,6 +69,7 @@ class Decoration extends GameObject {
 
         this.moveTo(snappedPos, { ignoreWalls: true });
         this.#dirty = true;
+        if (this.#isLamp) { lampMaskDirty = true; }
     }
 
     mouseDown(pos) {

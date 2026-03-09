@@ -485,7 +485,7 @@ body[cursor="none"] {
 #cursor {
     --size: 16px;
     --bg-pos-x: 0;
-    --bg-pos-y: 0;
+    --bg-pos-y: 32;
 
     width: var(--size);
     height: var(--size);
@@ -505,8 +505,9 @@ body[cursor="none"] {
 }
 
 #cursor[icon="candy"] {
-    --bg-pos-x: calc(-3 * var(--size));
-    --bg-pos-y: calc(-3 * var(--size));
+    background-image: url(./sprites/consumables.png);
+    background-position-x: var(--consumable-x, 0px);
+    background-position-y: var(--consumable-y, 0px);
     opacity: 1;
 }
 

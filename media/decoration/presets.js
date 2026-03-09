@@ -15,9 +15,13 @@ class DecorationPreset {
     };
 
     static LAMPS = {
-        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 192), price: 50, isLamp: true, lightRadius: 60 },
-        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 192), price: 50, isLamp: true, lightRadius: 60 },
-        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 192), price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 192), nightSpriteOffsetY: 256, price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 192), nightSpriteOffsetY: 256, price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 192), nightSpriteOffsetY: 256, price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_04: { name: 'Object 04', size: new Vec2(16, 48), spriteOffset: new Vec2(96, 192), nightSpriteOffsetY: 256, price: 50, isLamp: true, lightRadius: 80 },
+        OBJECT_05: { name: 'Object 05', size: new Vec2(32, 48), spriteOffset: new Vec2(128, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
+        OBJECT_06: { name: 'Object 06', size: new Vec2(32, 48), spriteOffset: new Vec2(160, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
+        OBJECT_07: { name: 'Object 07', size: new Vec2(32, 48), spriteOffset: new Vec2(192, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
     };
 
     static LARGE_MISC = {

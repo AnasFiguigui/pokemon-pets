@@ -71,6 +71,14 @@ function selectConsumable(id) {
     //Set selected consumable and toggle candy action
     Game.setSelectedConsumable(id);
     Game.setAction(Action.CANDY);
+
+    //Update cursor to show the selected consumable sprite
+    const info = ConsumableCatalog.find(c => c.id === id);
+    if (info) {
+        const el = document.getElementById('cursor');
+        el.style.setProperty('--consumable-x', `${-info.spriteOffset.x}px`);
+        el.style.setProperty('--consumable-y', `${-info.spriteOffset.y}px`);
+    }
 }
 
 function openBackpack() {
@@ -206,7 +214,14 @@ function createStoreItem(name, price) {
     element.append(text);
 
     //Add price to text
-    if (typeof price === 'number') { text.innerHTML += `<br><span class="storeButtonMoney" ${price > Game.money ? 'expensive' : ''}>${price}G</span>`; }
+    if (typeof price === 'number') {
+        text.appendChild(document.createElement('br'));
+        const priceSpan = document.createElement('span');
+        priceSpan.classList.add('storeButtonMoney');
+        if (price > Game.money) { priceSpan.setAttribute('expensive', ''); }
+        priceSpan.innerText = `${price}G`;
+        text.appendChild(priceSpan);
+    }
 
     //Return element
     return element;
@@ -470,6 +485,9 @@ function handleSpawnMessage(message) {
             new WildPokemon(specie); // NOSONAR - constructor registers in Game.wildPokemons
             break;
         }
+        case 'retry_wild_spawn':
+            Game.wildPokemonSpawner.wait(30 * 1000);
+            break;
         case 'remove_pokemon':
         case 'remove_pet':
             Game.pets[message.index].remove();
@@ -497,6 +515,7 @@ function handleMenuMessage(message) {
 
 window.addEventListener('message', event => { // NOSONAR - VS Code webview; extension host origin differs from webview origin
     const message = event.data;
+    if (typeof message?.type !== 'string') { return; }
     handleGameMessage(message);
     handleSettingsMessage(message);
     handleSpawnMessage(message);
@@ -504,6 +523,7 @@ window.addEventListener('message', event => { // NOSONAR - VS Code webview; exte
 });
 
 //Night overlay & lamp lighting
+// eslint-disable-next-line no-unused-vars -- read by decoration/object.js
 let nightOverlayActive = false;
 
 function updateNightOverlay(timeOfDay, opacity) {
@@ -513,7 +533,14 @@ function updateNightOverlay(timeOfDay, opacity) {
     overlay.style.opacity = opacity;
     glow.style.opacity = nightOverlayActive ? 1 : 0;
 
+    //Switch lamp sprites (day = off, night = on)
+    for (const decor of Game.decoration) {
+        if (!decor.isLamp) { continue; }
+        decor.spriteOffset.y = nightOverlayActive ? decor.nightSpriteY : decor.daySpriteY;
+    }
+
     if (nightOverlayActive) {
+        lampMaskDirty = true;
         updateLampMasks();
     } else {
         overlay.style.maskImage = '';
@@ -526,7 +553,7 @@ function buildLampMask(lamps, scale) {
     if (lamps.length === 0) { return ''; }
     return lamps.map(l => {
         const cx = (l.x + l.halfW) * scale;
-        const cy = (l.y + l.halfH) * scale;
+        const cy = (l.y + l.halfH + 8) * scale;
         const r = l.radius * scale;
         return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,1) 100%)`;
     }).join(', ');
@@ -536,7 +563,7 @@ function buildLampGlow(lamps, scale) {
     if (lamps.length === 0) { return 'transparent'; }
     const gradients = lamps.map(l => {
         const cx = (l.x + l.halfW) * scale;
-        const cy = (l.y + l.halfH) * scale;
+        const cy = (l.y + l.halfH + 8) * scale;
         const r = l.radius * scale;
         return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(255,200,80,0.18) 0%, rgba(255,180,60,0.08) 40%, transparent 100%)`;
     }).join(', ');
@@ -681,7 +708,12 @@ document.onmouseleave = event => {
 Game.start();
 
 //Update lamp masks every frame (so dragged lamps update their light in real-time)
-Game.onAfterDraw = () => { updateLampMasks(); };
+let lampMaskDirty = true;
+Game.onAfterDraw = () => {
+    if (!nightOverlayActive || !lampMaskDirty) { return; }
+    lampMaskDirty = false;
+    updateLampMasks();
+};
 
 //Show top bar while any menu is open (if not permanently visible)
 Menus.onOpen = () => {
