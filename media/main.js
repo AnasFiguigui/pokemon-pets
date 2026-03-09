@@ -508,14 +508,17 @@ let nightOverlayActive = false;
 
 function updateNightOverlay(timeOfDay, opacity) {
     const overlay = document.getElementById('night-overlay');
+    const glow = document.getElementById('lamp-glow');
     nightOverlayActive = timeOfDay === 'night';
     overlay.style.opacity = opacity;
+    glow.style.opacity = nightOverlayActive ? 1 : 0;
 
     if (nightOverlayActive) {
         updateLampMasks();
     } else {
         overlay.style.maskImage = '';
         overlay.style.webkitMaskImage = '';
+        glow.style.background = '';
     }
 }
 
@@ -529,8 +532,20 @@ function buildLampMask(lamps, scale) {
     }).join(', ');
 }
 
+function buildLampGlow(lamps, scale) {
+    if (lamps.length === 0) { return 'transparent'; }
+    const gradients = lamps.map(l => {
+        const cx = (l.x + l.halfW) * scale;
+        const cy = (l.y + l.halfH) * scale;
+        const r = l.radius * scale;
+        return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(255,200,80,0.18) 0%, rgba(255,180,60,0.08) 40%, transparent 100%)`;
+    }).join(', ');
+    return gradients;
+}
+
 function updateLampMasks() {
     const overlay = document.getElementById('night-overlay');
+    const glow = document.getElementById('lamp-glow');
     if (!nightOverlayActive) { return; }
 
     //Collect all lamp decorations
@@ -546,6 +561,7 @@ function updateLampMasks() {
         });
     }
 
+    //Dark overlay mask (punch transparent holes where lamps are)
     const mask = buildLampMask(lamps, Game.scale);
     overlay.style.maskImage = mask;
     overlay.style.webkitMaskImage = mask;
@@ -556,6 +572,9 @@ function updateLampMasks() {
         overlay.style.maskComposite = '';
         overlay.style.webkitMaskComposite = '';
     }
+
+    //Warm glow layer (additive warm light where lamps are)
+    glow.style.background = buildLampGlow(lamps, Game.scale);
 }
 
 //Cursor events

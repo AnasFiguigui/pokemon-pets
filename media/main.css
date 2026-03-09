@@ -170,6 +170,7 @@ body[cursor="none"] {
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    z-index: 15;
 
     /* Decoration */
     background-color: rgba(0, 0, 0, 0.25);
@@ -400,7 +401,7 @@ body[cursor="none"] {
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    z-index: 10;
+    z-index: 20;
 
     /* Other */
     cursor: default;
@@ -526,8 +527,27 @@ body[cursor="none"] {
     inset: 0;
     z-index: 5;
 
+    /* Visuals – deep blue night tint */
+    background: rgb(8, 12, 42);
+    opacity: 0;
+
+    /* Other */
+    pointer-events: none;
+    transition: opacity 2s ease;
+}
+
+/* Warm lamp glow layer (rendered below the dark overlay) */
+#lamp-glow {
+    /* Size */
+    width: 100%;
+    height: 100%;
+
+    /* Layout */
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+
     /* Visuals */
-    background: black;
     opacity: 0;
 
     /* Other */
