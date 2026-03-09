@@ -3,8 +3,12 @@ class Decoration extends GameObject {
     get isDecoration() { return true; }
 
     #price = 0;
+    #isLamp = false;
+    #lightRadius = 0;
     
     get price() { return this.#price; }
+    get isLamp() { return this.#isLamp; }
+    get lightRadius() { return this.#lightRadius; }
 
     #snap = 16;
     #moving = false;
@@ -18,6 +22,8 @@ class Decoration extends GameObject {
         super({ ...preset, ...config });
 
         if (typeof preset.price === 'number') this.#price = preset.price;
+        if (preset.isLamp === true) this.#isLamp = true;
+        if (typeof preset.lightRadius === 'number') this.#lightRadius = preset.lightRadius;
 
         Game.decoration.push(this);
     }

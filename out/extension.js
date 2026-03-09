@@ -84,8 +84,8 @@ function loadDecor(decor) {
 // ── Day/Night Cycle ─────────────────────────────────────────────────────
 function sendDayNightTint() {
     const timeOfDay = day_night_1.DayNightCycle.getTimeOfDay();
-    const tint = day_night_1.DayNightCycle.getTint(timeOfDay);
-    webview.postMessage({ type: 'day_night', value: tint, timeOfDay });
+    const opacity = day_night_1.DayNightCycle.getOverlayOpacity(timeOfDay);
+    webview.postMessage({ type: 'day_night', timeOfDay, opacity });
 }
 function startDayNightTimer() {
     stopDayNightTimer();
@@ -414,7 +414,7 @@ function activate(context) {
             }
             else {
                 stopDayNightTimer();
-                webview.postMessage({ type: 'day_night', value: 'none', timeOfDay: 'day' });
+                webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
         }
     }));

@@ -69,8 +69,8 @@ function loadDecor(decor: Decoration): void {
 
 function sendDayNightTint(): void {
     const timeOfDay = DayNightCycle.getTimeOfDay();
-    const tint = DayNightCycle.getTint(timeOfDay);
-    webview.postMessage({ type: 'day_night', value: tint, timeOfDay });
+    const opacity = DayNightCycle.getOverlayOpacity(timeOfDay);
+    webview.postMessage({ type: 'day_night', timeOfDay, opacity });
 }
 
 function startDayNightTimer(): void {
@@ -426,7 +426,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 startDayNightTimer();
             } else {
                 stopDayNightTimer();
-                webview.postMessage({ type: 'day_night', value: 'none', timeOfDay: 'day' });
+                webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
         }
     }));

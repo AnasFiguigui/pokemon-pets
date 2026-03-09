@@ -36,18 +36,15 @@ describe('DayNightCycle', () => {
         });
     });
 
-    // ── getTint ─────────────────────────────────────────────────────────
+    // ── getOverlayOpacity ─────────────────────────────────────────────────
 
-    describe('getTint', () => {
-        it('returns "none" for day', () => {
-            expect(DayNightCycle.getTint('day')).toBe('none');
+    describe('getOverlayOpacity', () => {
+        it('returns 0 for day', () => {
+            expect(DayNightCycle.getOverlayOpacity('day')).toBe(0);
         });
 
-        it('returns a CSS filter string for night', () => {
-            const tint = DayNightCycle.getTint('night');
-            expect(tint).toContain('brightness');
-            expect(tint).toContain('saturate');
-            expect(tint).not.toBe('none');
+        it('returns 0.65 for night', () => {
+            expect(DayNightCycle.getOverlayOpacity('night')).toBe(0.65);
         });
     });
 

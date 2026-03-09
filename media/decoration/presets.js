@@ -15,9 +15,9 @@ class DecorationPreset {
     };
 
     static LAMPS = {
-        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 192), price: 50, isLamp: true },
-        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 192), price: 50, isLamp: true },
-        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 192), price: 50, isLamp: true },
+        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 192), price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 192), price: 50, isLamp: true, lightRadius: 60 },
+        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 192), price: 50, isLamp: true, lightRadius: 60 },
     };
 
     static LARGE_MISC = {

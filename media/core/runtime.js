@@ -472,6 +472,9 @@ class Game {
         //Draw double bufffer into real canvas
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.drawImage(this.canvasBuffer, 0, 0);
+
+        //Post-draw callback (e.g. update lamp masks)
+        if (typeof this.onAfterDraw === 'function') { this.onAfterDraw(); }
     };
 
     //Game objects

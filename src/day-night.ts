@@ -14,14 +14,14 @@ export class DayNightCycle {
         return (hour >= 6 && hour < 20) ? 'day' : 'night';
     }
 
-    /** Returns the CSS filter tint for the current time of day. */
-    public static getTint(timeOfDay: TimeOfDay): string {
+    /** Returns the overlay opacity for the given time of day. */
+    public static getOverlayOpacity(timeOfDay: TimeOfDay): number {
         switch (timeOfDay) {
             case 'night':
-                return 'brightness(0.55) saturate(0.7) sepia(0.3) hue-rotate(200deg)';
+                return 0.65;
             case 'day':
             default:
-                return 'none';
+                return 0;
         }
     }
 

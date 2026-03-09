@@ -390,7 +390,7 @@ function handleGameMessage(message) {
             }
             break;
         case 'day_night':
-            Game.background.style.filter = message.value;
+            updateNightOverlay(message.timeOfDay, message.opacity);
             break;
         case 'evolution':
             //Visual sparkle effect on the evolved pet
@@ -503,6 +503,61 @@ window.addEventListener('message', event => { // NOSONAR - VS Code webview; exte
     handleMenuMessage(message);
 });
 
+//Night overlay & lamp lighting
+let nightOverlayActive = false;
+
+function updateNightOverlay(timeOfDay, opacity) {
+    const overlay = document.getElementById('night-overlay');
+    nightOverlayActive = timeOfDay === 'night';
+    overlay.style.opacity = opacity;
+
+    if (nightOverlayActive) {
+        updateLampMasks();
+    } else {
+        overlay.style.maskImage = '';
+        overlay.style.webkitMaskImage = '';
+    }
+}
+
+function buildLampMask(lamps, scale) {
+    if (lamps.length === 0) { return ''; }
+    return lamps.map(l => {
+        const cx = (l.x + l.halfW) * scale;
+        const cy = (l.y + l.halfH) * scale;
+        const r = l.radius * scale;
+        return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,1) 100%)`;
+    }).join(', ');
+}
+
+function updateLampMasks() {
+    const overlay = document.getElementById('night-overlay');
+    if (!nightOverlayActive) { return; }
+
+    //Collect all lamp decorations
+    const lamps = [];
+    for (const decor of Game.decoration) {
+        if (!decor.isLamp) { continue; }
+        lamps.push({
+            x: decor.pos.x,
+            y: decor.pos.y,
+            halfW: decor.size.x / 2,
+            halfH: decor.size.y / 2,
+            radius: decor.lightRadius || 60,
+        });
+    }
+
+    const mask = buildLampMask(lamps, Game.scale);
+    overlay.style.maskImage = mask;
+    overlay.style.webkitMaskImage = mask;
+    if (mask) {
+        overlay.style.maskComposite = 'intersect';
+        overlay.style.webkitMaskComposite = 'source-in';
+    } else {
+        overlay.style.maskComposite = '';
+        overlay.style.webkitMaskComposite = '';
+    }
+}
+
 //Cursor events
 function handleDecorMouseDown(pos) {
     //Sort objects
@@ -605,6 +660,9 @@ document.onmouseleave = event => {
 
 //Start game loop
 Game.start();
+
+//Update lamp masks every frame (so dragged lamps update their light in real-time)
+Game.onAfterDraw = () => { updateLampMasks(); };
 
 //Show top bar while any menu is open (if not permanently visible)
 Menus.onOpen = () => {
