@@ -14,6 +14,12 @@ class DecorationPreset {
         OBJECT_11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 64), price: 300 },
     };
 
+    static LAMPS = {
+        OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 192), price: 50, isLamp: true },
+        OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 192), price: 50, isLamp: true },
+        OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(64, 192), price: 50, isLamp: true },
+    };
+
     static LARGE_MISC = {
 
     };
