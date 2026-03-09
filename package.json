@@ -91,7 +91,7 @@
             },
             {
                 "command": "pokemon-pets.toggleTopBar",
-                "title": "Toggle Gold & Candy",
+                "title": "Wallet toggler",
                 "icon": {
                     "light": "media/icons/light/wallet.svg",
                     "dark": "media/icons/dark/wallet.svg"
