@@ -19,7 +19,7 @@ export type Consumable = {
 };
 
 export const Consumables: Consumable[] = [
-    { id: 'candy', name: 'Candy', price: 30, description: 'Feed to a Pokémon to help it grow.' },
+    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.' },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.' },

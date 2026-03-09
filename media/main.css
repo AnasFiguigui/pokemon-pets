@@ -568,7 +568,7 @@ body[cursor="none"] {
 }
 
 .pokedexSprite {
-    /* Size */
+    /* Size (overridden inline for 48px sprites) */
     width: 32px;
     height: 32px;
 

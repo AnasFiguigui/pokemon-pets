@@ -34,16 +34,16 @@ function showTopBarTemporary() {
 
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
-    { id: 'candy', name: 'Candy', price: 30, spriteOffset: { x: 0, y: 32 } },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, spriteOffset: { x: 16, y: 32 } },
-    { id: 'water_stone', name: 'Water Stone', price: 100, spriteOffset: { x: 32, y: 32 } },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, spriteOffset: { x: 48, y: 32 } },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, spriteOffset: { x: 64, y: 32 } },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, spriteOffset: { x: 80, y: 32 } },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, spriteOffset: { x: 96, y: 32 } },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, spriteOffset: { x: 112, y: 32 } },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, spriteOffset: { x: 128, y: 32 } },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, spriteOffset: { x: 144, y: 32 } },
+    { id: 'candy', name: 'Rare Candy', price: 30, spriteOffset: { x: 0, y: 0 } },
+    { id: 'fire_stone', name: 'Fire Stone', price: 100, spriteOffset: { x: 32, y: 0 } },
+    { id: 'water_stone', name: 'Water Stone', price: 100, spriteOffset: { x: 64, y: 0 } },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, spriteOffset: { x: 96, y: 0 } },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, spriteOffset: { x: 128, y: 0 } },
+    { id: 'moon_stone', name: 'Moon Stone', price: 120, spriteOffset: { x: 160, y: 0 } },
+    { id: 'sun_stone', name: 'Sun Stone', price: 120, spriteOffset: { x: 192, y: 0 } },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, spriteOffset: { x: 224, y: 0 } },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, spriteOffset: { x: 256, y: 0 } },
+    { id: 'ice_stone', name: 'Ice Stone', price: 100, spriteOffset: { x: 288, y: 0 } },
 ];
 
 //Actions menu
@@ -101,14 +101,14 @@ function openBackpack() {
             element.type = 'button';
             element.classList.add('menuButton', 'storeButton');
 
-            //Add consumable icon
+            //Consumables sprites
             if (info) {
                 const imgBox = document.createElement('div');
                 const img = document.createElement('div');
-                img.style.setProperty('--image', `url('./sprites/decoration.png')`);
-                img.style.setProperty('--width', '16px');
-                img.style.setProperty('--height', '16px');
-                img.style.setProperty('--scale', `${50 / 16}`);
+                img.style.setProperty('--image', `url('./sprites/consumables.png')`);
+                img.style.setProperty('--width', '32px');
+                img.style.setProperty('--height', '32px');
+                img.style.setProperty('--scale', `${50 / 32}`);
                 img.style.setProperty('--spriteOffset', `${-info.spriteOffset.x}px ${-info.spriteOffset.y}px`);
                 imgBox.prepend(img);
                 element.appendChild(imgBox);
@@ -151,12 +151,15 @@ function renderPokedex() {
             const entry = document.createElement('div');
             entry.classList.add('pokedexEntry');
 
-            //Sprite (32x32, vec 0,0)
+            //Sprite (sized per pokemon, vec 0,0)
+            const spriteSize = pet.spriteSize === 48 ? 48 : 32;
             const sprite = document.createElement('img');
             const spriteName = (pet.sprite ?? pet.specie).toString().toLowerCase().replaceAll(' ', '_');
             sprite.src = `${Game.mediaURI}sprites/pokemons/${spriteName}.png`;
             sprite.alt = pet.name;
             sprite.classList.add('pokedexSprite');
+            sprite.style.width = `${spriteSize}px`;
+            sprite.style.height = `${spriteSize}px`;
             entry.appendChild(sprite);
 
             //Info column
@@ -342,10 +345,10 @@ function openStoreConsumablesMenu() {
         //Add sprite image (using decoration sprite sheet temporarily)
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
-        img.style.setProperty('--image', `url('./sprites/decoration.png')`);
-        img.style.setProperty('--width', '16px');
-        img.style.setProperty('--height', '16px');
-        img.style.setProperty('--scale', `${50 / 16}`);
+        img.style.setProperty('--image', `url('./sprites/consumables.png')`);
+        img.style.setProperty('--width', '32px');
+        img.style.setProperty('--height', '32px');
+        img.style.setProperty('--scale', `${50 / 32}`);
         img.style.setProperty('--spriteOffset', `${-item.spriteOffset.x}px ${-item.spriteOffset.y}px`);
         imgBox.prepend(img);
         element.prepend(imgBox);
@@ -400,6 +403,9 @@ function handleGameMessage(message) {
         case 'pokedex':
             pokedexData = Array.isArray(message.value) ? message.value : [];
             renderPokedex();
+            break;
+        case 'consumable_failed':
+            Game.showMessage('It had no effect!');
             break;
         default:
             break;

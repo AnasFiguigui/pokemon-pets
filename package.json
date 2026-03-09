@@ -93,13 +93,13 @@
                 "command": "pokemon-pets.toggleTopBar",
                 "title": "Toggle Gold & Candy",
                 "icon": {
-                    "light": "media/icons/light/add.svg",
-                    "dark": "media/icons/dark/add.svg"
+                    "light": "media/icons/light/wallet.svg",
+                    "dark": "media/icons/dark/wallet.svg"
                 }
             },
             {
                 "command": "pokemon-pets.actions",
-                "title": "Pokémon actions",
+                "title": "Menus & Actions",
                 "icon": {
                     "light": "media/icons/light/actions.svg",
                     "dark": "media/icons/dark/actions.svg"

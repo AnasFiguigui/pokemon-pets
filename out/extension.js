@@ -141,18 +141,38 @@ function handleWebviewMessage(message) {
             if (currentCount <= 0) {
                 break;
             }
-            saveManager.updateInventory(consumableId, currentCount - 1);
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            if (consumableId === 'candy') {
-                telemetry.trackCandyFed();
-            }
-            // Check evolution (candy uses feedCandy, other items use useItem)
             const petIndex = message.index;
-            if (typeof petIndex === 'number' && petIndex >= 0) {
-                const result = consumableId === 'candy'
-                    ? evolution.feedCandy(petIndex)
-                    : evolution.useItem(petIndex, consumableId);
+            if (consumableId === 'candy') {
+                // Candy is always consumed
+                saveManager.updateInventory(consumableId, currentCount - 1);
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                telemetry.trackCandyFed();
+                if (typeof petIndex === 'number' && petIndex >= 0) {
+                    const result = evolution.feedCandy(petIndex);
+                    if (result.evolved && result.newForm) {
+                        const pet = saveManager.save.pets[petIndex];
+                        webview.postMessage({ type: 'remove_pet', index: petIndex });
+                        loadPet(pet);
+                        webview.postMessage({
+                            type: 'evolution',
+                            index: petIndex,
+                            name: pet.name,
+                            newForm: result.newForm.name,
+                        });
+                        telemetry.trackPokemonEvolved(pet.specie);
+                        vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+                    }
+                }
+            }
+            else {
+                // Evolution stones: only consumed if evolution succeeds
+                if (typeof petIndex !== 'number' || petIndex < 0) {
+                    break;
+                }
+                const result = evolution.useItem(petIndex, consumableId);
                 if (result.evolved && result.newForm) {
+                    saveManager.updateInventory(consumableId, currentCount - 1);
+                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                     const pet = saveManager.save.pets[petIndex];
                     webview.postMessage({ type: 'remove_pet', index: petIndex });
                     loadPet(pet);
@@ -164,6 +184,10 @@ function handleWebviewMessage(message) {
                     });
                     telemetry.trackPokemonEvolved(pet.specie);
                     vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+                }
+                else {
+                    // Stone had no effect — not consumed
+                    webview.postMessage({ type: 'consumable_failed' });
                 }
             }
             break;
