@@ -484,6 +484,7 @@ class Game {
     static #ball;            //Pets ball object, gets init later
     static #pets = [];       //List of all the pets       (do not sort, positions must be the same as in extension.ts)
     static #decoration = []; //List of all the decoration (do not sort, positions must be the same as in extension.ts)
+    static #plants = [];     //List of all the growable plants (do not sort, indices must match extension.ts)
     static #wildPokemons = [];   //List of all the wild pokemons
     static #wildPokemonSpawner = new Timeout(() => vscode.postMessage({ type: 'spawn_wild_pokemon' }));
 
@@ -491,6 +492,7 @@ class Game {
     static get ball() { return this.#ball; }
     static get pets() { return this.#pets; }
     static get decoration() { return this.#decoration; }
+    static get plants() { return this.#plants; }
     static get wildPokemons() { return this.#wildPokemons; }
     static get wildPokemonSpawner() { return this.#wildPokemonSpawner; }
 

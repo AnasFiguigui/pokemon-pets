@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Pokemons = exports.WildPokemonSpecies = exports.Consumables = void 0;
+exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = void 0;
 exports.Consumables = [
     { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy' },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores stamina to a Pokémon.', category: 'food', restoreAmount: 10 },
-    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreAmount: 20 },
+    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15 },
+    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20 },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
@@ -14,6 +14,21 @@ exports.Consumables = [
     { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.', category: 'stone' },
     { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.', category: 'stone' },
     { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.', category: 'stone' },
+];
+exports.PlantTypes = [
+    {
+        id: 'oran_berry_plant',
+        name: 'Oran Berry Seed',
+        price: 50,
+        description: 'Grows Oran Berries. Fast grower!',
+        producesId: 'oran_berry',
+        growthHours: [0.02, 0.02, 0.02],
+        minFruits: 1,
+        maxFruits: 3,
+        size: [16, 32],
+        spriteOffset: [0, 0],
+        phaseStep: [0, 16],
+    },
 ];
 exports.WildPokemonSpecies = [
     { specie: 'meowth', nightOnly: false },

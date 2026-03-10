@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Decoration, Pet, Save, getMaxHp, getMaxStamina } from './models';
+import { Decoration, Pet, PlantInstance, Save, getMaxHp, getMaxStamina } from './models';
 
 export const MAX_SUMMONED_POKEMONS = 6;
 
@@ -102,6 +102,12 @@ export class SaveManager {
         // Validate decoration
         if (!Array.isArray(this.save.decoration)) {
             this.save.decoration = [];
+            saveUpdated = true;
+        }
+
+        // Validate plants
+        if (!Array.isArray(this.save.plants)) {
+            this.save.plants = [];
             saveUpdated = true;
         }
 
@@ -244,6 +250,38 @@ export class SaveManager {
     public removeDecor(index: number): void {
         this.save.decoration.splice(index, 1);
         this.scheduleSave();
+    }
+
+    /** Adds a plant and saves. */
+    public addPlant(plant: PlantInstance): void {
+        this.save.plants.push(plant);
+        this.scheduleSave();
+    }
+
+    /** Moves a plant to a new position and saves. */
+    public movePlant(index: number, x: number, y: number): void {
+        const plant = this.save.plants[index];
+        if (plant) {
+            plant.x = x;
+            plant.y = y;
+            this.scheduleSave();
+        }
+    }
+
+    /** Removes the plant at the given index and saves. */
+    public removePlant(index: number): void {
+        this.save.plants.splice(index, 1);
+        this.scheduleSave();
+    }
+
+    /** Advances a plant's phase and resets its phase start time. */
+    public updatePlantPhase(index: number, phase: number): void {
+        const plant = this.save.plants[index];
+        if (plant) {
+            plant.phase = phase;
+            plant.phaseStartTime = new Date().toISOString();
+            this.scheduleSave();
+        }
     }
 
     /** Updates a pet's HP and/or stamina values. */

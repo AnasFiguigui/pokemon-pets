@@ -48,6 +48,17 @@ class WildPokemonAnimations {
                 4,
                 { loop: false },
             ),
+            'sleep': [
+                new Animation(
+                    [[0, 11], [1, 11]],
+                    30,
+                ),
+                new Animation(
+                    [[0, 10], [1, 10], [2, 10], [3, 10]],
+                    3,
+                    { loop: false },
+                ),
+            ],
         }; 
     }
 }
@@ -56,9 +67,8 @@ class WildPokemonAI extends AI {
 
     //State
     constructor(config) { 
-        //Fix config & disable sleep
+        //Fix config
         if (typeof config !== 'object') { config = {}; }
-        config.canSleep = false;
         
         //Base AI
         super(config); 

@@ -90,6 +90,22 @@
                 }
             },
             {
+                "command": "pokemon-pets.toggleAutoFeed",
+                "title": "Auto Feed: OFF",
+                "icon": {
+                    "light": "media/icons/light/switch-off.svg",
+                    "dark": "media/icons/dark/switch-off.svg"
+                }
+            },
+            {
+                "command": "pokemon-pets.toggleAutoFeedOff",
+                "title": "Auto Feed: ON",
+                "icon": {
+                    "light": "media/icons/light/switch-on.svg",
+                    "dark": "media/icons/dark/switch-on.svg"
+                }
+            },
+            {
                 "command": "pokemon-pets.toggleTopBar",
                 "title": "Wallet toggler",
                 "icon": {
@@ -147,19 +163,29 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "pokemon-pets.toggleTopBar",
-                    "when": "view == pokemon-pets",
+                    "command": "pokemon-pets.toggleAutoFeed",
+                    "when": "view == pokemon-pets && !pokemon-pets.autoFeedOn",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "pokemon-pets.actions",
+                    "command": "pokemon-pets.toggleAutoFeedOff",
+                    "when": "view == pokemon-pets && pokemon-pets.autoFeedOn",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "pokemon-pets.toggleTopBar",
                     "when": "view == pokemon-pets",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "pokemon-pets.settings",
+                    "command": "pokemon-pets.actions",
                     "when": "view == pokemon-pets",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "pokemon-pets.settings",
+                    "when": "view == pokemon-pets",
+                    "group": "navigation@5"
                 }
             ]
         },

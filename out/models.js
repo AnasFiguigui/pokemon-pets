@@ -18,6 +18,7 @@ class Save {
     money = 0;
     pets = [];
     decoration = [];
+    plants = [];
     inventory = {};
     streak = {
         currentStreak: 0,

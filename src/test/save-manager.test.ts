@@ -14,6 +14,7 @@ function completeSave(overrides: Record<string, unknown> = {}): Record<string, u
         money: 0,
         pets: [],
         decoration: [],
+        plants: [],
         inventory: {},
         streak: { currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 },
         telemetry: {

@@ -35,7 +35,7 @@ function showTopBarTemporary() {
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
     { id: 'candy', name: 'Rare Candy', price: 30, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, category: 'food', stat: '+10 STA', spriteOffset: { x: 32, y: 0 }, cursorOffset: { x: 32, y: 32 } },
+    { id: 'oran_berry', name: 'Oran Berry', price: 15, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 32, y: 0 }, cursorOffset: { x: 32, y: 32 } },
     { id: 'potion', name: 'Potion', price: 25, category: 'potion', stat: '+20 HP', spriteOffset: { x: 64, y: 0 }, cursorOffset: { x: 64, y: 32 } },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
     { id: 'water_stone', name: 'Water Stone', price: 100, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
@@ -46,6 +46,11 @@ const ConsumableCatalog = [
     { id: 'dusk_stone', name: 'Dusk Stone', price: 120, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
     { id: 'shiny_stone', name: 'Shiny Stone', price: 120, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
     { id: 'ice_stone', name: 'Ice Stone', price: 100, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
+];
+
+//Plant catalog (must match extension's PlantTypes array)
+const PlantCatalog = [
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', growthHours: [0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [0, 16] },
 ];
 
 //Actions menu
@@ -303,6 +308,15 @@ function openStoreMenu() {
     consumablesElement.onclick = () => openStoreConsumablesMenu();
     content.appendChild(consumablesElement);
 
+    //Create seeds category
+    const seedsElement = createStoreItem('Seeds');
+    const seedsIcon = document.createElement('img');
+    seedsIcon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+    seedsIcon.alt = 'Seeds';
+    seedsElement.prepend(seedsIcon);
+    seedsElement.onclick = () => openStoreSeedsMenu();
+    content.appendChild(seedsElement);
+
     //Create decoration categories
     for (const category of Object.keys(DecorationPreset)) {
         //Create item element
@@ -440,6 +454,84 @@ function openStoreConsumablesMenu() {
     setTimeout(() => { content.scrollTop = 0; }, 0);
 }
 
+function openStoreSeedsMenu() {
+    //Empty list
+    const content = document.getElementById('storeContent');
+    content.innerHTML = '';
+
+    //Top left back button goes to categories list
+    const backButton = document.getElementById('storeBackBtn');
+    if (backButton) {
+        backButton.innerText = 'Back';
+        backButton.onclick = openStoreMenu;
+    }
+
+    //Create seed items from catalog
+    for (const seed of PlantCatalog) {
+        const stat = `Blossom: ${seed.growthHours[0]}h | Fruit: ${seed.growthHours[1]}h | Ripe: ${seed.growthHours[2]}h`;
+        const element = createStoreItem(seed.name, seed.price, stat);
+
+        //Add sprite preview (phase 2 = ripe)
+        const ripeX = seed.spriteOffset[0] + seed.phaseStep[0] * 2;
+        const ripeY = seed.spriteOffset[1] + seed.phaseStep[1] * 2;
+        const imgBox = document.createElement('div');
+        const img = document.createElement('div');
+        img.style.setProperty('--image', `url('./sprites/plants.png')`);
+        img.style.setProperty('--width', `${seed.size[0]}px`);
+        img.style.setProperty('--height', `${seed.size[1]}px`);
+        img.style.setProperty('--scale', `${50 / Math.max(seed.size[0], seed.size[1])}`);
+        img.style.setProperty('--spriteOffset', `${-ripeX}px ${-ripeY}px`);
+        imgBox.prepend(img);
+        element.prepend(imgBox);
+
+        //Add buy function
+        element.onclick = () => {
+            if (Game.money < seed.price) {
+                Game.showMessage('Not enough gold!');
+                return;
+            }
+
+            //Consume money
+            Game.addMoney(-seed.price);
+
+            //Close menu
+            Menus.close();
+
+            //Create plant
+            const plant = new Plant({
+                plantId: seed.id,
+                index: Game.plants.length - 1,
+                phase: 0,
+                size: seed.size,
+                spriteOffset: seed.spriteOffset,
+                phaseStep: seed.phaseStep,
+                price: seed.price,
+            });
+
+            //Enter decor mode (after creating plant, else it will ask the user to buy one)
+            DecorMode.toggle(true);
+
+            //Center plant with mouse & start dragging it
+            const plantCenterRelativePos = plant.size.mult(0.5);
+            plant.moveTo(plant.snapPos(Cursor.posScaled.sub(plantCenterRelativePos)));
+            plant.startDragging(plantCenterRelativePos);
+
+            //Notify extension to save the plant
+            vscode.postMessage({
+                type: 'add_plant',
+                plantId: seed.id,
+                x: plant.pos.x,
+                y: plant.pos.y,
+            });
+        };
+        content.appendChild(element);
+    }
+
+    //Scroll to top
+    content.scrollTop = 0;
+    setTimeout(() => { content.scrollTop = 0; }, 0);
+}
+
 function refreshStorePrices() {
     const priceElements = document.querySelectorAll('#storeContent .storeButtonMoney');
     for (const el of priceElements) {
@@ -466,6 +558,7 @@ function handleGameMessage(message) {
             Game.pets = [];
             for (const decor of Game.decoration) { Game.objects.removeItem(decor); }
             Game.decoration = [];
+            Game.plants.length = 0;
             Menus.close();
             DecorMode.toggle(false);
             break;
@@ -509,6 +602,9 @@ function handleGameMessage(message) {
             break;
         case 'consumable_failed':
             Game.showMessage('It had no effect!');
+            break;
+        case 'harvest_result':
+            Game.showMessage(`Harvested ${message.count}x ${message.name}!`, true);
             break;
         default:
             break;
@@ -571,6 +667,25 @@ function handleSpawnMessage(message) {
         case 'spawn_wild_pokemon': {
             const specie = message.specie.toLowerCase();
             new WildPokemon(specie); // NOSONAR - constructor registers in Game.wildPokemons
+            break;
+        }
+        case 'spawn_plant': {
+            const plantInfo = PlantCatalog.find(p => p.id === message.plantId);
+            new Plant({ // NOSONAR - constructor registers in Game.plants & Game.decoration
+                plantId: message.plantId,
+                index: message.index,
+                phase: message.phase ?? 0,
+                size: message.size ?? (plantInfo ? plantInfo.size : [16, 32]),
+                spriteOffset: message.spriteOffset ?? (plantInfo ? plantInfo.spriteOffset : [0, 0]),
+                phaseStep: message.phaseStep ?? (plantInfo ? plantInfo.phaseStep : [0, 16]),
+                price: plantInfo ? plantInfo.price : 0,
+                pos: new Vec2(message.x, message.y),
+            });
+            break;
+        }
+        case 'update_plant': {
+            const plant = Game.plants[message.index];
+            if (plant) { plant.setPhase(message.phase); }
             break;
         }
         case 'retry_wild_spawn':

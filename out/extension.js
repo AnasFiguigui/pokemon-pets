@@ -42,6 +42,7 @@ let evolution;
 let streakService;
 let dayNightInterval;
 let staminaDrainInterval;
+let autoFeedEnabled = false;
 /** Interval between stamina drain ticks (6 minutes → 10 stamina/hour). */
 const STAMINA_DRAIN_INTERVAL_MS = 6 * 60_000;
 /** How much stamina drains per tick. */
@@ -50,6 +51,8 @@ const STAMINA_DRAIN_AMOUNT = 1;
 const HP_DRAIN_AMOUNT = 1;
 /** Pre-built map for O(1) consumable lookups by ID. */
 const ConsumablesMap = new Map(game_data_1.Consumables.map(c => [c.id, c]));
+/** Pre-built map for O(1) plant-type lookups by ID. */
+const PlantTypesMap = new Map(game_data_1.PlantTypes.map(p => [p.id, p]));
 // ── Game Initialization ─────────────────────────────────────────────────
 function initGame() {
     webview.postMessage({ type: 'background', value: config.get('background') });
@@ -66,6 +69,9 @@ function initGame() {
     }
     for (const decor of saveManager.save.decoration) {
         loadDecor(decor);
+    }
+    for (let i = 0; i < saveManager.save.plants.length; i++) {
+        loadPlant(saveManager.save.plants[i], i);
     }
     webview.postMessage({ type: 'init' });
 }
@@ -89,6 +95,61 @@ function loadDecor(decor) {
         category: decor.category,
         name: decor.name,
     });
+}
+function loadPlant(plant, index) {
+    const plantType = PlantTypesMap.get(plant.plantId);
+    if (!plantType) {
+        return;
+    }
+    // Calculate current visual phase based on elapsed time
+    const phase = getPlantPhase(plant, plantType);
+    webview.postMessage({
+        type: 'spawn_plant',
+        index,
+        x: plant.x,
+        y: plant.y,
+        plantId: plant.plantId,
+        name: plantType.name,
+        phase,
+        size: plantType.size,
+        spriteOffset: plantType.spriteOffset,
+        phaseStep: plantType.phaseStep,
+    });
+}
+/** Calculates a plant's current visual phase (0–2) based on elapsed time. */
+function getPlantPhase(plant, plantType) {
+    const elapsedMs = Date.now() - new Date(plant.phaseStartTime).getTime();
+    const elapsedHours = elapsedMs / 3_600_000;
+    let phase = plant.phase;
+    let hoursConsumed = 0;
+    while (phase < 2) {
+        const needed = plantType.growthHours[phase];
+        if (hoursConsumed + needed > elapsedHours) {
+            break;
+        }
+        hoursConsumed += needed;
+        phase++;
+    }
+    return phase;
+}
+/** Advances all plants to their correct phase and notifies the webview. */
+function tickPlants() {
+    const plants = saveManager.save.plants;
+    if (plants.length === 0) {
+        return;
+    }
+    for (let i = 0; i < plants.length; i++) {
+        const plant = plants[i];
+        const plantType = PlantTypesMap.get(plant.plantId);
+        if (!plantType) {
+            continue;
+        }
+        const currentPhase = getPlantPhase(plant, plantType);
+        if (currentPhase !== plant.phase) {
+            saveManager.updatePlantPhase(i, currentPhase);
+            webview.postMessage({ type: 'update_plant', index: i, phase: currentPhase });
+        }
+    }
 }
 // ── Day/Night Cycle ─────────────────────────────────────────────────────
 function sendDayNightTint() {
@@ -141,6 +202,61 @@ function drainStamina() {
     }
     // Broadcast updated stats so Pokédex stays fresh
     webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+    // Auto-feed pets that are low
+    if (autoFeedEnabled) {
+        autoFeedPets();
+    }
+}
+/** Auto-feeds pets at ≤25% HP or stamina using cheapest available food, then potions. */
+function autoFeedPets() {
+    const pets = saveManager.save.pets;
+    if (pets.length === 0) {
+        return;
+    }
+    // Build sorted list of food/potion consumables the player owns, cheapest first
+    const healItems = game_data_1.Consumables
+        .filter(c => (c.category === 'food' || c.category === 'potion') && saveManager.getConsumableCount(c.id) > 0)
+        .sort((a, b) => ((a.restoreHp ?? 0) + (a.restoreStamina ?? 0)) - ((b.restoreHp ?? 0) + (b.restoreStamina ?? 0)));
+    if (healItems.length === 0) {
+        return;
+    }
+    let inventoryChanged = false;
+    for (let i = 0; i < pets.length; i++) {
+        const pet = pets[i];
+        const maxHp = (0, models_1.getMaxHp)(pet);
+        const maxStamina = (0, models_1.getMaxStamina)(pet);
+        const hp = pet.hp ?? maxHp;
+        const stamina = pet.stamina ?? maxStamina;
+        const hpPct = maxHp > 0 ? hp / maxHp : 1;
+        const staPct = maxStamina > 0 ? stamina / maxStamina : 1;
+        // Only auto-feed when ≤25%
+        if (hpPct > 0.25 && staPct > 0.25) {
+            continue;
+        }
+        // Try each available consumable (cheapest first)
+        for (const consumable of healItems) {
+            const count = saveManager.getConsumableCount(consumable.id);
+            if (count <= 0) {
+                continue;
+            }
+            const canHealHp = (consumable.restoreHp ?? 0) > 0 && hp < maxHp;
+            const canHealSta = (consumable.restoreStamina ?? 0) > 0 && stamina < maxStamina;
+            if (!canHealHp && !canHealSta) {
+                continue;
+            }
+            // Use it
+            saveManager.updateInventory(consumable.id, count - 1);
+            const newHp = Math.min(maxHp, hp + (consumable.restoreHp ?? 0));
+            const newStamina = Math.min(maxStamina, stamina + (consumable.restoreStamina ?? 0));
+            saveManager.updatePetStats(i, newHp, newStamina);
+            inventoryChanged = true;
+            break; // one item per pet per tick
+        }
+    }
+    if (inventoryChanged) {
+        webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+        webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+    }
 }
 /** Builds an array of { hp, stamina, maxHp, maxStamina } for each pet. */
 function buildPetStats() {
@@ -153,12 +269,26 @@ function buildPetStats() {
 }
 function startStaminaDrainTimer() {
     stopStaminaDrainTimer();
-    staminaDrainInterval = setInterval(() => drainStamina(), STAMINA_DRAIN_INTERVAL_MS);
+    staminaDrainInterval = setInterval(() => {
+        drainStamina();
+    }, STAMINA_DRAIN_INTERVAL_MS);
 }
 function stopStaminaDrainTimer() {
     if (staminaDrainInterval !== undefined) {
         clearInterval(staminaDrainInterval);
         staminaDrainInterval = undefined;
+    }
+}
+let plantTickInterval;
+const PLANT_TICK_INTERVAL_MS = 60_000; // check plant growth every 60 seconds
+function startPlantTickTimer() {
+    stopPlantTickTimer();
+    plantTickInterval = setInterval(() => tickPlants(), PLANT_TICK_INTERVAL_MS);
+}
+function stopPlantTickTimer() {
+    if (plantTickInterval !== undefined) {
+        clearInterval(plantTickInterval);
+        plantTickInterval = undefined;
     }
 }
 // ── Webview Message Handler ─────────────────────────────────────────────
@@ -257,29 +387,8 @@ function handleWebviewMessage(message) {
                 if (!consumable) {
                     break;
                 }
-                if (consumable.category === 'food') {
-                    // Food (berry): restores stamina
-                    if (typeof petIndex !== 'number' || petIndex < 0) {
-                        break;
-                    }
-                    const pet = saveManager.save.pets[petIndex];
-                    if (!pet) {
-                        break;
-                    }
-                    const maxStamina = (0, models_1.getMaxStamina)(pet);
-                    const currentStamina = pet.stamina ?? maxStamina;
-                    if (currentStamina >= maxStamina) {
-                        webview.postMessage({ type: 'consumable_failed' });
-                        break;
-                    }
-                    saveManager.updateInventory(consumableId, currentCount - 1);
-                    const newStamina = Math.min(maxStamina, currentStamina + (consumable.restoreAmount ?? 10));
-                    saveManager.updatePetStats(petIndex, pet.hp ?? (0, models_1.getMaxHp)(pet), newStamina);
-                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
-                }
-                else if (consumable.category === 'potion') {
-                    // Potion: restores HP
+                if (consumable.category === 'food' || consumable.category === 'potion') {
+                    // Food/potion: restores HP and/or stamina
                     if (typeof petIndex !== 'number' || petIndex < 0) {
                         break;
                     }
@@ -288,14 +397,19 @@ function handleWebviewMessage(message) {
                         break;
                     }
                     const maxHp = (0, models_1.getMaxHp)(pet);
+                    const maxStamina = (0, models_1.getMaxStamina)(pet);
                     const currentHp = pet.hp ?? maxHp;
-                    if (currentHp >= maxHp) {
+                    const currentStamina = pet.stamina ?? maxStamina;
+                    const canHealHp = (consumable.restoreHp ?? 0) > 0 && currentHp < maxHp;
+                    const canHealSta = (consumable.restoreStamina ?? 0) > 0 && currentStamina < maxStamina;
+                    if (!canHealHp && !canHealSta) {
                         webview.postMessage({ type: 'consumable_failed' });
                         break;
                     }
                     saveManager.updateInventory(consumableId, currentCount - 1);
-                    const newHp = Math.min(maxHp, currentHp + (consumable.restoreAmount ?? 20));
-                    saveManager.updatePetStats(petIndex, newHp, pet.stamina ?? (0, models_1.getMaxStamina)(pet));
+                    const newHp = Math.min(maxHp, currentHp + (consumable.restoreHp ?? 0));
+                    const newStamina = Math.min(maxStamina, currentStamina + (consumable.restoreStamina ?? 0));
+                    saveManager.updatePetStats(petIndex, newHp, newStamina);
                     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                     webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
                 }
@@ -362,6 +476,55 @@ function handleWebviewMessage(message) {
         case 'remove_decor':
             saveManager.removeDecor(message.index);
             break;
+        case 'add_plant': {
+            const plantId = message.plantId;
+            const plantType = PlantTypesMap.get(plantId);
+            if (!plantType) {
+                break;
+            }
+            const plantInstance = {
+                x: message.x ?? 0,
+                y: message.y ?? 0,
+                plantId,
+                phase: 0,
+                phaseStartTime: new Date().toISOString(),
+            };
+            saveManager.addPlant(plantInstance);
+            telemetry.trackGoldSpent(plantType.price);
+            break;
+        }
+        case 'move_plant':
+            saveManager.movePlant(message.index, message.x, message.y);
+            break;
+        case 'remove_plant':
+            saveManager.removePlant(message.index);
+            break;
+        case 'harvest_plant': {
+            const harvestIndex = message.index;
+            const plant = saveManager.save.plants[harvestIndex];
+            if (!plant) {
+                break;
+            }
+            const pType = PlantTypesMap.get(plant.plantId);
+            if (!pType) {
+                break;
+            }
+            const phase = getPlantPhase(plant, pType);
+            if (phase < 2) {
+                break;
+            } // Not ripe yet
+            // Random fruit count
+            const fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
+            const prevCount = saveManager.getConsumableCount(pType.producesId);
+            saveManager.updateInventory(pType.producesId, prevCount + fruits);
+            // Reset plant to phase 0
+            saveManager.updatePlantPhase(harvestIndex, 0);
+            webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 0 });
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+            const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
+            webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
+            break;
+        }
         case 'request_pokedex': {
             const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
                 name: p.name,
@@ -493,6 +656,9 @@ async function importSaveCommand() {
         if (Array.isArray(imported.decoration)) {
             sanitized.decoration = imported.decoration;
         }
+        if (Array.isArray(imported.plants)) {
+            sanitized.plants = imported.plants;
+        }
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
             sanitized.inventory = imported.inventory;
         }
@@ -562,6 +728,8 @@ function activate(context) {
     }
     // Start stamina drain timer
     startStaminaDrainTimer();
+    // Start plant growth tick timer (every 60s)
+    startPlantTickTimer();
     // Listen for configuration changes
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         config = vscode.workspace.getConfiguration('pokemon-pets');
@@ -589,7 +757,15 @@ function activate(context) {
         }
     }));
     // Register commands
-    context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.actions', () => {
+    context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.toggleAutoFeed', () => {
+        autoFeedEnabled = !autoFeedEnabled;
+        vscode.commands.executeCommand('setContext', 'pokemon-pets.autoFeedOn', autoFeedEnabled);
+        vscode.window.showInformationMessage(`Auto Feed: ${autoFeedEnabled ? 'ON' : 'OFF'}`);
+    }), vscode.commands.registerCommand('pokemon-pets.toggleAutoFeedOff', () => {
+        autoFeedEnabled = !autoFeedEnabled;
+        vscode.commands.executeCommand('setContext', 'pokemon-pets.autoFeedOn', autoFeedEnabled);
+        vscode.window.showInformationMessage(`Auto Feed: ${autoFeedEnabled ? 'ON' : 'OFF'}`);
+    }), vscode.commands.registerCommand('pokemon-pets.actions', () => {
         webview.postMessage({ type: 'actions' });
     }), vscode.commands.registerCommand('pokemon-pets.toggleTopBar', () => {
         webview.postMessage({ type: 'toggle_topbar' });
@@ -607,6 +783,7 @@ function deactivate() {
     saveManager.flushSave();
     stopDayNightTimer();
     stopStaminaDrainTimer();
+    stopPlantTickTimer();
     console.log('Pokemon Pets is now deactivated 😿');
 }
 //# sourceMappingURL=extension.js.map

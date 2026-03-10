@@ -122,12 +122,13 @@ describe('Consumables', () => {
         expect(Consumables.some(c => c.category === 'potion')).toBe(true);
     });
 
-    it('food and potion items have positive restoreAmount', () => {
+    it('food and potion items have positive restoreHp or restoreStamina', () => {
         const healables = Consumables.filter(c => c.category === 'food' || c.category === 'potion');
         expect(healables.length).toBeGreaterThan(0);
         for (const item of healables) {
-            expect(item.restoreAmount).toBeTypeOf('number');
-            expect(item.restoreAmount).toBeGreaterThan(0);
+            const hasHp = typeof item.restoreHp === 'number' && item.restoreHp > 0;
+            const hasSta = typeof item.restoreStamina === 'number' && item.restoreStamina > 0;
+            expect(hasHp || hasSta).toBe(true);
         }
     });
 });
