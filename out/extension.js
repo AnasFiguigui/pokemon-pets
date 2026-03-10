@@ -75,6 +75,7 @@ function addFriendship(petIndex, amount) {
 function initGame() {
     webview.postMessage({ type: 'background', value: config.get('background') });
     webview.postMessage({ type: 'scale', value: config.get('scale') });
+    webview.postMessage({ type: 'filter', value: config.get('filter') });
     webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });
     webview.postMessage({ type: 'money', value: saveManager.save.money });
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
@@ -873,6 +874,9 @@ function activate(context) {
         }
         if (event.affectsConfiguration('pokemon-pets.scale')) {
             webview.postMessage({ type: 'scale', value: config.get('scale') });
+        }
+        if (event.affectsConfiguration('pokemon-pets.filter')) {
+            webview.postMessage({ type: 'filter', value: config.get('filter') });
         }
         if (event.affectsConfiguration('pokemon-pets.wild')) {
             webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });

@@ -72,6 +72,19 @@
                     "default": true,
                     "description": "Enables the day/night cycle that tints the background based on the time of day."
                 },
+                "pokemon-pets.filter": {
+                    "type": "string",
+                    "default": "None",
+                    "enum": [
+                        "None",
+                        "Grayscale",
+                        "Sepia",
+                        "High Contrast",
+                        "CRT Retro",
+                        "Soft Night"
+                    ],
+                    "description": "Visual filter applied to the game scene. Only affects the pixel art, not the UI."
+                },
                 "pokemon-pets.telemetry": {
                     "type": "boolean",
                     "default": false,

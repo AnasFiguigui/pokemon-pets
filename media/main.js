@@ -151,29 +151,34 @@ function openBackpack() {
 
             //Sell buttons
             if (sellPrice > 0) {
+                const sellRow = document.createElement('div');
+                sellRow.classList.add('backpackSellRow');
+
                 const sellOne = document.createElement('button');
                 sellOne.type = 'button';
                 sellOne.classList.add('menuButton', 'sellButton');
-                sellOne.innerText = `Sell\n${sellPrice}G`;
+                sellOne.innerText = `Sell 1 · ${sellPrice}G`;
                 sellOne.onclick = (e) => {
                     e.stopPropagation();
                     vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: 1 });
                     openBackpack();
                 };
-                row.appendChild(sellOne);
+                sellRow.appendChild(sellOne);
 
                 if (count > 1) {
                     const sellAll = document.createElement('button');
                     sellAll.type = 'button';
                     sellAll.classList.add('menuButton', 'sellButton');
-                    sellAll.innerText = `Sell All\n${sellPrice * count}G`;
+                    sellAll.innerText = `Sell All · ${sellPrice * count}G`;
                     sellAll.onclick = (e) => {
                         e.stopPropagation();
                         vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: count });
                         openBackpack();
                     };
-                    row.appendChild(sellAll);
+                    sellRow.appendChild(sellAll);
                 }
+
+                row.appendChild(sellRow);
             }
 
             content.appendChild(row);
@@ -732,6 +737,12 @@ function handleSettingsMessage(message) {
                     break;
             }
             document.body.style.setProperty('--scale', Game.scale);
+            break;
+        case 'filter':
+            Game.background.removeAttribute('filter');
+            if (message.value && message.value.toLowerCase() !== 'none') {
+                Game.background.setAttribute('filter', message.value.toLowerCase().replaceAll(' ', '-'));
+            }
             break;
         case 'wild_pokemons':
             for (const wildPokemon of Game.wildPokemons) { wildPokemon.remove(); }

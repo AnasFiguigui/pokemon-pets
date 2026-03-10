@@ -87,6 +87,27 @@ body[cursor="none"] {
     background-image: url(./sprites/backgrounds/floor_3.png);
 }
 
+/* Visual filters (applied to scene only, not UI) */
+#background[filter="grayscale"] {
+    filter: grayscale(100%);
+}
+
+#background[filter="sepia"] {
+    filter: sepia(0.6) saturate(0.9);
+}
+
+#background[filter="high-contrast"] {
+    filter: contrast(1.35) saturate(1.1);
+}
+
+#background[filter="crt-retro"] {
+    filter: contrast(1.25) saturate(1.2) brightness(0.95);
+}
+
+#background[filter="soft-night"] {
+    filter: brightness(0.85) contrast(1.1) saturate(0.9);
+}
+
 /* Game canvas */
 #canvas {
     /* Layout */
@@ -397,21 +418,27 @@ body[cursor="none"] {
 
 .backpackRow {
     display: flex;
-    gap: 4px;
+    flex-direction: column;
+    gap: 2px;
     width: 100%;
 }
 
 .backpackRow > .storeButton {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+}
+
+.backpackSellRow {
+    display: flex;
+    gap: 4px;
+    padding: 0 4px 2px;
 }
 
 .sellButton {
-    flex: 0 0 auto;
+    flex: 1;
     font-size: 12px;
-    padding: 4px 6px;
+    padding: 3px 4px;
     line-height: 1.2;
-    white-space: pre-line;
+    white-space: nowrap;
     text-align: center;
     color: #e8a83a;
 }
