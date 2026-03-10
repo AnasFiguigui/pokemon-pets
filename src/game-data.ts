@@ -69,7 +69,7 @@ export const PlantTypes: PlantType[] = [
         maxFruits: 3,
         size: [16, 32],
         spriteOffset: [0, 0],
-        phaseStep: [0, 16],
+        phaseStep: [16, 0],
     },
 ];
 

@@ -304,14 +304,14 @@ class GameObject {
             pos.y = Util.clamp(pos.y, 0, this.maxPosY);
         }
 
-        //Check if moved
-        const moved = this.#pos.equals(pos);
+        //Check if position changed
+        const samePos = this.#pos.equals(pos);
 
         //Update position
         this.#pos = pos;
 
-        //Return if moved
-        return !moved;
+        //Return whether we actually moved
+        return !samePos;
     }
 
     respawn() {
@@ -597,12 +597,13 @@ class Game {
         //Check if last frame timestamp is init
         if (!this.#lastFrameTimestamp) { this.#lastFrameTimestamp = timestamp; }
 
-        //Calculate delta accumulation
+        //Calculate delta accumulation (cap to prevent spiral on tab refocus)
         this.#deltaAccumulation += timestamp - this.#lastFrameTimestamp;
         this.#lastFrameTimestamp = timestamp;
+        const interval = (1000 / this.fps);
+        this.#deltaAccumulation = Math.min(this.#deltaAccumulation, interval * 5);
 
         //Calculate the amount of updates needed to perform
-        const interval = (1000 / this.fps);
         const updates = Math.floor(this.#deltaAccumulation / interval);
 
         //Perform updates

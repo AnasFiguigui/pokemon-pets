@@ -18,6 +18,11 @@ let dayNightInterval: ReturnType<typeof setInterval> | undefined;
 let staminaDrainInterval: ReturnType<typeof setInterval> | undefined;
 let autoFeedEnabled = false;
 
+function syncAutoFeedState(): void {
+    autoFeedEnabled = saveManager?.save?.autoFeed ?? false;
+    vscode.commands.executeCommand('setContext', 'pokemon-pets.autoFeedOn', autoFeedEnabled);
+}
+
 /** Interval between stamina drain ticks (6 minutes → 10 stamina/hour). */
 const STAMINA_DRAIN_INTERVAL_MS = 6 * 60_000;
 /** How much stamina drains per tick. */
@@ -308,8 +313,13 @@ function handleWebviewMessage(message: any): void {
         case 'money': {
             const oldMoney = saveManager.save.money;
             const newMoney = message.value as number;
-            saveManager.updateMoney(newMoney);
-            const diff = newMoney - oldMoney;
+            if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) { break; }
+            // Cap single transaction delta to prevent exploits (max reasonable: 1000G)
+            const maxDelta = 1000;
+            const delta = newMoney - oldMoney;
+            const clampedMoney = delta > maxDelta ? oldMoney + maxDelta : newMoney;
+            saveManager.updateMoney(clampedMoney);
+            const diff = clampedMoney - oldMoney;
             if (diff > 0) { telemetry.trackGoldEarned(diff); }
             else if (diff < 0) { telemetry.trackGoldSpent(Math.abs(diff)); }
             break;
@@ -324,9 +334,15 @@ function handleWebviewMessage(message: any): void {
             }
             break;
         }
-        case 'wild_pokemon_caught':
+        case 'wild_pokemon_caught': {
+            // Compute catch reward server-side (60–100 gold)
+            const catchReward = 60 + Math.floor(Math.random() * 9) * 5;
+            saveManager.updateMoney(saveManager.save.money + catchReward);
+            webview.postMessage({ type: 'money', value: saveManager.save.money });
+            telemetry.trackGoldEarned(catchReward);
             telemetry.trackWildPokemonCaught();
             break;
+        }
         case 'use_consumable': {
             const consumableId = message.consumableId as string;
             if (!consumableId) { break; }
@@ -363,8 +379,16 @@ function handleWebviewMessage(message: any): void {
                         }
 
                         if (result.evolved && result.newForm) {
-                            webview.postMessage({ type: 'remove_pet', index: petIndex });
-                            loadPet(pet);
+                            webview.postMessage({
+                                type: 'update_pet',
+                                index: petIndex,
+                                name: pet.name,
+                                specie: pet.specie,
+                                color: pet.color,
+                                form: normalizePet(pet).form,
+                                sprite: normalizePet(pet).sprite,
+                                spriteSize: normalizePet(pet).spriteSize,
+                            });
                             webview.postMessage({
                                 type: 'evolution',
                                 index: petIndex,
@@ -415,8 +439,16 @@ function handleWebviewMessage(message: any): void {
                         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
 
                         const pet = saveManager.save.pets[petIndex];
-                        webview.postMessage({ type: 'remove_pet', index: petIndex });
-                        loadPet(pet);
+                        webview.postMessage({
+                            type: 'update_pet',
+                            index: petIndex,
+                            name: pet.name,
+                            specie: pet.specie,
+                            color: pet.color,
+                            form: normalizePet(pet).form,
+                            sprite: normalizePet(pet).sprite,
+                            spriteSize: normalizePet(pet).spriteSize,
+                        });
                         webview.postMessage({
                             type: 'evolution',
                             index: petIndex,
@@ -439,7 +471,7 @@ function handleWebviewMessage(message: any): void {
             const itemId = message.consumableId as string;
             const consumable = ConsumablesMap.get(itemId);
             if (!consumable) { break; }
-            const qty = (message.quantity as number) || 1;
+            const qty = Math.max(1, Math.floor(message.quantity ?? 1));
             const totalCost = consumable.price * qty;
             if (saveManager.save.money < totalCost) { break; }
             saveManager.updateMoney(saveManager.save.money - totalCost);
@@ -576,7 +608,11 @@ async function addPetCommand(): Promise<void> {
         placeHolder: 'Name',
         value: tmpname,
         valueSelection: [0, tmpname.length],
-        validateInput: text => (text === '' ? 'Please input a name for your Pokémon' : null),
+        validateInput: text => {
+            if (text === '') { return 'Please input a name for your Pokémon'; }
+            if (text.length > 20) { return 'Max 20 characters'; }
+            return null;
+        },
     });
     if (name === undefined) { return; }
 
@@ -647,23 +683,66 @@ async function importSaveCommand(): Promise<void> {
 
         // Only accept known Save fields to prevent excess property injection
         const sanitized = new Save();
-        if (typeof imported.money === 'number') { sanitized.money = imported.money; }
-        if (Array.isArray(imported.pets)) { sanitized.pets = imported.pets; }
-        if (Array.isArray(imported.decoration)) { sanitized.decoration = imported.decoration; }
-        if (Array.isArray(imported.plants)) { sanitized.plants = imported.plants; }
+        if (typeof imported.money === 'number' && isFinite(imported.money)) {
+            sanitized.money = Math.max(0, Math.floor(imported.money));
+        }
+        if (Array.isArray(imported.pets)) {
+            sanitized.pets = imported.pets
+                .filter((p: any) => typeof p === 'object' && p !== null && typeof p.name === 'string' && typeof p.specie === 'string')
+                .slice(0, MAX_SUMMONED_POKEMONS)
+                .map((p: any) => ({
+                    name: String(p.name).slice(0, 20),
+                    specie: String(p.specie),
+                    color: typeof p.color === 'string' ? p.color : 'generation 1',
+                    form: typeof p.form === 'string' ? p.form : undefined,
+                    sprite: typeof p.sprite === 'string' ? p.sprite : undefined,
+                    spriteSize: p.spriteSize === 48 ? 48 : 32,
+                    candyFed: typeof p.candyFed === 'number' ? Math.min(Math.max(0, Math.floor(p.candyFed)), 100) : 0,
+                    hp: typeof p.hp === 'number' ? Math.max(0, Math.floor(p.hp)) : undefined,
+                    stamina: typeof p.stamina === 'number' ? Math.max(0, Math.floor(p.stamina)) : undefined,
+                }));
+        }
+        if (Array.isArray(imported.decoration)) {
+            sanitized.decoration = imported.decoration
+                .filter((d: any) => typeof d === 'object' && d !== null && typeof d.category === 'string' && typeof d.name === 'string');
+        }
+        if (Array.isArray(imported.plants)) {
+            sanitized.plants = imported.plants
+                .filter((p: any) => typeof p === 'object' && p !== null && typeof p.plantId === 'string' && PlantTypesMap.has(p.plantId))
+                .map((p: any) => ({
+                    x: typeof p.x === 'number' ? p.x : 0,
+                    y: typeof p.y === 'number' ? p.y : 0,
+                    plantId: p.plantId,
+                    phase: typeof p.phase === 'number' ? Math.min(Math.max(0, Math.floor(p.phase)), 2) : 0,
+                    phaseStartTime: typeof p.phaseStartTime === 'string' ? p.phaseStartTime : new Date().toISOString(),
+                }));
+        }
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
-            sanitized.inventory = imported.inventory;
+            for (const [key, val] of Object.entries(imported.inventory)) {
+                if (typeof val === 'number' && val > 0 && isFinite(val)) {
+                    sanitized.inventory[key] = Math.floor(val);
+                }
+            }
         }
         if (typeof imported.streak === 'object' && imported.streak !== null && !Array.isArray(imported.streak)) {
-            sanitized.streak = imported.streak;
+            sanitized.streak = {
+                currentStreak: typeof imported.streak.currentStreak === 'number' ? Math.max(0, Math.floor(imported.streak.currentStreak)) : 0,
+                lastClaimDate: typeof imported.streak.lastClaimDate === 'string' ? imported.streak.lastClaimDate : '',
+                longestStreak: typeof imported.streak.longestStreak === 'number' ? Math.max(0, Math.floor(imported.streak.longestStreak)) : 0,
+                totalRewardsClaimed: typeof imported.streak.totalRewardsClaimed === 'number' ? Math.max(0, Math.floor(imported.streak.totalRewardsClaimed)) : 0,
+            };
         }
         if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
             sanitized.telemetry = imported.telemetry;
+        }
+        if (typeof imported.autoFeed === 'boolean') {
+            sanitized.autoFeed = imported.autoFeed;
         }
 
         saveManager.save = sanitized;
         saveManager.saveGame();
         saveManager.loadGame();
+        syncAutoFeedState();
 
         webview.postMessage({ type: 'reset' });
         initGame();
@@ -694,6 +773,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Initialize save manager
     saveManager = new SaveManager(context.globalStorageUri.fsPath);
     saveManager.loadGame();
+    syncAutoFeedState();
 
     // Initialize services
     const telemetryEnabled = config.get<boolean>('telemetry', false);
@@ -772,11 +852,15 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand),
         vscode.commands.registerCommand('pokemon-pets.toggleAutoFeed', () => {
             autoFeedEnabled = !autoFeedEnabled;
+            saveManager.save.autoFeed = autoFeedEnabled;
+            saveManager.scheduleSave();
             vscode.commands.executeCommand('setContext', 'pokemon-pets.autoFeedOn', autoFeedEnabled);
             vscode.window.showInformationMessage(`Auto Feed: ${autoFeedEnabled ? 'ON' : 'OFF'}`);
         }),
         vscode.commands.registerCommand('pokemon-pets.toggleAutoFeedOff', () => {
             autoFeedEnabled = !autoFeedEnabled;
+            saveManager.save.autoFeed = autoFeedEnabled;
+            saveManager.scheduleSave();
             vscode.commands.executeCommand('setContext', 'pokemon-pets.autoFeedOn', autoFeedEnabled);
             vscode.window.showInformationMessage(`Auto Feed: ${autoFeedEnabled ? 'ON' : 'OFF'}`);
         }),

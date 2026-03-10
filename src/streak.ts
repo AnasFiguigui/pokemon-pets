@@ -17,9 +17,12 @@ export class StreakService {
         this.saveManager = saveManager;
     }
 
-    /** Returns today's date as YYYY-MM-DD. */
+    /** Returns today's date as YYYY-MM-DD (local time). */
     public static today(date: Date = new Date()): string {
-        return date.toISOString().slice(0, 10);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
     /** Returns the streak data (read-only copy). */
@@ -81,8 +84,12 @@ export class StreakService {
 
     /** Returns the YYYY-MM-DD string for the day before the given date string. */
     private getYesterday(dateStr: string): string {
-        const d = new Date(dateStr + 'T12:00:00');
+        const parts = dateStr.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
         d.setDate(d.getDate() - 1);
-        return d.toISOString().slice(0, 10);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
     }
 }

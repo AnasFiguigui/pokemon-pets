@@ -50,7 +50,7 @@ const ConsumableCatalog = [
 
 //Plant catalog (must match extension's PlantTypes array)
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', growthHours: [0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [0, 16] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', growthHours: [0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
 //Actions menu
@@ -500,7 +500,7 @@ function openStoreSeedsMenu() {
             //Create plant
             const plant = new Plant({
                 plantId: seed.id,
-                index: Game.plants.length - 1,
+                index: Game.plants.length,
                 phase: 0,
                 size: seed.size,
                 spriteOffset: seed.spriteOffset,
@@ -661,7 +661,9 @@ function handleSpawnMessage(message) {
             const pos = new Vec2(message.x, message.y);
             const category = message.category.toUpperCase().replaceAll(' ', '_');
             const name = message.name.toUpperCase().replaceAll(' ', '_');
-            new Decoration(DecorationPreset[category][name], { pos: pos }); // NOSONAR - constructor registers in Game.decoration
+            if (DecorationPreset[category]?.[name]) {
+                new Decoration(DecorationPreset[category][name], { pos: pos }); // NOSONAR - constructor registers in Game.decoration
+            }
             break;
         }
         case 'spawn_wild_pokemon': {
@@ -688,12 +690,31 @@ function handleSpawnMessage(message) {
             if (plant) { plant.setPhase(message.phase); }
             break;
         }
+        case 'update_pet': {
+            // Evolution: replace the pet at the same index to keep indices in sync
+            const oldPet = Game.pets[message.index];
+            if (oldPet) {
+                // Remove old pet from game objects without sending remove_pet to extension
+                Game.objects.removeItem(oldPet);
+                Game.pets.splice(message.index, 1);
+            }
+            const specie = message.specie.toLowerCase();
+            const generation = (message.color ?? 'generation 1').toString();
+            const form = (message.form ?? message.specie).toString();
+            const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
+            const spriteSize = message.spriteSize === 48 ? 48 : 32;
+            const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
+            // Move from end of Game.pets to correct index
+            Game.pets.removeItem(newPet);
+            Game.pets.splice(message.index, 0, newPet);
+            break;
+        }
         case 'retry_wild_spawn':
             Game.wildPokemonSpawner.wait(30 * 1000);
             break;
         case 'remove_pokemon':
         case 'remove_pet':
-            Game.pets[message.index].remove();
+            if (Game.pets[message.index]) { Game.pets[message.index].remove(); }
             break;
         default:
             break;
@@ -727,23 +748,23 @@ window.addEventListener('message', event => { // NOSONAR - VS Code webview; exte
 
 //Night overlay & lamp lighting
 // eslint-disable-next-line no-unused-vars -- read by decoration/object.js
-let nightOverlayActive = false;
+Game.nightOverlayActive = false;
 
 function updateNightOverlay(timeOfDay, opacity) {
     const overlay = document.getElementById('night-overlay');
     const glow = document.getElementById('lamp-glow');
-    nightOverlayActive = timeOfDay === 'night';
+    Game.nightOverlayActive = timeOfDay === 'night';
     overlay.style.opacity = opacity;
-    glow.style.opacity = nightOverlayActive ? 1 : 0;
+    glow.style.opacity = Game.nightOverlayActive ? 1 : 0;
 
     //Switch lamp sprites (day = off, night = on)
     for (const decor of Game.decoration) {
         if (!decor.isLamp) { continue; }
-        decor.spriteOffset.y = nightOverlayActive ? decor.nightSpriteY : decor.daySpriteY;
+        decor.spriteOffset.y = Game.nightOverlayActive ? decor.nightSpriteY : decor.daySpriteY;
     }
 
-    if (nightOverlayActive) {
-        lampMaskDirty = true;
+    if (Game.nightOverlayActive) {
+        Game.lampMaskDirty = true;
         updateLampMasks();
     } else {
         overlay.style.maskImage = '';
@@ -776,7 +797,7 @@ function buildLampGlow(lamps, scale) {
 function updateLampMasks() {
     const overlay = document.getElementById('night-overlay');
     const glow = document.getElementById('lamp-glow');
-    if (!nightOverlayActive) { return; }
+    if (!Game.nightOverlayActive) { return; }
 
     //Collect all lamp decorations
     const lamps = [];
@@ -911,10 +932,10 @@ document.onmouseleave = event => {
 Game.start();
 
 //Update lamp masks every frame (so dragged lamps update their light in real-time)
-let lampMaskDirty = true;
+Game.lampMaskDirty = true;
 Game.onAfterDraw = () => {
-    if (!nightOverlayActive || !lampMaskDirty) { return; }
-    lampMaskDirty = false;
+    if (!Game.nightOverlayActive || !Game.lampMaskDirty) { return; }
+    Game.lampMaskDirty = false;
     updateLampMasks();
 };
 

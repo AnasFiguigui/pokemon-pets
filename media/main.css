@@ -387,7 +387,7 @@ body[cursor="none"] {
 
 .storeButtonMoney[expensive] {
     /* Text */
-    color: #a7a7a7;
+    color: #e44;
 }
 
 .storeButtonStat {
@@ -638,7 +638,7 @@ body[cursor="none"] {
 
 .pokedexLevel {
     font-size: 13px;
-    color: #4b4b4b;
+    color: var(--vscode-descriptionForeground, #999);
 }
 
 /* Pokédex stat bars */

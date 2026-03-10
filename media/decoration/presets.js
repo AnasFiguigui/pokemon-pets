@@ -22,13 +22,7 @@ class DecorationPreset {
         OBJECT_05: { name: 'Object 05', size: new Vec2(32, 48), spriteOffset: new Vec2(128, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
         OBJECT_06: { name: 'Object 06', size: new Vec2(32, 48), spriteOffset: new Vec2(160, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
         OBJECT_07: { name: 'Object 07', size: new Vec2(32, 48), spriteOffset: new Vec2(192, 192), nightSpriteOffsetY: 256, price: 100, isLamp: true, lightRadius: 80 },
-    };
-
-    static LARGE_MISC = {
-
-    };
-
-    static MID_MISC = {
+    };\n\n    static MID_MISC = {
         OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 0), price: 200 },
         OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(16, 0), price: 200 },
         OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 0), price: 200 },

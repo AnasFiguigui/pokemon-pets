@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import { Decoration, Pet, PlantInstance, Save, getMaxHp, getMaxStamina } from './models';
 
@@ -125,6 +126,12 @@ export class SaveManager {
             }
         }
 
+        // Validate autoFeed
+        if (typeof this.save.autoFeed !== 'boolean') {
+            this.save.autoFeed = false;
+            saveUpdated = true;
+        }
+
         // Validate streak
         if (typeof this.save.streak !== 'object' || this.save.streak === null) {
             this.save.streak = defaultStreak();
@@ -135,6 +142,9 @@ export class SaveManager {
         if (typeof this.save.telemetry !== 'object' || this.save.telemetry === null) {
             this.save.telemetry = defaultTelemetry();
             saveUpdated = true;
+        } else {
+            // Merge with defaults so new fields are always present
+            this.save.telemetry = { ...defaultTelemetry(), ...this.save.telemetry };
         }
 
         if (saveUpdated) {
@@ -154,7 +164,9 @@ export class SaveManager {
         if (this.saveTimer !== undefined) { return; }
         this.saveTimer = setTimeout(() => {
             this.saveTimer = undefined;
-            fs.writeFileSync(this.savePath, JSON.stringify(this.save, null, 4));
+            fsp.writeFile(this.savePath, JSON.stringify(this.save, null, 4)).catch(err => {
+                console.error('Failed to write save file:', err);
+            });
         }, SaveManager.SAVE_DELAY_MS);
     }
 
@@ -248,6 +260,7 @@ export class SaveManager {
 
     /** Removes the decoration at the given index and saves. */
     public removeDecor(index: number): void {
+        if (index < 0 || index >= this.save.decoration.length) { return; }
         this.save.decoration.splice(index, 1);
         this.scheduleSave();
     }
@@ -270,6 +283,7 @@ export class SaveManager {
 
     /** Removes the plant at the given index and saves. */
     public removePlant(index: number): void {
+        if (index < 0 || index >= this.save.plants.length) { return; }
         this.save.plants.splice(index, 1);
         this.scheduleSave();
     }

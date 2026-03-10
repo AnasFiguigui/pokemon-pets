@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import { SaveManager, MAX_SUMMONED_POKEMONS } from '../save-manager';
 import type { Pet, Decoration } from '../models';
 
 vi.mock('node:fs');
+vi.mock('node:fs/promises');
 
 const STORAGE = path.join('mock', 'storage');
 
@@ -22,6 +24,7 @@ function completeSave(overrides: Record<string, unknown> = {}): Record<string, u
             wildPokemonCaught: 0, decorationsPlaced: 0,
             goldEarned: 0, goldSpent: 0, sessionsCount: 0, lastSessionDate: '',
         },
+        autoFeed: false,
         ...overrides,
     };
 }
@@ -31,6 +34,7 @@ describe('SaveManager', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        vi.mocked(fsp.writeFile).mockResolvedValue(undefined);
         manager = new SaveManager(STORAGE);
     });
 
@@ -203,9 +207,9 @@ describe('SaveManager', () => {
             manager.save.money = 42;
             manager.scheduleSave();
 
-            expect(fs.writeFileSync).not.toHaveBeenCalled();
+            expect(fsp.writeFile).not.toHaveBeenCalled();
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+            expect(fsp.writeFile).toHaveBeenCalledTimes(1);
         });
 
         it('coalesces multiple rapid calls into a single write', () => {
@@ -214,7 +218,7 @@ describe('SaveManager', () => {
             manager.scheduleSave();
 
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+            expect(fsp.writeFile).toHaveBeenCalledTimes(1);
         });
 
         it('flushSave writes immediately if a save is pending', () => {
@@ -259,7 +263,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('Spark');
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('rejects when at max capacity', () => {
@@ -298,7 +302,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('B');
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('returns undefined for a positive out-of-range index', () => {
@@ -321,7 +325,7 @@ describe('SaveManager', () => {
             manager.updateMoney(999);
             expect(manager.save.money).toBe(999);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
             vi.useRealTimers();
         });
     });
@@ -345,7 +349,7 @@ describe('SaveManager', () => {
             expect(manager.save.decoration).toHaveLength(1);
             expect(manager.save.decoration[0]).toEqual(decor);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('moveDecor updates position and schedules a save', () => {
@@ -354,7 +358,7 @@ describe('SaveManager', () => {
             expect(manager.save.decoration[0].x).toBe(50);
             expect(manager.save.decoration[0].y).toBe(60);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('moveDecor does nothing for an invalid index', () => {
@@ -367,7 +371,7 @@ describe('SaveManager', () => {
             manager.removeDecor(0);
             expect(manager.save.decoration).toHaveLength(0);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
     });
 
@@ -393,7 +397,7 @@ describe('SaveManager', () => {
             manager.updateInventory('candy', 5);
             expect(manager.save.inventory.candy).toBe(5);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('clamps negative amount to zero and removes key', () => {
@@ -509,7 +513,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets[0].hp).toBe(30);
             expect(manager.save.pets[0].stamina).toBe(20);
             vi.runAllTimers();
-            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(fsp.writeFile).toHaveBeenCalled();
         });
 
         it('clamps negative values to zero', () => {

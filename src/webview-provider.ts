@@ -39,9 +39,10 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
         webview.options = { enableScripts: true };
         webview.html = await this.getHtmlContent(webview);
 
-        webview.onDidReceiveMessage(message => {
+        const messageDisposable = webview.onDidReceiveMessage(message => {
             this.messageHandler?.(message);
         });
+        this.context.subscriptions.push(messageDisposable);
 
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {

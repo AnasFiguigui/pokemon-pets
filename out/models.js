@@ -20,6 +20,7 @@ class Save {
     decoration = [];
     plants = [];
     inventory = {};
+    autoFeed = false;
     streak = {
         currentStreak: 0,
         lastClaimDate: '',

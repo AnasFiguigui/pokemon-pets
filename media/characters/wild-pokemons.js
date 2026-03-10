@@ -76,13 +76,10 @@ class WildPokemonAI extends AI {
 
     //Click
     click() {
-        //Alredy clicked
+        //Already clicked
         if (this.state === AI.SPECIAL) { return; }
 
-        //Give money to player
-        Game.addMoney(60 + 5 * Util.randomInclusive(8)); //60 - 100 gold
-
-        //Notify extension about the catch (for telemetry)
+        //Notify extension about the catch (backend computes reward)
         vscode.postMessage({ type: 'wild_pokemon_caught' });
 
         //Wait to spawn a new wild pokemon

@@ -266,7 +266,7 @@ class Character extends GameObject {
     //Click
     onclick() {
         //Notify AI a click happened
-        this.ai.onclick();
+        this.ai.click();
     }
 
 }
@@ -353,7 +353,7 @@ class PetMoods {
     static get MAD() { return new Vec2(6, 1); }
     static get IDK() { return new Vec2(0, 2); }
     static get PLEDGE() { return new Vec2(5, 1); }
-    static get GIGACHAD() { return new Vec2(6, 1); }
+    static get GIGACHAD() { return new Vec2(6, 2); }
     static get ALIEN() { return new Vec2(1, 1); }
     static get DEVIL() { return new Vec2(2, 2); }
     static get SILLY() { return new Vec2(0, 0); }

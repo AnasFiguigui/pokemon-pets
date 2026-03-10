@@ -32,17 +32,17 @@ class Decoration extends GameObject {
         if (typeof preset.nightSpriteOffsetY === 'number') this.#nightSpriteY = preset.nightSpriteOffsetY;
 
         // Apply night sprite immediately if night overlay is active
-        if (this.#isLamp && nightOverlayActive) {
+        if (this.#isLamp && Game.nightOverlayActive) {
             this.spriteOffset.y = this.#nightSpriteY;
         }
 
         Game.decoration.push(this);
-        if (this.#isLamp) { lampMaskDirty = true; }
+        if (this.#isLamp) { Game.lampMaskDirty = true; }
     }
 
     remove() {
         super.remove();
-        if (this.#isLamp) { lampMaskDirty = true; }
+        if (this.#isLamp) { Game.lampMaskDirty = true; }
 
         const index = Game.decoration.removeItem(this);
 
@@ -69,7 +69,7 @@ class Decoration extends GameObject {
 
         this.moveTo(snappedPos, { ignoreWalls: true });
         this.#dirty = true;
-        if (this.#isLamp) { lampMaskDirty = true; }
+        if (this.#isLamp) { Game.lampMaskDirty = true; }
     }
 
     mouseDown(pos) {

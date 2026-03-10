@@ -53,9 +53,9 @@ class Vec2 {
 
     div(n) {
         if (typeof n === 'object') {
-            return new Vec2(this.x / n.x, this.y / n.y);
+            return new Vec2(n.x !== 0 ? this.x / n.x : 0, n.y !== 0 ? this.y / n.y : 0);
         } else {
-            return new Vec2(this.x / n, this.y / n);
+            return n !== 0 ? new Vec2(this.x / n, this.y / n) : new Vec2();
         }
     }
 
@@ -175,22 +175,37 @@ class Util {
 
 }
 
-//Array extensions
-Array.prototype.removeAt = function(index) { // NOSONAR - intentional prototype extension used throughout codebase
-    const elem = this[index];
-    this.splice(index, 1);
-    return elem;
-};
+//Array extensions (non-enumerable to avoid for...in pollution)
+Object.defineProperty(Array.prototype, 'removeAt', { // NOSONAR - intentional prototype extension used throughout codebase
+    value: function(index) {
+        const elem = this[index];
+        this.splice(index, 1);
+        return elem;
+    },
+    enumerable: false,
+    configurable: true,
+    writable: true,
+});
 
-Array.prototype.removeItem = function(elem) { // NOSONAR - intentional prototype extension used throughout codebase
-    const index = this.indexOf(elem);
-    if (index !== -1) { this.splice(index, 1); }
-    return index;
-};
+Object.defineProperty(Array.prototype, 'removeItem', { // NOSONAR - intentional prototype extension used throughout codebase
+    value: function(elem) {
+        const index = this.indexOf(elem);
+        if (index !== -1) { this.splice(index, 1); }
+        return index;
+    },
+    enumerable: false,
+    configurable: true,
+    writable: true,
+});
 
-Array.prototype.isEmpty = function() { // NOSONAR - intentional prototype extension used throughout codebase
-    return this.length === 0;
-};
+Object.defineProperty(Array.prototype, 'isEmpty', { // NOSONAR - intentional prototype extension used throughout codebase
+    value: function() {
+        return this.length === 0;
+    },
+    enumerable: false,
+    configurable: true,
+    writable: true,
+});
 
 //Actions
 class Action {

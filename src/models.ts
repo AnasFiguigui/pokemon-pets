@@ -35,7 +35,7 @@ export type PlantInstance = {
     x: number;
     y: number;
     plantId: string;
-    /** Current growth phase (0 = seed, 1 = blossom, 2 = fruit dev, 3 = ripe/harvestable). */
+    /** Current growth phase (0 = seed, 1 = growing, 2 = ripe/harvestable). */
     phase: number;
     /** ISO timestamp when the current phase started. */
     phaseStartTime: string;
@@ -70,6 +70,7 @@ export class Save {
     public decoration: Decoration[] = [];
     public plants: PlantInstance[] = [];
     public inventory: Inventory = {};
+    public autoFeed: boolean = false;
     public streak: StreakData = {
         currentStreak: 0,
         lastClaimDate: '',
