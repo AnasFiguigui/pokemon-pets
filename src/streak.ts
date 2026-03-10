@@ -70,13 +70,13 @@ export class StreakService {
 
         let message: string;
         if (streakDays >= 30) {
-            message = `🔥 ${streakDays}-day streak! Legendary coder! +${gold}G`;
+            message = `🔥 ${streakDays}-day streak! Legendary coder! +${gold}$`;
         } else if (streakDays >= 7) {
-            message = `🔥 ${streakDays}-day streak! Keep it up! +${gold}G`;
+            message = `🔥 ${streakDays}-day streak! Keep it up! +${gold}$`;
         } else if (streakDays > 1) {
-            message = `⚡ ${streakDays}-day streak! +${gold}G`;
+            message = `⚡ ${streakDays}-day streak! +${gold}$`;
         } else {
-            message = `Welcome back! +${gold}G`;
+            message = `Welcome back! +${gold}$`;
         }
 
         return { gold, message };

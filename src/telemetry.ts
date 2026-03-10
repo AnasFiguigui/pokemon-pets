@@ -101,8 +101,8 @@ export class TelemetryService {
             `Candy fed: ${t.candyFed}`,
             `Wild Pokémon caught: ${t.wildPokemonCaught}`,
             `Decorations placed: ${t.decorationsPlaced}`,
-            `Gold earned: ${t.goldEarned}G`,
-            `Gold spent: ${t.goldSpent}G`,
+            `Gold earned: ${t.goldEarned}$`,
+            `Gold spent: ${t.goldSpent}$`,
             `Most popular: ${topPokemon}`,
         ].join('\n');
     }

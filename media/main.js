@@ -157,7 +157,7 @@ function openBackpack() {
                 const sellOne = document.createElement('button');
                 sellOne.type = 'button';
                 sellOne.classList.add('menuButton', 'sellButton');
-                sellOne.innerText = `Sell 1 · ${sellPrice}G`;
+                sellOne.innerText = `Sell 1 · ${sellPrice}$`;
                 sellOne.onclick = (e) => {
                     e.stopPropagation();
                     vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: 1 });
@@ -169,7 +169,7 @@ function openBackpack() {
                     const sellAll = document.createElement('button');
                     sellAll.type = 'button';
                     sellAll.classList.add('menuButton', 'sellButton');
-                    sellAll.innerText = `Sell All · ${sellPrice * count}G`;
+                    sellAll.innerText = `Sell All · ${sellPrice * count}$`;
                     sellAll.onclick = (e) => {
                         e.stopPropagation();
                         vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: count });
@@ -319,7 +319,7 @@ function createStoreItem(name, price, stat) {
         const priceSpan = document.createElement('span');
         priceSpan.classList.add('storeButtonMoney');
         if (price > Game.money) { priceSpan.setAttribute('expensive', ''); }
-        priceSpan.innerText = `${price}G`;
+        priceSpan.innerText = `${price}$`;
         text.appendChild(priceSpan);
     }
 
@@ -609,7 +609,7 @@ function handleGameMessage(message) {
             // Show reward message if amount is included (e.g. wild catch)
             if (typeof message.reward === 'number' && message.reward !== 0) {
                 const formatted = Util.formatNumber(Math.abs(message.reward));
-                Game.showMessage(`${message.reward >= 0 ? '+' : '-'}${formatted}G`);
+                Game.showMessage(`${message.reward >= 0 ? '+' : '-'}${formatted}$`);
             }
             // Refresh store price indicators if store is open
             if (Menus.current === 'store') { refreshStorePrices(); }
