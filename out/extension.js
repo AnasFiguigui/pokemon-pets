@@ -41,6 +41,15 @@ let telemetry;
 let evolution;
 let streakService;
 let dayNightInterval;
+let staminaDrainInterval;
+/** Interval between stamina drain ticks (6 minutes → 10 stamina/hour). */
+const STAMINA_DRAIN_INTERVAL_MS = 6 * 60_000;
+/** How much stamina drains per tick. */
+const STAMINA_DRAIN_AMOUNT = 1;
+/** How much HP drains per tick when stamina is 0. */
+const HP_DRAIN_AMOUNT = 1;
+/** Pre-built map for O(1) consumable lookups by ID. */
+const ConsumablesMap = new Map(game_data_1.Consumables.map(c => [c.id, c]));
 // ── Game Initialization ─────────────────────────────────────────────────
 function initGame() {
     webview.postMessage({ type: 'background', value: config.get('background') });
@@ -95,6 +104,61 @@ function stopDayNightTimer() {
     if (dayNightInterval !== undefined) {
         clearInterval(dayNightInterval);
         dayNightInterval = undefined;
+    }
+}
+// ── Stamina / HP Drain ──────────────────────────────────────────────────
+function drainStamina() {
+    const pets = saveManager.save.pets;
+    if (pets.length === 0) {
+        return;
+    }
+    const removedIndices = [];
+    for (let i = pets.length - 1; i >= 0; i--) {
+        const pet = pets[i];
+        const maxHp = (0, models_1.getMaxHp)(pet);
+        const maxStamina = (0, models_1.getMaxStamina)(pet);
+        let hp = Math.min(pet.hp ?? maxHp, maxHp);
+        let stamina = Math.min(pet.stamina ?? maxStamina, maxStamina);
+        // Drain stamina
+        stamina = Math.max(0, stamina - STAMINA_DRAIN_AMOUNT);
+        // If stamina is 0, drain HP
+        if (stamina <= 0) {
+            hp = Math.max(0, hp - HP_DRAIN_AMOUNT);
+        }
+        saveManager.updatePetStats(i, hp, stamina);
+        // If HP reaches 0, remove the pet
+        if (hp <= 0) {
+            removedIndices.push(i);
+        }
+    }
+    // Remove fainted pets (already in reverse order)
+    for (const idx of removedIndices) {
+        const pet = saveManager.save.pets[idx];
+        const petName = pet?.name ?? 'A Pokémon';
+        saveManager.removePet(idx);
+        webview.postMessage({ type: 'remove_pet', index: idx });
+        vscode.window.showWarningMessage(`💔 ${petName} fainted from exhaustion and left...`);
+    }
+    // Broadcast updated stats so Pokédex stays fresh
+    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+}
+/** Builds an array of { hp, stamina, maxHp, maxStamina } for each pet. */
+function buildPetStats() {
+    return saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+        hp: p.hp ?? (0, models_1.getMaxHp)(p),
+        stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
+        maxHp: (0, models_1.getMaxHp)(p),
+        maxStamina: (0, models_1.getMaxStamina)(p),
+    }));
+}
+function startStaminaDrainTimer() {
+    stopStaminaDrainTimer();
+    staminaDrainInterval = setInterval(() => drainStamina(), STAMINA_DRAIN_INTERVAL_MS);
+}
+function stopStaminaDrainTimer() {
+    if (staminaDrainInterval !== undefined) {
+        clearInterval(staminaDrainInterval);
+        staminaDrainInterval = undefined;
     }
 }
 // ── Webview Message Handler ─────────────────────────────────────────────
@@ -155,8 +219,95 @@ function handleWebviewMessage(message) {
                 webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                 telemetry.trackCandyFed();
                 if (typeof petIndex === 'number' && petIndex >= 0) {
-                    const result = evolution.feedCandy(petIndex);
+                    const pet = saveManager.save.pets[petIndex];
+                    // Boost HP/Stamina by the level-up delta (max increases by 2 per candy)
+                    if (pet) {
+                        const oldMaxHp = (0, models_1.getMaxHp)(pet);
+                        const oldMaxStamina = (0, models_1.getMaxStamina)(pet);
+                        const result = evolution.feedCandy(petIndex);
+                        const newMaxHp = (0, models_1.getMaxHp)(pet);
+                        const newMaxStamina = (0, models_1.getMaxStamina)(pet);
+                        const hpGain = newMaxHp - oldMaxHp;
+                        const staminaGain = newMaxStamina - oldMaxStamina;
+                        if (hpGain > 0 || staminaGain > 0) {
+                            saveManager.updatePetStats(petIndex, Math.min(newMaxHp, (pet.hp ?? oldMaxHp) + hpGain), Math.min(newMaxStamina, (pet.stamina ?? oldMaxStamina) + staminaGain));
+                            webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                        }
+                        if (result.evolved && result.newForm) {
+                            webview.postMessage({ type: 'remove_pet', index: petIndex });
+                            loadPet(pet);
+                            webview.postMessage({
+                                type: 'evolution',
+                                index: petIndex,
+                                name: pet.name,
+                                newForm: result.newForm.name,
+                            });
+                            telemetry.trackPokemonEvolved(pet.specie);
+                            vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+                        }
+                    }
+                    else {
+                        evolution.feedCandy(petIndex);
+                    }
+                }
+            }
+            else {
+                // Look up consumable to determine category
+                const consumable = ConsumablesMap.get(consumableId);
+                if (!consumable) {
+                    break;
+                }
+                if (consumable.category === 'food') {
+                    // Food (berry): restores stamina
+                    if (typeof petIndex !== 'number' || petIndex < 0) {
+                        break;
+                    }
+                    const pet = saveManager.save.pets[petIndex];
+                    if (!pet) {
+                        break;
+                    }
+                    const maxStamina = (0, models_1.getMaxStamina)(pet);
+                    const currentStamina = pet.stamina ?? maxStamina;
+                    if (currentStamina >= maxStamina) {
+                        webview.postMessage({ type: 'consumable_failed' });
+                        break;
+                    }
+                    saveManager.updateInventory(consumableId, currentCount - 1);
+                    const newStamina = Math.min(maxStamina, currentStamina + (consumable.restoreAmount ?? 10));
+                    saveManager.updatePetStats(petIndex, pet.hp ?? (0, models_1.getMaxHp)(pet), newStamina);
+                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                }
+                else if (consumable.category === 'potion') {
+                    // Potion: restores HP
+                    if (typeof petIndex !== 'number' || petIndex < 0) {
+                        break;
+                    }
+                    const pet = saveManager.save.pets[petIndex];
+                    if (!pet) {
+                        break;
+                    }
+                    const maxHp = (0, models_1.getMaxHp)(pet);
+                    const currentHp = pet.hp ?? maxHp;
+                    if (currentHp >= maxHp) {
+                        webview.postMessage({ type: 'consumable_failed' });
+                        break;
+                    }
+                    saveManager.updateInventory(consumableId, currentCount - 1);
+                    const newHp = Math.min(maxHp, currentHp + (consumable.restoreAmount ?? 20));
+                    saveManager.updatePetStats(petIndex, newHp, pet.stamina ?? (0, models_1.getMaxStamina)(pet));
+                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                }
+                else {
+                    // Evolution stones: only consumed if evolution succeeds
+                    if (typeof petIndex !== 'number' || petIndex < 0) {
+                        break;
+                    }
+                    const result = evolution.useItem(petIndex, consumableId);
                     if (result.evolved && result.newForm) {
+                        saveManager.updateInventory(consumableId, currentCount - 1);
+                        webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                         const pet = saveManager.save.pets[petIndex];
                         webview.postMessage({ type: 'remove_pet', index: petIndex });
                         loadPet(pet);
@@ -169,39 +320,17 @@ function handleWebviewMessage(message) {
                         telemetry.trackPokemonEvolved(pet.specie);
                         vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
                     }
-                }
-            }
-            else {
-                // Evolution stones: only consumed if evolution succeeds
-                if (typeof petIndex !== 'number' || petIndex < 0) {
-                    break;
-                }
-                const result = evolution.useItem(petIndex, consumableId);
-                if (result.evolved && result.newForm) {
-                    saveManager.updateInventory(consumableId, currentCount - 1);
-                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                    const pet = saveManager.save.pets[petIndex];
-                    webview.postMessage({ type: 'remove_pet', index: petIndex });
-                    loadPet(pet);
-                    webview.postMessage({
-                        type: 'evolution',
-                        index: petIndex,
-                        name: pet.name,
-                        newForm: result.newForm.name,
-                    });
-                    telemetry.trackPokemonEvolved(pet.specie);
-                    vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
-                }
-                else {
-                    // Stone had no effect — not consumed
-                    webview.postMessage({ type: 'consumable_failed' });
+                    else {
+                        // Stone had no effect — not consumed
+                        webview.postMessage({ type: 'consumable_failed' });
+                    }
                 }
             }
             break;
         }
         case 'buy_consumable': {
             const itemId = message.consumableId;
-            const consumable = game_data_1.Consumables.find(c => c.id === itemId);
+            const consumable = ConsumablesMap.get(itemId);
             if (!consumable) {
                 break;
             }
@@ -240,6 +369,10 @@ function handleWebviewMessage(message) {
                 sprite: p.sprite,
                 spriteSize: p.spriteSize,
                 candyFed: p.candyFed ?? 0,
+                hp: p.hp ?? (0, models_1.getMaxHp)(p),
+                stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
+                maxHp: (0, models_1.getMaxHp)(p),
+                maxStamina: (0, models_1.getMaxStamina)(p),
             }));
             webview.postMessage({ type: 'pokedex', value: pets });
             break;
@@ -307,6 +440,9 @@ async function addPetCommand() {
         spriteSize: formData.spriteSize,
         candyFed: formData.candyCost,
     };
+    // Initialize HP/Stamina at max for the pet's level
+    pet.hp = (0, models_1.getMaxHp)(pet);
+    pet.stamina = (0, models_1.getMaxStamina)(pet);
     const added = saveManager.addPet(pet);
     if (!added) {
         vscode.window.showWarningMessage(`You can only summon up to ${save_manager_1.MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
@@ -424,6 +560,8 @@ function activate(context) {
     if (config.get('dayNightCycle', true)) {
         startDayNightTimer();
     }
+    // Start stamina drain timer
+    startStaminaDrainTimer();
     // Listen for configuration changes
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         config = vscode.workspace.getConfiguration('pokemon-pets');
@@ -468,6 +606,7 @@ function activate(context) {
 function deactivate() {
     saveManager.flushSave();
     stopDayNightTimer();
+    stopStaminaDrainTimer();
     console.log('Pokemon Pets is now deactivated 😿');
 }
 //# sourceMappingURL=extension.js.map

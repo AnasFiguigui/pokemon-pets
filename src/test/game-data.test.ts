@@ -110,6 +110,24 @@ describe('Consumables', () => {
             expect(typeof item.price).toBe('number');
             expect(item.price).toBeGreaterThan(0);
             expect(typeof item.description).toBe('string');
+            expect(['candy', 'stone', 'food', 'potion']).toContain(item.category);
+        }
+    });
+
+    it('includes berries (food category)', () => {
+        expect(Consumables.some(c => c.category === 'food')).toBe(true);
+    });
+
+    it('includes potions (potion category)', () => {
+        expect(Consumables.some(c => c.category === 'potion')).toBe(true);
+    });
+
+    it('food and potion items have positive restoreAmount', () => {
+        const healables = Consumables.filter(c => c.category === 'food' || c.category === 'potion');
+        expect(healables.length).toBeGreaterThan(0);
+        for (const item of healables) {
+            expect(item.restoreAmount).toBeTypeOf('number');
+            expect(item.restoreAmount).toBeGreaterThan(0);
         }
     });
 });

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Decoration, Pet, Save } from './models';
+import { Decoration, Pet, Save, getMaxHp, getMaxStamina } from './models';
 
 export const MAX_SUMMONED_POKEMONS = 6;
 
@@ -80,6 +80,23 @@ export class SaveManager {
         } else if (this.save.pets.length > MAX_SUMMONED_POKEMONS) {
             this.save.pets = this.save.pets.slice(0, MAX_SUMMONED_POKEMONS);
             saveUpdated = true;
+        }
+
+        // Initialize HP/Stamina for pets that don't have them yet
+        for (const pet of this.save.pets) {
+            const maxHp = getMaxHp(pet);
+            const maxStamina = getMaxStamina(pet);
+            if (typeof pet.hp !== 'number' || pet.hp <= 0) {
+                pet.hp = maxHp;
+                saveUpdated = true;
+            }
+            if (typeof pet.stamina !== 'number' || pet.stamina <= 0) {
+                pet.stamina = maxStamina;
+                saveUpdated = true;
+            }
+            // Clamp to current max (in case level changed)
+            if (pet.hp > maxHp) { pet.hp = maxHp; saveUpdated = true; }
+            if (pet.stamina > maxStamina) { pet.stamina = maxStamina; saveUpdated = true; }
         }
 
         // Validate decoration
@@ -226,6 +243,15 @@ export class SaveManager {
     /** Removes the decoration at the given index and saves. */
     public removeDecor(index: number): void {
         this.save.decoration.splice(index, 1);
+        this.scheduleSave();
+    }
+
+    /** Updates a pet's HP and/or stamina values. */
+    public updatePetStats(index: number, hp: number, stamina: number): void {
+        const pet = this.save.pets[index];
+        if (!pet) { return; }
+        pet.hp = Math.max(0, hp);
+        pet.stamina = Math.max(0, stamina);
         this.scheduleSave();
     }
 }

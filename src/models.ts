@@ -8,7 +8,21 @@ export type Pet = {
     sprite?: string;
     spriteSize?: 32 | 48;
     candyFed?: number;
+    hp?: number;
+    stamina?: number;
 };
+
+/** Returns the maximum HP for a pet based on its level (candyFed). */
+export function getMaxHp(pet: Pet): number {
+    const level = Math.min(pet.candyFed ?? 0, 100);
+    return 50 + level * 2;
+}
+
+/** Returns the maximum stamina for a pet based on its level (candyFed). */
+export function getMaxStamina(pet: Pet): number {
+    const level = Math.min(pet.candyFed ?? 0, 100);
+    return 50 + level * 2;
+}
 
 export type Decoration = {
     x: number;

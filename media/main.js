@@ -34,16 +34,18 @@ function showTopBarTemporary() {
 
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
-    { id: 'candy', name: 'Rare Candy', price: 30, spriteOffset: { x: 0, y: 0 } },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, spriteOffset: { x: 32, y: 0 } },
-    { id: 'water_stone', name: 'Water Stone', price: 100, spriteOffset: { x: 64, y: 0 } },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, spriteOffset: { x: 96, y: 0 } },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, spriteOffset: { x: 128, y: 0 } },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, spriteOffset: { x: 160, y: 0 } },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, spriteOffset: { x: 192, y: 0 } },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, spriteOffset: { x: 224, y: 0 } },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, spriteOffset: { x: 256, y: 0 } },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, spriteOffset: { x: 288, y: 0 } },
+    { id: 'candy', name: 'Rare Candy', price: 30, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
+    { id: 'oran_berry', name: 'Oran Berry', price: 15, category: 'food', stat: '+10 STA', spriteOffset: { x: 32, y: 0 }, cursorOffset: { x: 32, y: 32 } },
+    { id: 'potion', name: 'Potion', price: 25, category: 'potion', stat: '+20 HP', spriteOffset: { x: 64, y: 0 }, cursorOffset: { x: 64, y: 32 } },
+    { id: 'fire_stone', name: 'Fire Stone', price: 100, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
+    { id: 'water_stone', name: 'Water Stone', price: 100, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, category: 'stone', spriteOffset: { x: 256, y: 0 }, cursorOffset: { x: 256, y: 32 } },
+    { id: 'moon_stone', name: 'Moon Stone', price: 120, category: 'stone', spriteOffset: { x: 288, y: 0 }, cursorOffset: { x: 288, y: 32 } },
+    { id: 'sun_stone', name: 'Sun Stone', price: 120, category: 'stone', spriteOffset: { x: 320, y: 0 }, cursorOffset: { x: 320, y: 32 } },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
+    { id: 'ice_stone', name: 'Ice Stone', price: 100, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
 ];
 
 //Actions menu
@@ -76,8 +78,8 @@ function selectConsumable(id) {
     const info = ConsumableCatalog.find(c => c.id === id);
     if (info) {
         const el = document.getElementById('cursor');
-        el.style.setProperty('--consumable-x', `${-info.spriteOffset.x}px`);
-        el.style.setProperty('--consumable-y', `${-info.spriteOffset.y}px`);
+        el.style.setProperty('--consumable-x', `${-info.cursorOffset.x}px`);
+        el.style.setProperty('--consumable-y', `${-info.cursorOffset.y}px`);
     }
 }
 
@@ -124,6 +126,13 @@ function openBackpack() {
 
             const text = document.createElement('span');
             text.innerText = `${name} x${count}`;
+            if (info && info.stat) {
+                text.appendChild(document.createElement('br'));
+                const statSpan = document.createElement('span');
+                statSpan.classList.add('storeButtonStat');
+                statSpan.innerText = info.stat;
+                text.appendChild(statSpan);
+            }
             element.appendChild(text);
 
             element.onclick = () => selectConsumable(id);
@@ -185,6 +194,43 @@ function renderPokedex() {
             levelEl.innerText = `Lv. ${level}`;
             info.appendChild(levelEl);
 
+            // HP bar
+            const hp = pet.hp ?? 0;
+            const maxHp = pet.maxHp ?? 50;
+            const hpPercent = maxHp > 0 ? (hp / maxHp) * 100 : 0;
+            const hpBar = document.createElement('div');
+            hpBar.classList.add('pokedexBar');
+            const hpFill = document.createElement('div');
+            hpFill.classList.add('pokedexBarFill', 'hp');
+            hpFill.style.width = `${hpPercent}%`;
+            // Dynamic color: green >50%, orange ≤50%, red ≤25%
+            if (hpPercent <= 25) {
+                hpFill.style.background = '#e44';
+            } else if (hpPercent <= 50) {
+                hpFill.style.background = '#e98a2a';
+            }
+            hpBar.appendChild(hpFill);
+            const hpLabel = document.createElement('span');
+            hpLabel.classList.add('pokedexBarLabel');
+            hpLabel.innerText = `HP ${hp}/${maxHp}`;
+            hpBar.appendChild(hpLabel);
+            info.appendChild(hpBar);
+
+            // Stamina bar
+            const stamina = pet.stamina ?? 0;
+            const maxStamina = pet.maxStamina ?? 50;
+            const staminaBar = document.createElement('div');
+            staminaBar.classList.add('pokedexBar');
+            const staminaFill = document.createElement('div');
+            staminaFill.classList.add('pokedexBarFill', 'stamina');
+            staminaFill.style.width = `${maxStamina > 0 ? (stamina / maxStamina) * 100 : 0}%`;
+            staminaBar.appendChild(staminaFill);
+            const staminaLabel = document.createElement('span');
+            staminaLabel.classList.add('pokedexBarLabel');
+            staminaLabel.innerText = `STA ${stamina}/${maxStamina}`;
+            staminaBar.appendChild(staminaLabel);
+            info.appendChild(staminaBar);
+
             entry.appendChild(info);
             content.appendChild(entry);
         }
@@ -203,7 +249,7 @@ function toggleActionDecor() {
 }
 
 //Store menu
-function createStoreItem(name, price) {
+function createStoreItem(name, price, stat) {
     //Item element
     const element = document.createElement('div');
     element.classList.add('menuButton', 'storeButton');
@@ -212,6 +258,15 @@ function createStoreItem(name, price) {
     const text = document.createElement('span');
     text.innerText = Util.titleCase(name.toLowerCase().replaceAll('_', ' '));
     element.append(text);
+
+    //Add stat label
+    if (stat) {
+        text.appendChild(document.createElement('br'));
+        const statSpan = document.createElement('span');
+        statSpan.classList.add('storeButtonStat');
+        statSpan.innerText = stat;
+        text.appendChild(statSpan);
+    }
 
     //Add price to text
     if (typeof price === 'number') {
@@ -355,7 +410,7 @@ function openStoreConsumablesMenu() {
 
     //Create consumable items from catalog (styled like decoration presets)
     for (const item of ConsumableCatalog) {
-        const element = createStoreItem(item.name, item.price);
+        const element = createStoreItem(item.name, item.price, item.stat);
 
         //Add sprite image (using decoration sprite sheet temporarily)
         const imgBox = document.createElement('div');
@@ -370,8 +425,12 @@ function openStoreConsumablesMenu() {
 
         //Add buy function
         element.onclick = () => {
-            if (Game.money < item.price) { return; }
+            if (Game.money < item.price) {
+                Game.showMessage('Not enough gold!');
+                return;
+            }
             vscode.postMessage({ type: 'buy_consumable', consumableId: item.id, quantity: 1 });
+            Game.showMessage(`Bought ${item.name}!`);
         };
         content.appendChild(element);
     }
@@ -379,6 +438,20 @@ function openStoreConsumablesMenu() {
     //Scroll to top
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0);
+}
+
+function refreshStorePrices() {
+    const priceElements = document.querySelectorAll('#storeContent .storeButtonMoney');
+    for (const el of priceElements) {
+        const price = parseInt(el.innerText);
+        if (!isNaN(price)) {
+            if (price > Game.money) {
+                el.setAttribute('expensive', '');
+            } else {
+                el.removeAttribute('expensive');
+            }
+        }
+    }
 }
 
 //Messages from VSCode
@@ -398,6 +471,8 @@ function handleGameMessage(message) {
             break;
         case 'money':
             Game.setMoney(message.value);
+            // Refresh store price indicators if store is open
+            if (Menus.current === 'store') { refreshStorePrices(); }
             break;
         case 'inventory':
             if (typeof message.value === 'object') {
@@ -418,6 +493,19 @@ function handleGameMessage(message) {
         case 'pokedex':
             pokedexData = Array.isArray(message.value) ? message.value : [];
             renderPokedex();
+            break;
+        case 'pet_stats':
+            // Update cached pokedex data with fresh stats
+            if (Array.isArray(message.value) && pokedexData.length > 0) {
+                for (let i = 0; i < Math.min(message.value.length, pokedexData.length); i++) {
+                    pokedexData[i].hp = message.value[i].hp;
+                    pokedexData[i].stamina = message.value[i].stamina;
+                    pokedexData[i].maxHp = message.value[i].maxHp;
+                    pokedexData[i].maxStamina = message.value[i].maxStamina;
+                }
+                // Re-render if pokedex is open
+                if (Menus.current === 'pokedex') { renderPokedex(); }
+            }
             break;
         case 'consumable_failed':
             Game.showMessage('It had no effect!');

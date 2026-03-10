@@ -152,6 +152,9 @@ describe('SaveManager', () => {
                 name: `Pet${i}`,
                 specie: 'S',
                 color: 'C',
+                candyFed: 0,
+                hp: 50,
+                stamina: 50,
             }));
             const saveData = completeSave({ pets });
             vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -482,6 +485,101 @@ describe('SaveManager', () => {
             expect(manager.save.inventory.candy).toBe(10);
             expect(manager.save.inventory.fire_stone).toBe(2);
             expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── updatePetStats ──────────────────────────────────────────────────
+
+    describe('updatePetStats', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+            manager.save.pets = [
+                { name: 'A', specie: 'SA', color: 'C', hp: 50, stamina: 50 },
+            ];
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('updates hp and stamina and schedules a save', () => {
+            manager.updatePetStats(0, 30, 20);
+            expect(manager.save.pets[0].hp).toBe(30);
+            expect(manager.save.pets[0].stamina).toBe(20);
+            vi.runAllTimers();
+            expect(fs.writeFileSync).toHaveBeenCalled();
+        });
+
+        it('clamps negative values to zero', () => {
+            manager.updatePetStats(0, -10, -5);
+            expect(manager.save.pets[0].hp).toBe(0);
+            expect(manager.save.pets[0].stamina).toBe(0);
+        });
+
+        it('does nothing for invalid index', () => {
+            manager.updatePetStats(99, 10, 10);
+            expect(manager.save.pets[0].hp).toBe(50);
+            expect(manager.save.pets[0].stamina).toBe(50);
+        });
+    });
+
+    // ── HP/Stamina validation in loadGame ───────────────────────────────
+
+    describe('HP/Stamina validation', () => {
+        it('initializes missing hp and stamina to max values', () => {
+            const saveData = completeSave({
+                pets: [{ name: 'A', specie: 'SA', color: 'C', candyFed: 0 }],
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.pets[0].hp).toBe(50); // 50 + 0*2
+            expect(manager.save.pets[0].stamina).toBe(50);
+        });
+
+        it('clamps hp and stamina to max when they exceed it', () => {
+            const saveData = completeSave({
+                pets: [{ name: 'A', specie: 'SA', color: 'C', candyFed: 0, hp: 999, stamina: 999 }],
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.pets[0].hp).toBe(50);
+            expect(manager.save.pets[0].stamina).toBe(50);
+        });
+
+        it('preserves valid hp and stamina values', () => {
+            const saveData = completeSave({
+                pets: [{ name: 'A', specie: 'SA', color: 'C', candyFed: 10, hp: 60, stamina: 40 }],
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(manager.save.pets[0].hp).toBe(60);
+            expect(manager.save.pets[0].stamina).toBe(40);
+        });
+
+        it('resets hp and stamina of 0 to max (pets with 0 HP should have been removed)', () => {
+            const saveData = completeSave({
+                pets: [{ name: 'A', specie: 'SA', color: 'C', candyFed: 5, hp: 0, stamina: 0 }],
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.pets[0].hp).toBe(60);  // 50 + 5*2
+            expect(manager.save.pets[0].stamina).toBe(60);
         });
     });
 });

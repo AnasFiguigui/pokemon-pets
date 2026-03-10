@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Save, PetItem, normalizePet } from '../models';
+import { Save, PetItem, normalizePet, getMaxHp, getMaxStamina } from '../models';
 import type { Pet } from '../models';
 
 describe('Save', () => {
@@ -94,5 +94,39 @@ describe('normalizePet', () => {
         // Simulates bad data loaded from a save file
         const pet = { name: 'X', specie: 'Squirtle', color: 'generation 1', form: 123 } as unknown as Pet;
         expect(normalizePet(pet).form).toBe('Squirtle');
+    });
+});
+
+describe('getMaxHp', () => {
+    it('returns 50 for a pet with no candyFed', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C' };
+        expect(getMaxHp(pet)).toBe(50);
+    });
+
+    it('scales with candyFed', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C', candyFed: 10 };
+        expect(getMaxHp(pet)).toBe(70); // 50 + 10*2
+    });
+
+    it('caps at level 100', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C', candyFed: 200 };
+        expect(getMaxHp(pet)).toBe(250); // 50 + 100*2
+    });
+});
+
+describe('getMaxStamina', () => {
+    it('returns 50 for a pet with no candyFed', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C' };
+        expect(getMaxStamina(pet)).toBe(50);
+    });
+
+    it('scales with candyFed', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C', candyFed: 25 };
+        expect(getMaxStamina(pet)).toBe(100); // 50 + 25*2
+    });
+
+    it('caps at level 100', () => {
+        const pet: Pet = { name: 'A', specie: 'B', color: 'C', candyFed: 150 };
+        expect(getMaxStamina(pet)).toBe(250); // 50 + 100*2
     });
 });

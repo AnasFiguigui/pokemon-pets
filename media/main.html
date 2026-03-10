@@ -123,7 +123,13 @@
         <div id="topBar">
             <img src="{media}sprites/ui/gold.png" alt="Gold" class="topBarIcon">
             <span id="moneyText">0</span>
-            <button type="button" id="candyBtn" class="topBarItem" onclick="openBackpack();">
+            <button type="button" id="pokedexBtn" class="topBarItem" onclick="openPokedex();">
+                <img src="{media}sprites/ui/pokedex.png" alt="Pokédex" class="topBarIcon">
+            </button>
+            <button type="button" id="backpackBtn" class="topBarItem" onclick="openBackpack();">
+                <img src="{media}sprites/ui/backpack.png" alt="Backpack" class="topBarIcon">
+            </button>
+            <button type="button" id="candyBtn" class="topBarItem" onclick="selectConsumable('candy');">
                 <img src="{media}sprites/ui/candy.png" alt="Candy" class="topBarIcon">
                 <span id="candyText">0</span>
             </button>

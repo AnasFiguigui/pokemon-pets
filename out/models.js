@@ -1,7 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PetItem = exports.Save = void 0;
+exports.getMaxHp = getMaxHp;
+exports.getMaxStamina = getMaxStamina;
 exports.normalizePet = normalizePet;
+/** Returns the maximum HP for a pet based on its level (candyFed). */
+function getMaxHp(pet) {
+    const level = Math.min(pet.candyFed ?? 0, 100);
+    return 50 + level * 2;
+}
+/** Returns the maximum stamina for a pet based on its level (candyFed). */
+function getMaxStamina(pet) {
+    const level = Math.min(pet.candyFed ?? 0, 100);
+    return 50 + level * 2;
+}
 class Save {
     money = 0;
     pets = [];

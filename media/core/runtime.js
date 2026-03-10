@@ -507,12 +507,13 @@ class Game {
 
     static setMoney = (amount) => {
         this.#money = amount;
-        this.#moneyText.innerText = `${amount}`;
+        this.#moneyText.innerText = Util.formatNumber(amount);
     };
 
     static addMoney = (amount) => {
         this.setMoney(this.money + amount);
-        this.showMessage(`${amount >= 0 ? '+' : '-'}${Math.abs(amount)}G`);
+        const formatted = Util.formatNumber(Math.abs(amount));
+        this.showMessage(`${amount >= 0 ? '+' : '-'}${formatted}G`);
         vscode.postMessage({ 
             type: 'money', 
             value: this.money 
