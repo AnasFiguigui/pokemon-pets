@@ -10,6 +10,7 @@ export type Pet = {
     candyFed?: number;
     hp?: number;
     stamina?: number;
+    friendship?: number;
 };
 
 /** Returns the maximum HP for a pet based on its level (candyFed). */

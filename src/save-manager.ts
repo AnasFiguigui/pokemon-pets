@@ -98,6 +98,15 @@ export class SaveManager {
             // Clamp to current max (in case level changed)
             if (pet.hp > maxHp) { pet.hp = maxHp; saveUpdated = true; }
             if (pet.stamina > maxStamina) { pet.stamina = maxStamina; saveUpdated = true; }
+
+            // Initialize friendship for pets that don't have it yet (neutral range 50–99)
+            if (typeof pet.friendship !== 'number') {
+                pet.friendship = 50 + Math.floor(Math.random() * 50);
+                saveUpdated = true;
+            }
+            // Clamp friendship to [0, 255]
+            if (pet.friendship < 0) { pet.friendship = 0; saveUpdated = true; }
+            if (pet.friendship > 255) { pet.friendship = 255; saveUpdated = true; }
         }
 
         // Validate decoration

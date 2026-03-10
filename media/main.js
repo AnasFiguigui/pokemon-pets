@@ -584,11 +584,71 @@ function handleGameMessage(message) {
             updateNightOverlay(message.timeOfDay, message.opacity);
             break;
         case 'evolution':
-            //Visual sparkle effect on the evolved pet
+            // Canvas-based evolution effect: blink the old pet, then swap to evolved form
             if (typeof message.index === 'number' && Game.pets[message.index]) {
-                const pet = Game.pets[message.index];
-                pet.element.classList.add('evolving');
-                setTimeout(() => { pet.element.classList.remove('evolving'); }, 2000);
+                const oldPet = Game.pets[message.index];
+                const idx = message.index;
+
+                // Freeze the pet at idle during evolution
+                oldPet.animate('idle', true);
+
+                // Blink: toggle visibility every 100ms for 2 seconds (accelerating)
+                let blinkStep = 0;
+                const blinkPhases = [
+                    { count: 5, interval: 200 },  // Slow blinks (1 second)
+                    { count: 5, interval: 100 },   // Medium blinks (0.5 second)
+                    { count: 10, interval: 50 },   // Fast blinks (0.5 second) 
+                ];
+                let phaseIdx = 0;
+                let phaseStep = 0;
+
+                function doBlink() {
+                    if (phaseIdx >= blinkPhases.length) {
+                        // Blinking done — ensure visible, then swap
+                        oldPet.setActive(true);
+                        performEvolutionSwap();
+                        return;
+                    }
+                    const phase = blinkPhases[phaseIdx];
+                    phaseStep++;
+                    oldPet.setActive(phaseStep % 2 === 0);
+
+                    if (phaseStep >= phase.count) {
+                        phaseIdx++;
+                        phaseStep = 0;
+                    }
+
+                    const nextInterval = blinkPhases[Math.min(phaseIdx, blinkPhases.length - 1)].interval;
+                    setTimeout(doBlink, nextInterval);
+                }
+
+                function performEvolutionSwap() {
+                    const preservedPos = oldPet.pos;
+                    // Remove old pet
+                    Game.objects.removeItem(oldPet);
+                    Game.pets.splice(idx, 1);
+
+                    // Create new evolved pet
+                    const specie = message.specie.toLowerCase();
+                    const generation = (message.color ?? 'generation 1').toString();
+                    const form = (message.form ?? message.specie).toString();
+                    const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
+                    const spriteSize = message.spriteSize === 48 ? 48 : 32;
+                    const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
+
+                    // Restore position
+                    if (preservedPos) { newPet.moveTo(preservedPos); }
+
+                    // Play special animation on the new form
+                    newPet.animate('special', true);
+
+                    // Fix index
+                    Game.pets.removeItem(newPet);
+                    Game.pets.splice(idx, 0, newPet);
+                }
+
+                // Start blinking after a brief pause
+                setTimeout(doBlink, 200);
             }
             break;
         case 'pokedex':
@@ -712,7 +772,10 @@ function handleSpawnMessage(message) {
         case 'update_pet': {
             // Evolution: replace the pet at the same index to keep indices in sync
             const oldPet = Game.pets[message.index];
+            let preservedPos = null;
             if (oldPet) {
+                // Preserve position before removing so the new pet doesn't jump
+                preservedPos = oldPet.pos;
                 // Remove old pet from game objects without sending remove_pet to extension
                 Game.objects.removeItem(oldPet);
                 Game.pets.splice(message.index, 1);
@@ -723,6 +786,12 @@ function handleSpawnMessage(message) {
             const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
             const spriteSize = message.spriteSize === 48 ? 48 : 32;
             const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
+            // Restore the old position so the pet doesn't teleport on evolution
+            if (preservedPos) {
+                newPet.moveTo(preservedPos);
+            }
+            // Play evolve animation
+            newPet.animate('evolve', true);
             // Move from end of Game.pets to correct index
             Game.pets.removeItem(newPet);
             Game.pets.splice(message.index, 0, newPet);

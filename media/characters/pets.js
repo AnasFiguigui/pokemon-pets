@@ -328,6 +328,11 @@ class PokemonAnimations {
                     { loop: false }
                 )
             ],
+            'evolve': new Animation(
+                [[0, 12], [1, 12], [2, 12], [3, 12]],
+                0.5,
+                { loop: false }
+            ),
         };
     }
 
@@ -489,6 +494,12 @@ class PetAI extends AI {
 
         //Didn't move -> Point reached, notify game that the ball was reached
         Game.ball.onReached();
+
+        //Notify extension which pet caught the ball (for friendship gain)
+        const petIndex = Game.pets.indexOf(this.character);
+        if (petIndex >= 0) {
+            vscode.postMessage({ type: 'ball_caught', index: petIndex });
+        }
 
         //Set mood to heart & show mood
         this.#setHeartMood();

@@ -57,6 +57,20 @@ const HP_DRAIN_AMOUNT = 1;
 const ConsumablesMap = new Map(game_data_1.Consumables.map(c => [c.id, c]));
 /** Pre-built map for O(1) plant-type lookups by ID. */
 const PlantTypesMap = new Map(game_data_1.PlantTypes.map(p => [p.id, p]));
+/** Max friendship value. */
+const MAX_FRIENDSHIP = 255;
+/**
+ * Increase a pet's friendship by the given amount, clamped to [0, 255].
+ * Saves automatically.
+ */
+function addFriendship(petIndex, amount) {
+    const pet = saveManager.save.pets[petIndex];
+    if (!pet) {
+        return;
+    }
+    pet.friendship = Math.min(MAX_FRIENDSHIP, (pet.friendship ?? 0) + amount);
+    saveManager.scheduleSave();
+}
 // ── Game Initialization ─────────────────────────────────────────────────
 function initGame() {
     webview.postMessage({ type: 'background', value: config.get('background') });
@@ -255,6 +269,10 @@ function autoFeedPets() {
             const newStamina = Math.min(maxStamina, stamina + (consumable.restoreStamina ?? 0));
             saveManager.updatePetStats(i, newHp, newStamina);
             inventoryChanged = true;
+            // Auto-feed also grants friendship
+            if (consumable.friendshipGain) {
+                addFriendship(i, consumable.friendshipGain);
+            }
             break; // one item per pet per tick
         }
     }
@@ -351,6 +369,14 @@ function handleWebviewMessage(message) {
             telemetry.trackWildPokemonCaught();
             break;
         }
+        case 'ball_caught': {
+            // Pet caught the ball — increase friendship by 0.5
+            const ballPetIndex = message.index;
+            if (typeof ballPetIndex === 'number' && ballPetIndex >= 0) {
+                addFriendship(ballPetIndex, 0.5);
+            }
+            break;
+        }
         case 'use_consumable': {
             const consumableId = message.consumableId;
             if (!consumableId) {
@@ -368,6 +394,13 @@ function handleWebviewMessage(message) {
                 telemetry.trackCandyFed();
                 if (typeof petIndex === 'number' && petIndex >= 0) {
                     const pet = saveManager.save.pets[petIndex];
+                    // Increase friendship from candy
+                    if (pet) {
+                        const candyConsumable = ConsumablesMap.get('candy');
+                        if (candyConsumable?.friendshipGain) {
+                            addFriendship(petIndex, candyConsumable.friendshipGain);
+                        }
+                    }
                     // Boost HP/Stamina by the level-up delta (max increases by 2 per candy)
                     if (pet) {
                         const oldMaxHp = (0, models_1.getMaxHp)(pet);
@@ -383,7 +416,7 @@ function handleWebviewMessage(message) {
                         }
                         if (result.evolved && result.newForm) {
                             webview.postMessage({
-                                type: 'update_pet',
+                                type: 'evolution',
                                 index: petIndex,
                                 name: pet.name,
                                 specie: pet.specie,
@@ -391,11 +424,6 @@ function handleWebviewMessage(message) {
                                 form: (0, models_1.normalizePet)(pet).form,
                                 sprite: (0, models_1.normalizePet)(pet).sprite,
                                 spriteSize: (0, models_1.normalizePet)(pet).spriteSize,
-                            });
-                            webview.postMessage({
-                                type: 'evolution',
-                                index: petIndex,
-                                name: pet.name,
                                 newForm: result.newForm.name,
                             });
                             telemetry.trackPokemonEvolved(pet.specie);
@@ -438,6 +466,10 @@ function handleWebviewMessage(message) {
                     saveManager.updatePetStats(petIndex, newHp, newStamina);
                     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                     webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                    // Increase friendship from food/potion
+                    if (consumable.friendshipGain) {
+                        addFriendship(petIndex, consumable.friendshipGain);
+                    }
                 }
                 else {
                     // Evolution stones: only consumed if evolution succeeds
@@ -450,7 +482,7 @@ function handleWebviewMessage(message) {
                         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                         const pet = saveManager.save.pets[petIndex];
                         webview.postMessage({
-                            type: 'update_pet',
+                            type: 'evolution',
                             index: petIndex,
                             name: pet.name,
                             specie: pet.specie,
@@ -458,11 +490,6 @@ function handleWebviewMessage(message) {
                             form: (0, models_1.normalizePet)(pet).form,
                             sprite: (0, models_1.normalizePet)(pet).sprite,
                             spriteSize: (0, models_1.normalizePet)(pet).spriteSize,
-                        });
-                        webview.postMessage({
-                            type: 'evolution',
-                            index: petIndex,
-                            name: pet.name,
                             newForm: result.newForm.name,
                         });
                         telemetry.trackPokemonEvolved(pet.specie);
@@ -656,6 +683,8 @@ async function addPetCommand() {
     // Initialize HP/Stamina at max for the pet's level
     pet.hp = (0, models_1.getMaxHp)(pet);
     pet.stamina = (0, models_1.getMaxStamina)(pet);
+    // Initialize friendship to random neutral value (50–99)
+    pet.friendship = 50 + Math.floor(Math.random() * 50);
     const added = saveManager.addPet(pet);
     if (!added) {
         vscode.window.showWarningMessage(`You can only summon up to ${save_manager_1.MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);

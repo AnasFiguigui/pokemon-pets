@@ -160,6 +160,7 @@ describe('SaveManager', () => {
                 candyFed: 0,
                 hp: 50,
                 stamina: 50,
+                friendship: 75,
             }));
             const saveData = completeSave({ pets });
             vi.mocked(fs.existsSync).mockReturnValue(true);

@@ -4,6 +4,7 @@ export type PokemonForm = {
     spriteSize: 32 | 48;
     candyCost: number;  // Cumulative candy needed to reach this form (0 = base form)
     requiredItem?: string; // Consumable ID required for this evolution (in addition to candy)
+    requiredFriendship?: number; // Minimum friendship needed for this evolution
 };
 
 export type PokemonSpecies = {
@@ -19,6 +20,7 @@ export type Consumable = {
     category: 'candy' | 'stone' | 'food' | 'potion';
     restoreHp?: number;
     restoreStamina?: number;
+    friendshipGain?: number; // Amount of friendship gained when consumed
 };
 
 export type PlantType = {
@@ -45,9 +47,9 @@ export type PlantType = {
 };
 
 export const Consumables: Consumable[] = [
-    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy' },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15 },
-    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20 },
+    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 1 },
+    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
+    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 3 },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
@@ -95,7 +97,7 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
             forms: [
                 { name: 'Charmander', sprite: 'charmander', spriteSize: 32, candyCost: 0 },
                 { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyCost: 10 },
-                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone' },
+                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone', requiredFriendship: 220 },
             ],
         },
         {

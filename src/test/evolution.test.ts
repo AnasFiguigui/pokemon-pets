@@ -214,6 +214,7 @@ describe('EvolutionService', () => {
             const pet: Pet = {
                 name: 'Char', specie: 'Charmander', color: 'Generation 1',
                 form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 25,
+                friendship: 220,
             };
             sm.save.pets.push(pet);
 

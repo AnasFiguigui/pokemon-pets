@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = void 0;
 exports.Consumables = [
-    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy' },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15 },
-    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20 },
+    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 1 },
+    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
+    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 3 },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
@@ -49,7 +49,7 @@ exports.Pokemons = {
             forms: [
                 { name: 'Charmander', sprite: 'charmander', spriteSize: 32, candyCost: 0 },
                 { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyCost: 10 },
-                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone' },
+                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone', requiredFriendship: 220 },
             ],
         },
         {

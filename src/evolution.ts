@@ -78,7 +78,10 @@ export class EvolutionService {
         if (nextFormIdx < species.forms.length) {
             const nextForm = species.forms[nextFormIdx];
             // Only evolve via candy if the form does NOT require a special item
-            if (!nextForm.requiredItem && pet.candyFed >= nextForm.candyCost) {
+            // and friendship requirement is met (if any)
+            const friendshipMet = typeof nextForm.requiredFriendship !== 'number'
+                || (pet.friendship ?? 0) >= nextForm.requiredFriendship;
+            if (!nextForm.requiredItem && friendshipMet && pet.candyFed >= nextForm.candyCost) {
                 // Evolve!
                 pet.form = nextForm.name;
                 pet.sprite = nextForm.sprite;
@@ -134,7 +137,9 @@ export class EvolutionService {
         // Scan all forms after the current one for a matching requiredItem
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const form = species.forms[i];
-            if (form.requiredItem === itemId && candyFed >= form.candyCost) {
+            const friendshipMet = typeof form.requiredFriendship !== 'number'
+                || (pet.friendship ?? 0) >= form.requiredFriendship;
+            if (form.requiredItem === itemId && friendshipMet && candyFed >= form.candyCost) {
                 // Evolve!
                 pet.form = form.name;
                 pet.sprite = form.sprite;
