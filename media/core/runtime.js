@@ -68,9 +68,8 @@ class Animation {
             }
         }
 
-        //Return animation sprite position
-        const offset = this.#frames[this.#frame];
-        return new Vec2(offset[0], offset[1]);
+        //Return animation frame data (raw array [x, y] to avoid Vec2 allocation)
+        return this.#frames[this.#frame];
     }
 
 }
@@ -171,8 +170,17 @@ class GameObject {
 
     //Update
     update() {
-        //Update animation sprite offset
-        if (this.#animation) { this.#spriteOffset = this.#animation.update().mult(this.#animation.pixelOffset ? new Vec2(1) : this.size); }
+        //Update animation sprite offset (inline to avoid Vec2 allocation per frame)
+        if (this.#animation) {
+            const frame = this.#animation.update();
+            if (this.#animation.pixelOffset) {
+                this.#spriteOffset.x = frame[0];
+                this.#spriteOffset.y = frame[1];
+            } else {
+                this.#spriteOffset.x = frame[0] * this.size.x;
+                this.#spriteOffset.y = frame[1] * this.size.y;
+            }
+        }
     }
 
     //Clicks
@@ -412,12 +420,14 @@ class Game {
     static #fps = 20;    //Game framerate
     static #frames = 0;  //Frames since game start
 
+    static #resizeDirty = true; //Flag set by resize event listener
+
     static get fps() { return this.#fps; }
     static get frames() { return this.#frames; }
 
     static update = () => {
-        //Check if window size changed
-        if (this.windowSize.x !== window.innerWidth || this.windowSize.y !== window.innerHeight) { this.onResize(); }
+        //Check if a resize was flagged
+        if (this.#resizeDirty) { this.#resizeDirty = false; this.onResize(); }
 
         //Next frame
         this.#frames++;
@@ -491,7 +501,9 @@ class Game {
     static get objects() { return this.#objects; }
     static get ball() { return this.#ball; }
     static get pets() { return this.#pets; }
+    static set pets(value) { this.#pets = value; }
     static get decoration() { return this.#decoration; }
+    static set decoration(value) { this.#decoration = value; }
     static get plants() { return this.#plants; }
     static get wildPokemons() { return this.#wildPokemons; }
     static get wildPokemonSpawner() { return this.#wildPokemonSpawner; }
@@ -622,7 +634,7 @@ class Game {
     static start = () => {
         //Init canvas contexts
         this.#context = this.canvas.getContext('2d');
-        this.#contextBuffer = this.canvasBuffer.getContext('2d', { willReadFrequently: true });
+        this.#contextBuffer = this.canvasBuffer.getContext('2d');
         this.#contextAlphaTest = this.canvasAlphaTest.getContext('2d', { willReadFrequently: true });
 
         //Init canvas sizes
@@ -630,6 +642,9 @@ class Game {
 
         //Create ball
         this.#ball = new Ball();
+
+        //Listen for window resize events
+        window.addEventListener('resize', () => { this.#resizeDirty = true; });
 
         //Start game loop
         cancelAnimationFrame(this.#animationFrame);

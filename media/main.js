@@ -746,16 +746,16 @@ window.addEventListener('message', event => { // NOSONAR - VS Code webview; exte
     handleMenuMessage(message);
 });
 
-//Night overlay & lamp lighting
+//Night overlay & lamp lighting (cached DOM elements)
 // eslint-disable-next-line no-unused-vars -- read by decoration/object.js
 Game.nightOverlayActive = false;
+const nightOverlayEl = document.getElementById('night-overlay');
+const lampGlowEl = document.getElementById('lamp-glow');
 
 function updateNightOverlay(timeOfDay, opacity) {
-    const overlay = document.getElementById('night-overlay');
-    const glow = document.getElementById('lamp-glow');
     Game.nightOverlayActive = timeOfDay === 'night';
-    overlay.style.opacity = opacity;
-    glow.style.opacity = Game.nightOverlayActive ? 1 : 0;
+    nightOverlayEl.style.opacity = opacity;
+    lampGlowEl.style.opacity = Game.nightOverlayActive ? 1 : 0;
 
     //Switch lamp sprites (day = off, night = on)
     for (const decor of Game.decoration) {
@@ -767,9 +767,9 @@ function updateNightOverlay(timeOfDay, opacity) {
         Game.lampMaskDirty = true;
         updateLampMasks();
     } else {
-        overlay.style.maskImage = '';
-        overlay.style.webkitMaskImage = '';
-        glow.style.background = '';
+        nightOverlayEl.style.maskImage = '';
+        nightOverlayEl.style.webkitMaskImage = '';
+        lampGlowEl.style.background = '';
     }
 }
 
@@ -795,8 +795,6 @@ function buildLampGlow(lamps, scale) {
 }
 
 function updateLampMasks() {
-    const overlay = document.getElementById('night-overlay');
-    const glow = document.getElementById('lamp-glow');
     if (!Game.nightOverlayActive) { return; }
 
     //Collect all lamp decorations
@@ -814,18 +812,18 @@ function updateLampMasks() {
 
     //Dark overlay mask (punch transparent holes where lamps are)
     const mask = buildLampMask(lamps, Game.scale);
-    overlay.style.maskImage = mask;
-    overlay.style.webkitMaskImage = mask;
+    nightOverlayEl.style.maskImage = mask;
+    nightOverlayEl.style.webkitMaskImage = mask;
     if (mask) {
-        overlay.style.maskComposite = 'intersect';
-        overlay.style.webkitMaskComposite = 'source-in';
+        nightOverlayEl.style.maskComposite = 'intersect';
+        nightOverlayEl.style.webkitMaskComposite = 'source-in';
     } else {
-        overlay.style.maskComposite = '';
-        overlay.style.webkitMaskComposite = '';
+        nightOverlayEl.style.maskComposite = '';
+        nightOverlayEl.style.webkitMaskComposite = '';
     }
 
     //Warm glow layer (additive warm light where lamps are)
-    glow.style.background = buildLampGlow(lamps, Game.scale);
+    lampGlowEl.style.background = buildLampGlow(lamps, Game.scale);
 }
 
 //Cursor events

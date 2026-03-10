@@ -79,6 +79,12 @@ class Vec2 {
         return new Vec2(Math.ceil(this.x), Math.ceil(this.y));
     }
 
+    setXY(x, y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+
     toString() {
         return `(${this.x}, ${this.y})`;
     }
@@ -225,12 +231,15 @@ class Cursor {
 
     //Position
     static #pos = new Vec2();
+    static #posScaled = new Vec2(); //Cached scaled position
 
     static get pos() { return this.#pos; }
-    static get posScaled() { return Cursor.pos.div(Game.scale).toInt(); }
+    static get posScaled() { return this.#posScaled; }
 
     static moveTo(pos) {
         this.#pos = pos;
+        //Update cached scaled position inline (avoids 2 Vec2 allocations per access)
+        this.#posScaled.setXY(Math.floor(pos.x / Game.scale), Math.floor(pos.y / Game.scale));
         this.#element.style.left = `${pos.x}px`;
         this.#element.style.top =  `${pos.y}px`;
     }

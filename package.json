@@ -1,8 +1,8 @@
 {
     "name": "pokemon-pets",
-    "displayName": "Pokemon Pets (Beta)",
-    "description": "Pokemon pets for VSCode",
-    "version": "0.9.3",
+    "displayName": "Pokemon Pets",
+    "description": "Pokemon for VSCode",
+    "version": "1.0.0",
     "publisher": "Anasfiguigui",
     "author": {
         "name": "Anasfiguigui"
@@ -16,7 +16,7 @@
     "pricing": "Free",
     "keywords": [
         "pokemon",
-        "valley",
+        "vscode",
         "pets"
     ],
     "categories": [
@@ -74,6 +74,22 @@
         },
         "commands": [
             {
+                "command": "pokemon-pets.toggleAutoFeed",
+                "title": "Auto Feed: OFF",
+                "icon": {
+                    "light": "media/icons/light/switch-off.svg",
+                    "dark": "media/icons/dark/switch-off.svg"
+                }
+            },
+                        {
+                "command": "pokemon-pets.toggleAutoFeedOff",
+                "title": "Auto Feed: ON",
+                "icon": {
+                    "light": "media/icons/light/switch-on.svg",
+                    "dark": "media/icons/dark/switch-on.svg"
+                }
+            },
+            {
                 "command": "pokemon-pets.addPet",
                 "title": "Add Pokémon",
                 "icon": {
@@ -87,22 +103,6 @@
                 "icon": {
                     "light": "media/icons/light/remove.svg",
                     "dark": "media/icons/dark/remove.svg"
-                }
-            },
-            {
-                "command": "pokemon-pets.toggleAutoFeed",
-                "title": "Auto Feed: OFF",
-                "icon": {
-                    "light": "media/icons/light/switch-off.svg",
-                    "dark": "media/icons/dark/switch-off.svg"
-                }
-            },
-            {
-                "command": "pokemon-pets.toggleAutoFeedOff",
-                "title": "Auto Feed: ON",
-                "icon": {
-                    "light": "media/icons/light/switch-on.svg",
-                    "dark": "media/icons/dark/switch-on.svg"
                 }
             },
             {
