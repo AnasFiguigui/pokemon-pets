@@ -108,13 +108,14 @@ function loadPlant(plant: PlantInstance, index: number): void {
     });
 }
 
-/** Calculates a plant's current visual phase (0–2) based on elapsed time. */
+/** Calculates a plant's current visual phase (0–4) based on elapsed time. */
 function getPlantPhase(plant: PlantInstance, plantType: PlantType): number {
     const elapsedMs = Date.now() - new Date(plant.phaseStartTime).getTime();
     const elapsedHours = elapsedMs / 3_600_000;
+    const maxPhase = plantType.growthHours.length - 1;
     let phase = plant.phase;
     let hoursConsumed = 0;
-    while (phase < 2) {
+    while (phase < maxPhase) {
         const needed = plantType.growthHours[phase];
         if (hoursConsumed + needed > elapsedHours) { break; }
         hoursConsumed += needed;
@@ -525,16 +526,23 @@ function handleWebviewMessage(message: any): void {
             const pType = PlantTypesMap.get(plant.plantId);
             if (!pType) { break; }
             const phase = getPlantPhase(plant, pType);
-            if (phase < 2) { break; } // Not ripe yet
+            const maxPhase = pType.growthHours.length - 1;
+            if (phase < maxPhase) { break; } // Not ripe yet
             // Random fruit count
             const fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
             const prevCount = saveManager.getConsumableCount(pType.producesId);
             saveManager.updateInventory(pType.producesId, prevCount + fruits);
-            // Reset plant to phase 0
-            saveManager.updatePlantPhase(harvestIndex, 0);
-            webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 0 });
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
+            if (pType.harvestType === 'single') {
+                // Single-harvest: remove the plant after harvesting
+                saveManager.removePlant(harvestIndex);
+                webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
+            } else {
+                // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
+                saveManager.updatePlantPhase(harvestIndex, 2);
+                webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+            }
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
             break;
         }
@@ -713,7 +721,7 @@ async function importSaveCommand(): Promise<void> {
                     x: typeof p.x === 'number' ? p.x : 0,
                     y: typeof p.y === 'number' ? p.y : 0,
                     plantId: p.plantId,
-                    phase: typeof p.phase === 'number' ? Math.min(Math.max(0, Math.floor(p.phase)), 2) : 0,
+                    phase: typeof p.phase === 'number' ? Math.min(Math.max(0, Math.floor(p.phase)), 4) : 0,
                     phaseStartTime: typeof p.phaseStartTime === 'string' ? p.phaseStartTime : new Date().toISOString(),
                 }));
         }

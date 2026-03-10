@@ -28,8 +28,10 @@ export type PlantType = {
     description: string;
     /** Consumable ID this plant produces when harvested. */
     producesId: string;
-    /** Hours for each growth phase (blossom, fruit development, ripening). */
-    growthHours: [number, number, number];
+    /** 'single' = destroyed after harvest, 'repeatable' = regrows from blossom after harvest. */
+    harvestType: 'single' | 'repeatable';
+    /** Hours for each growth phase (seed, sprout, blossom, fruit, ripening). */
+    growthHours: [number, number, number, number, number];
     /** Min fruits produced per harvest. */
     minFruits: number;
     /** Max fruits produced per harvest. */
@@ -62,9 +64,10 @@ export const PlantTypes: PlantType[] = [
         id: 'oran_berry_plant',
         name: 'Oran Berry Seed',
         price: 50,
-        description: 'Grows Oran Berries. Fast grower!',
+        description: 'Grows Oran Berries. Regrows after each harvest!',
         producesId: 'oran_berry',
-        growthHours: [0.02, 0.02, 0.02],
+        harvestType: 'repeatable',
+        growthHours: [0.02, 0.02, 0.02, 0.02, 0.02],
         minFruits: 1,
         maxFruits: 3,
         size: [16, 32],

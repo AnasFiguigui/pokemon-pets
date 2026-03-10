@@ -59,7 +59,7 @@ class Plant extends GameObject {
         this.spriteOffset.y = this.#baseOffsetY + this.#phase * this.#stepY;
     }
 
-    /** Sets the growth phase (0–2) and updates the visual. */
+    /** Sets the growth phase (0–4) and updates the visual. */
     setPhase(phase) {
         this.#phase = phase;
         this.#updateSprite();
@@ -114,7 +114,7 @@ class Plant extends GameObject {
     mouseUp(pos) {
         // If in normal mode (no action / no decor), attempt harvest
         if (!Game.isAction(Action.DECOR)) {
-            if (this.#phase >= 2) {
+            if (this.#phase >= 4) {
                 vscode.postMessage({ type: 'harvest_plant', index: Game.plants.indexOf(this) });
             } else {
                 Game.showMessage('Not ripe yet...');
@@ -162,8 +162,8 @@ class Plant extends GameObject {
     draw(ctx, options = {}) {
         super.draw(ctx, options);
 
-        // Add a subtle glow when ripe (phase 2)
-        if (this.#phase >= 2 && Game.frames % 40 < 20) {
+        // Add a subtle glow when ripe (phase 4)
+        if (this.#phase >= 4 && Game.frames % 40 < 20) {
             const drawPos = options.pos ?? this.pos;
             ctx.save();
             ctx.globalAlpha = 0.3;

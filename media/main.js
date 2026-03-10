@@ -49,8 +49,9 @@ const ConsumableCatalog = [
 ];
 
 //Plant catalog (must match extension's PlantTypes array)
+// harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', growthHours: [0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.02, 0.02, 0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
 //Actions menu
@@ -468,12 +469,14 @@ function openStoreSeedsMenu() {
 
     //Create seed items from catalog
     for (const seed of PlantCatalog) {
-        const stat = `Blossom: ${seed.growthHours[0]}h | Fruit: ${seed.growthHours[1]}h | Ripe: ${seed.growthHours[2]}h`;
+        const typeLabel = seed.harvestType === 'single' ? 'One-time' : 'Regrows';
+        const stat = `${typeLabel} · Ripe: ${seed.growthHours.reduce((a, b) => a + b, 0)}h`;
         const element = createStoreItem(seed.name, seed.price, stat);
 
-        //Add sprite preview (phase 2 = ripe)
-        const ripeX = seed.spriteOffset[0] + seed.phaseStep[0] * 2;
-        const ripeY = seed.spriteOffset[1] + seed.phaseStep[1] * 2;
+        //Add sprite preview (last phase = ripe)
+        const maxPhase = seed.growthHours.length - 1;
+        const ripeX = seed.spriteOffset[0] + seed.phaseStep[0] * maxPhase;
+        const ripeY = seed.spriteOffset[1] + seed.phaseStep[1] * maxPhase;
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
         img.style.setProperty('--image', `url('./sprites/plants.png')`);
@@ -693,6 +696,17 @@ function handleSpawnMessage(message) {
         case 'update_plant': {
             const plant = Game.plants[message.index];
             if (plant) { plant.setPhase(message.phase); }
+            break;
+        }
+        case 'destroy_plant': {
+            // Server-initiated removal (e.g. single-harvest plant after harvesting)
+            const plantToRemove = Game.plants[message.index];
+            if (plantToRemove) {
+                Game.objects.removeItem(plantToRemove);
+                Game.plants.removeItem(plantToRemove);
+                Game.decoration.removeItem(plantToRemove);
+                if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
+            }
             break;
         }
         case 'update_pet': {

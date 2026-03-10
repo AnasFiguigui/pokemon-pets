@@ -35,7 +35,7 @@ export type PlantInstance = {
     x: number;
     y: number;
     plantId: string;
-    /** Current growth phase (0 = seed, 1 = growing, 2 = ripe/harvestable). */
+    /** Current growth phase (0 = seed, 1 = sprout, 2 = blossom, 3 = fruit, 4 = ripe/harvestable). */
     phase: number;
     /** ISO timestamp when the current phase started. */
     phaseStartTime: string;
