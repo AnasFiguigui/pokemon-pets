@@ -112,6 +112,11 @@ function openBackpack() {
             const info = ConsumableCatalog.find(c => c.id === id);
             const name = info ? info.name : Util.titleCase(id.replaceAll('_', ' '));
             const count = inv[id];
+            const sellPrice = info ? Math.floor(info.price * 0.7) : 0;
+
+            //Row container
+            const row = document.createElement('div');
+            row.classList.add('backpackRow');
 
             const element = document.createElement('button');
             element.type = 'button';
@@ -142,7 +147,36 @@ function openBackpack() {
             element.appendChild(text);
 
             element.onclick = () => selectConsumable(id);
-            content.appendChild(element);
+            row.appendChild(element);
+
+            //Sell buttons
+            if (sellPrice > 0) {
+                const sellOne = document.createElement('button');
+                sellOne.type = 'button';
+                sellOne.classList.add('menuButton', 'sellButton');
+                sellOne.innerText = `Sell\n${sellPrice}G`;
+                sellOne.onclick = (e) => {
+                    e.stopPropagation();
+                    vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: 1 });
+                    openBackpack();
+                };
+                row.appendChild(sellOne);
+
+                if (count > 1) {
+                    const sellAll = document.createElement('button');
+                    sellAll.type = 'button';
+                    sellAll.classList.add('menuButton', 'sellButton');
+                    sellAll.innerText = `Sell All\n${sellPrice * count}G`;
+                    sellAll.onclick = (e) => {
+                        e.stopPropagation();
+                        vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: count });
+                        openBackpack();
+                    };
+                    row.appendChild(sellAll);
+                }
+            }
+
+            content.appendChild(row);
         }
     }
 

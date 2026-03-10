@@ -570,9 +570,11 @@ class PokemonCharacter extends Character {
     }
 
     moveTowardsBall(pos) {
+        const halfW = Math.floor(this.size.x / 2);
+        const halfH = Math.floor(this.size.y / 2);
         const target = new Vec2(
-            Util.clamp(pos.x, 0, this.maxPosX),
-            Util.clamp(pos.y, 0, this.maxPosY)
+            Util.clamp(pos.x - halfW, 0, this.maxPosX),
+            Util.clamp(pos.y - halfH, 0, this.maxPosY)
         );
         this.ai.moveTowards(target, true);
     }

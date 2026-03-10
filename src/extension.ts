@@ -514,6 +514,22 @@ function handleWebviewMessage(message: any): void {
             telemetry.trackGoldSpent(totalCost);
             break;
         }
+        case 'sell_consumable': {
+            const sellId = message.consumableId as string;
+            const sellItem = ConsumablesMap.get(sellId);
+            if (!sellItem) { break; }
+            const sellQty = Math.max(1, Math.floor(message.quantity ?? 1));
+            const owned = saveManager.getConsumableCount(sellId);
+            const actualQty = Math.min(sellQty, owned);
+            if (actualQty <= 0) { break; }
+            const sellPrice = Math.floor(sellItem.price * 0.7) * actualQty;
+            saveManager.updateInventory(sellId, owned - actualQty);
+            saveManager.updateMoney(saveManager.save.money + sellPrice);
+            webview.postMessage({ type: 'money', value: saveManager.save.money });
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+            telemetry.trackGoldEarned(sellPrice);
+            break;
+        }
         case 'move_decor':
             saveManager.moveDecor(message.index, message.x, message.y);
             break;

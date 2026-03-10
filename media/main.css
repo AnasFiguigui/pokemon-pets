@@ -395,6 +395,31 @@ body[cursor="none"] {
     color: #2eb32e;
 }
 
+.backpackRow {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+
+.backpackRow > .storeButton {
+    flex: 1;
+    min-width: 0;
+}
+
+.sellButton {
+    flex: 0 0 auto;
+    font-size: 12px;
+    padding: 4px 6px;
+    line-height: 1.2;
+    white-space: pre-line;
+    text-align: center;
+    color: #e8a83a;
+}
+
+.sellButton:hover {
+    color: #ff4444;
+}
+
 /* Top bar */
 #topBar {
     /* Layout */
@@ -458,6 +483,7 @@ body[cursor="none"] {
     align-items: end;
     justify-content: end;
     gap: 5px;
+    z-index: 10;
 
     /* Other */
     pointer-events: none;
