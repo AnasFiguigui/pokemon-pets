@@ -55,8 +55,8 @@ body[cursor="none"] {
     pointer-events: none;
 }
 
-#background[background="grass (fall)"] {
-    background-image: url(./sprites/backgrounds/grass_fall.png);
+#background[background="pokemon_grass"] {
+    background-image: url(./sprites/backgrounds/pokemon_grass.png);
 }
 
 #background[background="sand"] {
@@ -71,20 +71,20 @@ body[cursor="none"] {
     background-image: url(./sprites/backgrounds/snow.png);
 }
 
-#background[background="light wood"] {
-    background-image: url(./sprites/backgrounds/wood_light.png);
+#background[background="bridge"] {
+    background-image: url(./sprites/backgrounds/bridge.png);
 }
 
-#background[background="dark wood"] {
-    background-image: url(./sprites/backgrounds/wood_dark.png);
+#background[background="beach"] {
+    background-image: url(./sprites/backgrounds/beach.png);
 }
 
-#background[background="orange wood"] {
-    background-image: url(./sprites/backgrounds/wood_orange.png);
+#background[background="floor1"] {
+    background-image: url(./sprites/backgrounds/floor_1.png);
 }
 
-#background[background="broken wood"] {
-    background-image: url(./sprites/backgrounds/wood_broken.png);
+#background[background="floor3"] {
+    background-image: url(./sprites/backgrounds/floor_3.png);
 }
 
 /* Game canvas */

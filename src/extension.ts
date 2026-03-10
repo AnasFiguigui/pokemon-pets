@@ -338,7 +338,7 @@ function handleWebviewMessage(message: any): void {
             // Compute catch reward server-side (60–100 gold)
             const catchReward = 60 + Math.floor(Math.random() * 9) * 5;
             saveManager.updateMoney(saveManager.save.money + catchReward);
-            webview.postMessage({ type: 'money', value: saveManager.save.money });
+            webview.postMessage({ type: 'money', value: saveManager.save.money, reward: catchReward });
             telemetry.trackGoldEarned(catchReward);
             telemetry.trackWildPokemonCaught();
             break;

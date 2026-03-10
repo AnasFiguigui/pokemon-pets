@@ -29,9 +29,13 @@ Rules:
 
 - Add Pokémon pets with a full flow: `generation -> species -> form`.
 - Pet moods and interactions (including candy and pokéball actions).
-- Wild Pokémon spawn system with generic/automated animation handling.
+- Wild Pokémon spawn system with catch rewards.
 - In-game store and decoration mode (move/sell/place decor).
-- **Consumables & Backpack** — 10 items including Candy and 9 Evolution Stones.
+- **HP & Stamina** — Pokémon have health and stamina that drain over time; fainted Pokémon leave.
+- **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions.
+- **Pokédex** — View all your Pokémon with level, HP bar, and Stamina bar.
+- **Seeds & Plants** — Buy seeds, plant them, and harvest berries when they mature.
+- **Consumables & Backpack** — Food, potions, candy, and 9 evolution stones with a backpack UI.
 - **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
 - **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.
 - **Daily coding streaks** — Earn gold bonuses for consecutive coding days.

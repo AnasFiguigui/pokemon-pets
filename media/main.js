@@ -564,6 +564,11 @@ function handleGameMessage(message) {
             break;
         case 'money':
             Game.setMoney(message.value);
+            // Show reward message if amount is included (e.g. wild catch)
+            if (typeof message.reward === 'number' && message.reward !== 0) {
+                const formatted = Util.formatNumber(Math.abs(message.reward));
+                Game.showMessage(`${message.reward >= 0 ? '+' : '-'}${formatted}G`);
+            }
             // Refresh store price indicators if store is open
             if (Menus.current === 'store') { refreshStorePrices(); }
             break;

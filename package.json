@@ -41,7 +41,14 @@
                     "enum": [
                         "Grass",
                         "Sand",
-                        "Snow"
+                        "Snow",
+                        "Pokemon_grass",
+                        "Beach",
+                        "Floor1",
+                        "Bridge",
+                        "Floor3",
+                        "Floor4",
+                        "Ground3"
                     ],
                     "description": "The background theme for the window."
                 },

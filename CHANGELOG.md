@@ -1,5 +1,24 @@
 # Change Log
 
+## [v1.0.0] — Official Release
+
+### New Features
+- **HP & Stamina system** — Each Pokémon now has HP and Stamina stats that scale with level. Stamina drains over time, and HP drains when stamina reaches zero. Pokémon that faint from exhaustion will leave.
+- **Auto Feed** — Toggle automatic feeding for pets at low HP/stamina using your cheapest available food and potions.
+- **Pokédex** — View all your summoned Pokémon with their name, level, HP bar, and Stamina bar.
+- **Seeds & Plants** — Buy seeds from the store, plant them in your world, and harvest berries when they mature through 3 growth phases.
+- **Food & Potions** — Oran Berry (+10 HP, +15 STA) and Potion (+20 HP) consumables to keep your Pokémon healthy.
+- **Harvest system** — Click ripe plants to collect fruits that go straight into your backpack.
+- **Wild Pokémon catch reward** — Catching wild Pokémon now shows the gold reward on screen.
+
+### Improvements
+- **Performance: GPU-accelerated rendering** — Double-buffer canvas no longer forces software rendering, enabling hardware acceleration.
+- **Performance: Zero-allocation animation loop** — Animation frames no longer create temporary Vec2 objects every tick.
+- **Performance: Cached cursor position** — Scaled cursor position is computed once on mouse move instead of allocating 2 Vec2 objects per access.
+- **Performance: Cached DOM lookups** — Night overlay and lamp glow elements are cached at load time instead of queried every frame.
+- **Performance: Resize event listener** — Window resize detection uses an event listener instead of polling every game tick.
+- **Store menu fix** — Fixed a syntax error in decoration presets that prevented the store (and most webview functionality) from working.
+
 ## [v0.9.3]
 
 ### New Features
