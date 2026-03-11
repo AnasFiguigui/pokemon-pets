@@ -42,6 +42,8 @@ export type PlantInstance = {
     phaseStartTime: string;
     /** Applied mulch modifier (undefined = none). */
     mulch?: 'growth_mulch' | 'damp_mulch' | 'stable_mulch' | 'gooey_mulch';
+    /** ISO timestamp when mulch was applied (used for growth_mulch 1h expiry). */
+    mulchAppliedAt?: string;
     /** Number of regrow cycles completed (for gooey_mulch tracking). */
     regrowCount?: number;
 };

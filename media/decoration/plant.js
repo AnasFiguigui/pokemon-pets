@@ -11,6 +11,7 @@ class Plant extends GameObject {
     #stepX = 0;
     #stepY = 0;
     #price = 0;
+    #totalPhases = 5; // total growth phases (growthHours.length)
 
     get plantId() { return this.#plantId; }
     get plantIndex() { return this.#plantIndex; }
@@ -51,6 +52,7 @@ class Plant extends GameObject {
         this.#stepX = Array.isArray(config.phaseStep) ? config.phaseStep[0] : 0;
         this.#stepY = Array.isArray(config.phaseStep) ? config.phaseStep[1] : 16;
         this.#price = typeof config.price === 'number' ? config.price : 0;
+        this.#totalPhases = typeof config.totalPhases === 'number' ? config.totalPhases : 5;
 
         // Set initial sprite based on phase
         this.#updateSprite();
@@ -203,8 +205,26 @@ class Plant extends GameObject {
         return pos.div(this.#snap).toIntRound().mult(this.#snap);
     }
 
-    /** Override draw to add sparkle effect when ripe. */
+    /** Override draw to show preview when pending purchase and sparkle when ripe. */
     draw(ctx, options = {}) {
+        // During placement preview: draw the preview sprite (one past last phase) at 40% opacity
+        if (this.#pendingPurchase) {
+            const pos = (typeof options.pos === 'object' ? options.pos : this.pos);
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            const previewX = this.#baseOffsetX + this.#totalPhases * this.#stepX;
+            const previewY = this.#baseOffsetY + this.#totalPhases * this.#stepY;
+            ctx.drawImage(
+                this.image,
+                previewX, previewY,
+                this.size.x, this.size.y,
+                pos.x, pos.y,
+                this.size.x, this.size.y
+            );
+            ctx.restore();
+            return;
+        }
+
         super.draw(ctx, options);
 
         // Add a subtle glow when ripe (phase 4)

@@ -9,21 +9,18 @@ To celebrate the release of the new Pokémon game, I created this extension so y
 New Pokémon will be added in future releases.
 </div>
 
-## Community Voting
+## Community & Feedback
 
-Vote for the next Pokémon to be added:
+A Discord server is available for discussions, bug reports, feature suggestions, and community voting.
 
-https://trello.com/b/c2UVCW13/next-pokemon
+Join the server here:  
+https://discord.gg/2wZWwZ8Egy
 
-If your Pokémon is not on the list, join the board as a member and create a new card:
-
-https://trello.com/invite/b/69a69027fb2fa3f5e91c9a77/ATTI583b65e193854c5295412e8d24384b75CBC4550F/next-pokemon
-
-Rules:
-
-- One Pokémon per card.
-- Search before creating a new card to avoid duplicates.
-- The top 10 most voted Pokémon will be added to the extension.
+Use the server to:
+- Report issues or bugs
+- Suggest new features
+- Vote on future additions
+- Discuss the extension with other users
 
 ## Features
 
@@ -33,9 +30,12 @@ Rules:
 - In-game store and decoration mode (move/sell/place decor).
 - **HP & Stamina** — Pokémon have health and stamina that drain over time; fainted Pokémon leave.
 - **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions.
-- **Pokédex** — View all your Pokémon with level, HP bar, and Stamina bar.
-- **Seeds & Plants** — Buy seeds, plant them, and harvest berries when they mature.
-- **Consumables & Backpack** — Food, potions, candy, and 9 evolution stones with a backpack UI.
+- **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.
+- **Rename Pokémon** — Give your Pokémon custom nicknames from the actions menu or command palette.
+- **Seeds & Plants** — Buy seeds, plant them with a ghost preview of the grown plant, and harvest berries when they mature.
+- **Mulch System** — Apply mulch to plants for bonuses: Growth Mulch (−25% growth time), Damp Mulch (+1 yield), Stable Mulch (×2 harvest window), Gooey Mulch (+1 regrow).
+- **Consumables & Backpack** — Food, potions, candy, mulch, and 9 evolution stones with a backpack UI.
+- **Friendship** — Pokémon build friendship over time through feeding and catching; shown in the Pokédex.
 - **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
 - **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.
 - **Daily coding streaks** — Earn gold bonuses for consecutive coding days.
@@ -69,17 +69,17 @@ Then run: **Focus on Pokemon Pets View**.
 - [Node.js](https://nodejs.org/) v18+
 - [VS Code](https://code.visualstudio.com/)
 
-### Getting Started
+<!-- ### Getting Started
 
 ```bash
 git clone https://github.com/Anasfiguigui/Pokemon-Pets.git
 cd Pokemon-Pets
 npm install
-```
+``` -->
 
 Press **F5** in VS Code to launch the Extension Development Host.
 
-### Scripts
+<!-- ### Scripts
 
 | Command                 | Description                    |
 | ----------------------- | ------------------------------ |
@@ -91,8 +91,17 @@ Press **F5** in VS Code to launch the Extension Development Host.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. -->
 
-## License
+## Enjoying Pokemon Pets?
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+If you like this extension, please consider leaving a ⭐⭐⭐⭐⭐ rating on the [Marketplace](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.pokemon-pets)!
+
+You might also enjoy my other extensions:
+
+- **[Dark Reign Themes](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.dark-reign-theme)** — A collection of dark themes for VS Code.
+- **[Kaomoji Status](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.kaomoji-status)** — Fun kaomoji in your status bar.
+
+<!-- ## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE). -->

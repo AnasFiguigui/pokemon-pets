@@ -345,24 +345,24 @@ class PetMoods {
     static size = new Vec2(16);
 
     //Special moods
-    static get HEART() { return new Vec2(2, 1); }
+    static HEART = Object.freeze(new Vec2(2, 1));
     static get RANDOM() { return PetMoods[PetMoods.#moods[Util.randomExclusive(PetMoods.#moods.length)]]; }
 
     //Normal moods
     static #moods = ['HAPPY', 'BLUSH', 'ASHAMED', 'CRY', 'MAD', 'IDK', 'PLEDGE', 'GIGACHAD', 'ALIEN', 'DEVIL', 'SILLY', 'MUSIC'];
 
-    static get HAPPY() { return new Vec2(4, 0); }
-    static get BLUSH() { return new Vec2(4, 1); }
-    static get ASHAMED() { return new Vec2(5, 2); }
-    static get CRY() { return new Vec2(4, 2); }
-    static get MAD() { return new Vec2(6, 1); }
-    static get IDK() { return new Vec2(0, 2); }
-    static get PLEDGE() { return new Vec2(5, 1); }
-    static get GIGACHAD() { return new Vec2(6, 2); }
-    static get ALIEN() { return new Vec2(1, 1); }
-    static get DEVIL() { return new Vec2(2, 2); }
-    static get SILLY() { return new Vec2(0, 0); }
-    static get MUSIC() { return new Vec2(2, 0); }
+    static HAPPY = Object.freeze(new Vec2(4, 0));
+    static BLUSH = Object.freeze(new Vec2(4, 1));
+    static ASHAMED = Object.freeze(new Vec2(5, 2));
+    static CRY = Object.freeze(new Vec2(4, 2));
+    static MAD = Object.freeze(new Vec2(6, 1));
+    static IDK = Object.freeze(new Vec2(0, 2));
+    static PLEDGE = Object.freeze(new Vec2(5, 1));
+    static GIGACHAD = Object.freeze(new Vec2(6, 2));
+    static ALIEN = Object.freeze(new Vec2(1, 1));
+    static DEVIL = Object.freeze(new Vec2(2, 2));
+    static SILLY = Object.freeze(new Vec2(0, 0));
+    static MUSIC = Object.freeze(new Vec2(2, 0));
 
 }
 

@@ -127,6 +127,7 @@ class GameObject {
 
         //Add to game objects list
         Game.objects.push(this);
+        Game.markSortDirty();
     }
 
     #applyConfig(config) {
@@ -159,6 +160,7 @@ class GameObject {
     remove() {
         //Remove from objects list
         Game.objects.removeItem(this);
+        Game.markSortDirty();
     }
 
     setActive(active) {
@@ -254,33 +256,31 @@ class GameObject {
         //Get info
         const pos = (typeof options.pos === 'object' ? options.pos : this.pos);
 
-        //Save context transform
-        ctx.save(); 
-
-        //Translate sprite
-        ctx.translate(pos.x, pos.y);
-
         //Flip sprite
         if (this.animation?.flip) {
-            ctx.translate(this.size.x, 0);
+            ctx.save();
+            ctx.translate(pos.x + this.size.x, pos.y);
             ctx.scale(-1, 1);
+            ctx.drawImage(
+                this.image,
+                this.spriteSheetOffset.x + this.spriteOffset.x,
+                this.spriteSheetOffset.y + this.spriteOffset.y,
+                this.size.x, this.size.y,
+                0, 0,
+                this.size.x, this.size.y
+            );
+            ctx.restore();
+        } else {
+            //Draw sprite directly (no save/restore needed)
+            ctx.drawImage(
+                this.image,
+                this.spriteSheetOffset.x + this.spriteOffset.x,
+                this.spriteSheetOffset.y + this.spriteOffset.y,
+                this.size.x, this.size.y,
+                pos.x, pos.y,
+                this.size.x, this.size.y
+            );
         }
-        
-        //Draw sprite
-        ctx.drawImage(
-            this.image,     //Image
-            this.spriteSheetOffset.x + this.spriteOffset.x, //Sprite offset x
-            this.spriteSheetOffset.y + this.spriteOffset.y, //Sprite offset y
-            this.size.x,         //Source sprite width
-            this.size.y,         //Source sprite height
-            0,              //Position
-            0,              //Position
-            this.size.x,         //Drawing width
-            this.size.y          //Drawing height
-        );
-
-        //Restore context transform
-        ctx.restore();
     }
 
     //Animations
@@ -318,6 +318,9 @@ class GameObject {
 
         //Update position
         this.#pos = pos;
+
+        //Mark sort order dirty if we moved
+        if (!samePos) { Game.markSortDirty(); }
 
         //Return whether we actually moved
         return !samePos;
@@ -510,9 +513,15 @@ class Game {
     static get wildPokemonSpawner() { return this.#wildPokemonSpawner; }
 
     static sortObjects = () => {
-        //Sort objects back-to-front
+        //Sort objects back-to-front (only when order changed)
+        if (!this.#sortDirty) { return; }
+        this.#sortDirty = false;
         this.objects.sort((a, b) => { return a.sortingLayer === b.sortingLayer ? a.sortingOrder - b.sortingOrder : a.sortingLayer - b.sortingLayer; }); 
     };
+
+    static #sortDirty = true;
+
+    static markSortDirty() { this.#sortDirty = true; }
 
     //Money
     static #money = 0;

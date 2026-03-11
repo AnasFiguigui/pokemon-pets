@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.1.0] — Plants, Mulch & Quality of Life
+
+### New Features
+- **Mulch system** — 4 mulch types that modify plant behavior: Growth Mulch (−25% growth time for 1 hour), Damp Mulch (+1 harvest yield), Stable Mulch (×2 harvest window, single-harvest only), Gooey Mulch (+1 regrow cycle, single-harvest only). All mulch is consumed after one use/harvest.
+- **Friendship display** — Pokédex now shows a friendship tier message (Dislikes Trainer → Perfect Bond) next to each Pokémon's level.
+- **Rename Pokémon** — Accessible from the actions menu or via command palette (`Pokemon Pets: Rename Pokémon`).
+- **Seed placement preview** — When placing a seed, a 40% opacity ghost preview of the grown plant is shown to help with positioning.
+- **Super Potion & Hyper Potion** — Two new healing consumables available in the shop.
+- **Pokédex feed buttons** — Feed Candy and Food directly from each Pokémon's Pokédex entry.
+
+### Improvements
+- **Plant deferred purchase** — Seeds are paid for on placement, not on click, so cancelling doesn't cost gold.
+- **Decoration deferred purchase** — Same deferred-buy logic for decoration items.
+- **Build mode buttons** — Moved to bottom-left for better visibility.
+- **Sell consumable UI** — Backpack now refreshes correctly after selling items.
+
+### Bug Fixes
+- **Money clamping bug** — Fixed a cap that limited single-transaction money changes, causing large sales to silently lose gold.
+- **Consumable price sync** — Aligned frontend and backend prices so all items can be purchased correctly.
+- **Plant price fix** — Corrected Oran Berry Seed price.
+
 ## [v1.0.0] — Official Release
 
 ### New Features

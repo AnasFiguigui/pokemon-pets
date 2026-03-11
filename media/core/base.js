@@ -237,11 +237,20 @@ class Cursor {
     static get posScaled() { return this.#posScaled; }
 
     static moveTo(pos) {
-        this.#pos = pos;
+        this.#pos.x = pos.x;
+        this.#pos.y = pos.y;
         //Update cached scaled position inline (avoids 2 Vec2 allocations per access)
         this.#posScaled.setXY(Math.floor(pos.x / Game.scale), Math.floor(pos.y / Game.scale));
         this.#element.style.left = `${pos.x}px`;
         this.#element.style.top =  `${pos.y}px`;
+    }
+
+    static moveToXY(x, y) {
+        this.#pos.x = x;
+        this.#pos.y = y;
+        this.#posScaled.setXY(Math.floor(x / Game.scale), Math.floor(y / Game.scale));
+        this.#element.style.left = `${x}px`;
+        this.#element.style.top =  `${y}px`;
     }
 
     //Icon

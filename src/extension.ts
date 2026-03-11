@@ -157,6 +157,15 @@ function tickPlants(): void {
             saveManager.updatePlantPhase(i, currentPhase);
             webview.postMessage({ type: 'update_plant', index: i, phase: currentPhase });
         }
+        // Expire growth_mulch after 1 hour
+        if (plant.mulch === 'growth_mulch' && plant.mulchAppliedAt) {
+            const mulchElapsed = Date.now() - new Date(plant.mulchAppliedAt).getTime();
+            if (mulchElapsed >= 3_600_000) {
+                plant.mulch = undefined;
+                plant.mulchAppliedAt = undefined;
+                saveManager.scheduleSave();
+            }
+        }
         // Check harvest window expiry for ripe plants
         const maxPhase = plantType.growthHours.length - 1;
         if (currentPhase >= maxPhase) {
@@ -435,15 +444,16 @@ function handleWebviewMessage(message: any): void {
                         }
 
                         if (result.evolved && result.newForm) {
+                            const { form, sprite, spriteSize } = normalizePet(pet);
                             webview.postMessage({
                                 type: 'evolution',
                                 index: petIndex,
                                 name: pet.name,
                                 specie: pet.specie,
                                 color: pet.color,
-                                form: normalizePet(pet).form,
-                                sprite: normalizePet(pet).sprite,
-                                spriteSize: normalizePet(pet).spriteSize,
+                                form,
+                                sprite,
+                                spriteSize,
                                 newForm: result.newForm.name,
                             });
                             telemetry.trackPokemonEvolved(pet.specie);
@@ -495,15 +505,16 @@ function handleWebviewMessage(message: any): void {
                         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
 
                         const pet = saveManager.save.pets[petIndex];
+                        const { form, sprite, spriteSize } = normalizePet(pet);
                         webview.postMessage({
                             type: 'evolution',
                             index: petIndex,
                             name: pet.name,
                             specie: pet.specie,
                             color: pet.color,
-                            form: normalizePet(pet).form,
-                            sprite: normalizePet(pet).sprite,
-                            spriteSize: normalizePet(pet).spriteSize,
+                            form,
+                            sprite,
+                            spriteSize,
                             newForm: result.newForm.name,
                         });
                         telemetry.trackPokemonEvolved(pet.specie);
@@ -602,8 +613,10 @@ function handleWebviewMessage(message: any): void {
             const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
             if (pType.harvestType === 'single') {
                 // Single-harvest: gooey_mulch grants 1 extra regrow cycle
-                if (plant.mulch === 'gooey_mulch' && (plant.regrowCount ?? 0) < 1) {
-                    plant.regrowCount = (plant.regrowCount ?? 0) + 1;
+                if (plant.mulch === 'gooey_mulch') {
+                    // Regrow once, then consume the mulch
+                    plant.mulch = undefined;
+                    plant.mulchAppliedAt = undefined;
                     saveManager.updatePlantPhase(harvestIndex, 2);
                     webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
                 } else {
@@ -614,6 +627,12 @@ function handleWebviewMessage(message: any): void {
                 // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
                 saveManager.updatePlantPhase(harvestIndex, 2);
                 webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+            }
+            // Consume one-use mulch after harvest (damp, stable)
+            if (plant.mulch === 'damp_mulch' || plant.mulch === 'stable_mulch') {
+                plant.mulch = undefined;
+                plant.mulchAppliedAt = undefined;
+                saveManager.scheduleSave();
             }
             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
@@ -633,14 +652,25 @@ function handleWebviewMessage(message: any): void {
                 webview.postMessage({ type: 'consumable_failed' });
                 break;
             }
+            // Restrict stable_mulch and gooey_mulch to single-harvest plants
+            const targetPlantType = PlantTypesMap.get(targetPlant.plantId);
+            if ((mulchId === 'stable_mulch' || mulchId === 'gooey_mulch') &&
+                targetPlantType && targetPlantType.harvestType !== 'single') {
+                webview.postMessage({ type: 'show_message', text: 'This mulch only works on single-harvest plants.' });
+                break;
+            }
             // Consume mulch and apply to plant
             saveManager.updateInventory(mulchId, mulchCount - 1);
             targetPlant.mulch = mulchId as PlantInstance['mulch'];
+            targetPlant.mulchAppliedAt = new Date().toISOString();
             saveManager.scheduleSave();
             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
             break;
         }
+        case 'request_rename_pet':
+            renamePetCommand();
+            break;
         case 'request_pokedex': {
             const pets = saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS).map(p => ({
                 name: p.name,

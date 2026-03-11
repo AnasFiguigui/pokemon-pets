@@ -39,10 +39,10 @@ const ConsumableCatalog = [
     { id: 'potion', name: 'Potion', price: 100, category: 'potion', stat: '+20 HP', spriteOffset: { x: 0, y: 128 }, cursorOffset: { x: 0, y: 160 } },
     { id: 'super_potion', name: 'Super Potion', price: 280, category: 'potion', stat: '+60 HP', spriteOffset: { x: 32, y: 128 }, cursorOffset: { x: 32, y: 160 } },
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, category: 'potion', stat: '+120 HP', spriteOffset: { x: 64, y: 128 }, cursorOffset: { x: 64, y: 160 } },
-    { id: 'growth_mulch', name: 'Growth Mulch', price: 200, category: 'mulch', stat: '-25% growth time', spriteOffset: { x: 0, y: 192 }, cursorOffset: { x: 0, y: 224 } },
-    { id: 'damp_mulch', name: 'Damp Mulch', price: 200, category: 'mulch', stat: '+1 yield', spriteOffset: { x: 32, y: 192 }, cursorOffset: { x: 32, y: 224 } },
-    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 harvest window', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
-    { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, category: 'mulch', stat: '+1 regrow cycle', spriteOffset: { x: 96, y: 192 }, cursorOffset: { x: 96, y: 224 } },
+    { id: 'growth_mulch', name: 'Growth Mulch', price: 200, category: 'mulch', stat: '-25% growth (1h)', spriteOffset: { x: 0, y: 192 }, cursorOffset: { x: 0, y: 224 } },
+    { id: 'damp_mulch', name: 'Damp Mulch', price: 200, category: 'mulch', stat: '+1 yield (1 harvest)', spriteOffset: { x: 32, y: 192 }, cursorOffset: { x: 32, y: 224 } },
+    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 window (1 harvest)', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
+    { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, category: 'mulch', stat: '+1 regrow (1 harvest)', spriteOffset: { x: 96, y: 192 }, cursorOffset: { x: 96, y: 224 } },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
     { id: 'water_stone', name: 'Water Stone', price: 100, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
@@ -61,6 +61,11 @@ const PlantCatalog = [
 ];
 
 //Actions menu
+function requestRenamePet() {
+    Menus.close();
+    vscode.postMessage({ type: 'request_rename_pet' });
+}
+
 function toggleActionBall() {
     //Close actions menu & decor mode UI
     Menus.close();
@@ -250,12 +255,12 @@ function renderPokedex() {
             // Friendship message
             const friendship = pet.friendship ?? 0;
             let friendshipMsg;
-            if (friendship >= 255) friendshipMsg = 'Perfect Bond';
-            else if (friendship >= 200) friendshipMsg = 'Strong Bond';
-            else if (friendship >= 150) friendshipMsg = 'Very Friendly';
-            else if (friendship >= 100) friendshipMsg = 'Becoming Friendly';
-            else if (friendship >= 50) friendshipMsg = 'Neutral';
-            else friendshipMsg = 'Dislikes Trainer';
+            if (friendship >= 255) {friendshipMsg = 'Perfect Bond';}
+            else if (friendship >= 200) {friendshipMsg = 'Strong Bond';}
+            else if (friendship >= 150) {friendshipMsg = 'Very Friendly';}
+            else if (friendship >= 100) {friendshipMsg = 'Becoming Friendly';}
+            else if (friendship >= 50) {friendshipMsg = 'Neutral';}
+            else {friendshipMsg = 'Dislikes Trainer';}
             const friendshipEl = document.createElement('span');
             friendshipEl.classList.add('pokedexFriendship');
             friendshipEl.innerText = friendshipMsg;
@@ -574,8 +579,10 @@ function openStoreSeedsMenu() {
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
         img.style.setProperty('--image', `url('./sprites/plants.png')`);
-        img.style.setProperty('--width', `${seed.size[0]}px`);
-        img.style.setProperty('--height', `${seed.size[1]}px`);
+        img.style.setProperty('--width', `16px`);
+        img.style.setProperty('--height', `16px`);
+        // img.style.setProperty('--width', `${seed.size[0]}px`)
+        // img.style.setProperty('--height', `${seed.size[1]}px`)
         img.style.setProperty('--scale', `${50 / Math.max(seed.size[0], seed.size[1])}`);
         img.style.setProperty('--spriteOffset', `${-ripeX}px ${-ripeY}px`);
         imgBox.prepend(img);
@@ -600,6 +607,7 @@ function openStoreSeedsMenu() {
                 spriteOffset: seed.spriteOffset,
                 phaseStep: seed.phaseStep,
                 price: seed.price,
+                totalPhases: seed.growthHours.length + 1,
             });
             plant.setPendingPurchase();
 
@@ -1102,8 +1110,8 @@ document.body.onmouseup = event => {
 };
 
 document.onmousemove = event => {
-    //Mouse moved -> Update cursor position
-    Cursor.moveTo(new Vec2(event.clientX, event.clientY));
+    //Mouse moved -> Update cursor position (reuse pos object to avoid GC)
+    Cursor.moveToXY(event.clientX, event.clientY);
 };
 
 document.onmouseenter = event => {
