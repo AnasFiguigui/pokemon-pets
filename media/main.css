@@ -694,6 +694,19 @@ body[cursor="none"] {
     color: var(--vscode-descriptionForeground, #999);
 }
 
+.pokedexLevelRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+}
+
+.pokedexFriendship {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground, #999);
+    font-style: italic;
+}
+
 /* Pokédex stat bars */
 .pokedexBar {
     position: relative;

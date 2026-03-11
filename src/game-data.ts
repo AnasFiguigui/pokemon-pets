@@ -17,7 +17,7 @@ export type Consumable = {
     name: string;
     price: number;
     description: string;
-    category: 'candy' | 'stone' | 'food' | 'potion';
+    category: 'candy' | 'stone' | 'food' | 'potion' | 'mulch';
     restoreHp?: number;
     restoreStamina?: number;
     friendshipGain?: number; // Amount of friendship gained when consumed
@@ -64,11 +64,15 @@ export const Consumables: Consumable[] = [
     { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.', category: 'stone' },
     { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.', category: 'stone' },
     { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.', category: 'stone' },
+    { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces plant growth time by 25%.', category: 'mulch' },
+    { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1.', category: 'mulch' },
+    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window duration.', category: 'mulch' },
+    { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, description: 'Adds 1 extra regrow cycle.', category: 'mulch' },
 ];
 
 export const PlantTypes: PlantType[] = [
     {
-        id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.1, 0.3, 0.2, 0.2, 0.2], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
+        id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.01, 0.01, 0.01, 0.01, 0.01], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
     },
 ];
 

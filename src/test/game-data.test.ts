@@ -110,7 +110,7 @@ describe('Consumables', () => {
             expect(typeof item.price).toBe('number');
             expect(item.price).toBeGreaterThan(0);
             expect(typeof item.description).toBe('string');
-            expect(['candy', 'stone', 'food', 'potion']).toContain(item.category);
+            expect(['candy', 'stone', 'food', 'potion', 'mulch']).toContain(item.category);
         }
     });
 

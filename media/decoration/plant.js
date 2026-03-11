@@ -123,6 +123,29 @@ class Plant extends GameObject {
     }
 
     mouseUp(pos) {
+        // If mulch consumable selected, apply it to this plant
+        if (Game.isAction(Action.CANDY) && Game.selectedConsumable) {
+            const consumableId = Game.selectedConsumable;
+            const info = typeof ConsumableCatalog !== 'undefined'
+                ? ConsumableCatalog.find(c => c.id === consumableId)
+                : null;
+            if (info && info.category === 'mulch') {
+                if (Game.getItemCount(consumableId) <= 0) {
+                    Game.showMessage('None left!');
+                    Game.setAction(Action.NONE);
+                    Game.setSelectedConsumable(null);
+                    return true;
+                }
+                Game.setAction(Action.NONE);
+                Game.setSelectedConsumable(null);
+                const plantIndex = Game.plants.indexOf(this);
+                if (plantIndex >= 0) {
+                    vscode.postMessage({ type: 'apply_mulch', mulchId: consumableId, index: plantIndex });
+                }
+                return true;
+            }
+        }
+
         // If in normal mode (no action / no decor), attempt harvest
         if (!Game.isAction(Action.DECOR)) {
             if (this.#phase >= 4) {

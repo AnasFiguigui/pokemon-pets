@@ -128,10 +128,11 @@ function getPlantPhase(plant: PlantInstance, plantType: PlantType): number {
     const elapsedMs = Date.now() - new Date(plant.phaseStartTime).getTime();
     const elapsedHours = elapsedMs / 3_600_000;
     const maxPhase = plantType.growthHours.length - 1;
+    const growthMultiplier = plant.mulch === 'growth_mulch' ? 0.75 : 1;
     let phase = plant.phase;
     let hoursConsumed = 0;
     while (phase < maxPhase) {
-        const needed = plantType.growthHours[phase];
+        const needed = plantType.growthHours[phase] * growthMultiplier;
         if (hoursConsumed + needed > elapsedHours) { break; }
         hoursConsumed += needed;
         phase++;
@@ -139,11 +140,15 @@ function getPlantPhase(plant: PlantInstance, plantType: PlantType): number {
     return phase;
 }
 
+/** Default harvest window in hours before a ripe plant wilts. */
+const HARVEST_WINDOW_HOURS = 12;
+
 /** Advances all plants to their correct phase and notifies the webview. */
 function tickPlants(): void {
     const plants = saveManager.save.plants;
     if (plants.length === 0) { return; }
-    for (let i = 0; i < plants.length; i++) {
+    // Process in reverse so removals don't shift indices
+    for (let i = plants.length - 1; i >= 0; i--) {
         const plant = plants[i];
         const plantType = PlantTypesMap.get(plant.plantId);
         if (!plantType) { continue; }
@@ -151,6 +156,19 @@ function tickPlants(): void {
         if (currentPhase !== plant.phase) {
             saveManager.updatePlantPhase(i, currentPhase);
             webview.postMessage({ type: 'update_plant', index: i, phase: currentPhase });
+        }
+        // Check harvest window expiry for ripe plants
+        const maxPhase = plantType.growthHours.length - 1;
+        if (currentPhase >= maxPhase) {
+            const windowMultiplier = plant.mulch === 'stable_mulch' ? 2 : 1;
+            const harvestWindowMs = HARVEST_WINDOW_HOURS * windowMultiplier * 3_600_000;
+            // Time since the plant reached ripe phase
+            const elapsedSincePhaseStart = Date.now() - new Date(plant.phaseStartTime).getTime();
+            if (elapsedSincePhaseStart > harvestWindowMs) {
+                // Plant has wilted — remove it
+                saveManager.removePlant(i);
+                webview.postMessage({ type: 'destroy_plant', index: i });
+            }
         }
     }
 }
@@ -336,8 +354,8 @@ function handleWebviewMessage(message: any): void {
             const oldMoney = saveManager.save.money;
             const newMoney = message.value as number;
             if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) { break; }
-            // Cap single transaction delta to prevent exploits (max reasonable: 1000G)
-            const maxDelta = 1000;
+            // Cap single transaction delta to prevent exploits
+            const maxDelta = 100_000;
             const delta = newMoney - oldMoney;
             const clampedMoney = delta > maxDelta ? oldMoney + maxDelta : newMoney;
             saveManager.updateMoney(clampedMoney);
@@ -576,15 +594,22 @@ function handleWebviewMessage(message: any): void {
             const phase = getPlantPhase(plant, pType);
             const maxPhase = pType.growthHours.length - 1;
             if (phase < maxPhase) { break; } // Not ripe yet
-            // Random fruit count
-            const fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
+            // Random fruit count (damp_mulch: +1 yield)
+            let fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
+            if (plant.mulch === 'damp_mulch') { fruits += 1; }
             const prevCount = saveManager.getConsumableCount(pType.producesId);
             saveManager.updateInventory(pType.producesId, prevCount + fruits);
             const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
             if (pType.harvestType === 'single') {
-                // Single-harvest: remove the plant after harvesting
-                saveManager.removePlant(harvestIndex);
-                webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
+                // Single-harvest: gooey_mulch grants 1 extra regrow cycle
+                if (plant.mulch === 'gooey_mulch' && (plant.regrowCount ?? 0) < 1) {
+                    plant.regrowCount = (plant.regrowCount ?? 0) + 1;
+                    saveManager.updatePlantPhase(harvestIndex, 2);
+                    webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+                } else {
+                    saveManager.removePlant(harvestIndex);
+                    webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
+                }
             } else {
                 // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
                 saveManager.updatePlantPhase(harvestIndex, 2);
@@ -592,6 +617,28 @@ function handleWebviewMessage(message: any): void {
             }
             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
             webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
+            break;
+        }
+        case 'apply_mulch': {
+            const mulchId = message.mulchId as string;
+            const mulchItem = ConsumablesMap.get(mulchId);
+            if (!mulchItem || mulchItem.category !== 'mulch') { break; }
+            const mulchCount = saveManager.getConsumableCount(mulchId);
+            if (mulchCount <= 0) { break; }
+            const plantIdx = message.index as number;
+            const targetPlant = saveManager.save.plants[plantIdx];
+            if (!targetPlant) { break; }
+            if (targetPlant.mulch) {
+                // Plant already has mulch applied
+                webview.postMessage({ type: 'consumable_failed' });
+                break;
+            }
+            // Consume mulch and apply to plant
+            saveManager.updateInventory(mulchId, mulchCount - 1);
+            targetPlant.mulch = mulchId as PlantInstance['mulch'];
+            saveManager.scheduleSave();
+            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+            webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
             break;
         }
         case 'request_pokedex': {
@@ -605,6 +652,7 @@ function handleWebviewMessage(message: any): void {
                 stamina: p.stamina ?? getMaxStamina(p),
                 maxHp: getMaxHp(p),
                 maxStamina: getMaxStamina(p),
+                friendship: p.friendship ?? 0,
             }));
             webview.postMessage({ type: 'pokedex', value: pets });
             break;

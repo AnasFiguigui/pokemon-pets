@@ -40,7 +40,7 @@ describe('StreakService', () => {
 
             expect(reward).toBeDefined();
             expect(reward?.gold).toBe(50); // Base reward for streak day 1
-            expect(reward?.message).toContain('+50G');
+            expect(reward?.message).toContain('+50$');
         });
 
         it('sets streak to 1 on first claim', () => {

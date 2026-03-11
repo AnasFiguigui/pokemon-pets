@@ -40,6 +40,10 @@ export type PlantInstance = {
     phase: number;
     /** ISO timestamp when the current phase started. */
     phaseStartTime: string;
+    /** Applied mulch modifier (undefined = none). */
+    mulch?: 'growth_mulch' | 'damp_mulch' | 'stable_mulch' | 'gooey_mulch';
+    /** Number of regrow cycles completed (for gooey_mulch tracking). */
+    regrowCount?: number;
 };
 
 export type StreakData = {
