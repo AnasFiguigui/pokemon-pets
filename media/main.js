@@ -53,7 +53,7 @@ const ConsumableCatalog = [
 //Plant catalog (must match extension's PlantTypes array)
 // harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 450, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.1, 0.3, 0.2, 0.2, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 5, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.1, 0.3, 0.2, 0.2, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
 //Actions menu
@@ -550,8 +550,8 @@ function openStoreSeedsMenu() {
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
         img.style.setProperty('--image', `url('./sprites/plants.png')`);
-        img.style.setProperty('--width', `32px`);
-        img.style.setProperty('--height', `32px`);
+        img.style.setProperty('--width', `16px`);
+        img.style.setProperty('--height', `16px`);
         // img.style.setProperty('--width', `${seed.size[0]}px`)
         // img.style.setProperty('--height', `${seed.size[1]}px`)
         img.style.setProperty('--scale', `${50 / Math.max(seed.size[0], seed.size[1])}`);
