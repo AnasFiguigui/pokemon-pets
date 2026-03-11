@@ -18,8 +18,14 @@ class Decoration extends GameObject {
     #moving = false;
     #movingOffset = new Vec2();
     #dirty = false;     // Position changed during drag, needs saving
+    #pendingPurchase = null; // { category, name } — set when bought from store, cleared on first placement
 
     get moving() { return this.#moving; }
+    get isPendingPurchase() { return this.#pendingPurchase !== null; }
+
+    setPendingPurchase(category, name) {
+        this.#pendingPurchase = { category, name };
+    }
 
     constructor(preset = {}, config = {}) {
         config.image = `decoration.png`;
@@ -46,10 +52,15 @@ class Decoration extends GameObject {
 
         const index = Game.decoration.removeItem(this);
 
-        vscode.postMessage({
-            type: 'remove_decor',
-            index: index,
-        });
+        // If this was a pending purchase that was never placed, just remove from frontend
+        if (this.#pendingPurchase) {
+            this.#pendingPurchase = null;
+        } else {
+            vscode.postMessage({
+                type: 'remove_decor',
+                index: index,
+            });
+        }
 
         if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
     }
@@ -108,7 +119,19 @@ class Decoration extends GameObject {
     }
 
     stopDragging() {
-        if (this.#dirty) {
+        // Finalize pending purchase on first placement
+        if (this.#pendingPurchase) {
+            Game.addMoney(-this.price);
+            vscode.postMessage({
+                type: 'add_decor',
+                x: this.pos.x,
+                y: this.pos.y,
+                category: this.#pendingPurchase.category,
+                name: this.#pendingPurchase.name,
+            });
+            this.#pendingPurchase = null;
+            this.#dirty = false;
+        } else if (this.#dirty) {
             vscode.postMessage({
                 type: 'move_decor',
                 index: Game.decoration.indexOf(this),

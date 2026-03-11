@@ -83,6 +83,7 @@ class GameObject {
 
     get active() { return this.#active; }
     get name() { return this.#name; }
+    set name(value) { if (typeof value === 'string') this.#name = value; }
 
     //Position & Size
     #pos = new Vec2();

@@ -719,6 +719,39 @@ async function removePetCommand(): Promise<void> {
     vscode.window.showInformationMessage('Bye ' + selected.label + '!');
 }
 
+async function renamePetCommand(): Promise<void> {
+    const pets = saveManager.save.pets;
+    if (pets.length === 0) {
+        vscode.window.showInformationMessage('No Pokémon to rename.');
+        return;
+    }
+
+    const items: PetItem[] = pets.map((pet, i) =>
+        new PetItem(i, pet.name, `${pet.color} ${pet.form ?? pet.specie}`),
+    );
+
+    const selected = await vscode.window.showQuickPick(items, {
+        title: 'Select a Pokémon to rename',
+        placeHolder: 'Pokémon',
+        matchOnDescription: true,
+    });
+    if (selected === undefined) { return; }
+
+    const newName = await vscode.window.showInputBox({
+        title: 'New name',
+        prompt: `Rename ${selected.label}`,
+        value: selected.label,
+        validateInput: (v) => v.trim().length === 0 ? 'Name cannot be empty' : undefined,
+    });
+    if (!newName) { return; }
+
+    const trimmed = newName.trim();
+    pets[selected.index].name = trimmed;
+    saveManager.scheduleSave();
+    webview.postMessage({ type: 'rename_pet', index: selected.index, name: trimmed });
+    vscode.window.showInformationMessage(`Renamed to ${trimmed}!`);
+}
+
 async function exportSaveCommand(): Promise<void> {
     const saveJson = JSON.stringify(saveManager.save, null, 2);
     await vscode.env.clipboard.writeText(saveJson);
@@ -946,6 +979,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand),
         vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand),
         vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand),
+        vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand),
     );
 }
 

@@ -168,6 +168,10 @@
             {
                 "command": "pokemon-pets.showStats",
                 "title": "Pokemon Pets: Show stats"
+            },
+            {
+                "command": "pokemon-pets.renamePet",
+                "title": "Pokemon Pets: Rename Pokémon"
             }
         ],
         "menus": {

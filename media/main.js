@@ -34,24 +34,26 @@ function showTopBarTemporary() {
 
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
-    { id: 'candy', name: 'Rare Candy', price: 30, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 32, y: 0 }, cursorOffset: { x: 32, y: 32 } },
-    { id: 'potion', name: 'Potion', price: 25, category: 'potion', stat: '+20 HP', spriteOffset: { x: 64, y: 0 }, cursorOffset: { x: 64, y: 32 } },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
-    { id: 'water_stone', name: 'Water Stone', price: 100, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, category: 'stone', spriteOffset: { x: 256, y: 0 }, cursorOffset: { x: 256, y: 32 } },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, category: 'stone', spriteOffset: { x: 288, y: 0 }, cursorOffset: { x: 288, y: 32 } },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, category: 'stone', spriteOffset: { x: 320, y: 0 }, cursorOffset: { x: 320, y: 32 } },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
+    { id: 'candy', name: 'Rare Candy', price: 300, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
+    { id: 'oran_berry', name: 'Oran Berry', price: 30, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 0, y: 64 }, cursorOffset: { x: 0, y: 96 } },
+    { id: 'potion', name: 'Potion', price: 50, category: 'potion', stat: '+20 HP', spriteOffset: { x: 64, y: 0 }, cursorOffset: { x: 64, y: 32 } },
+    { id: 'super_potion', name: 'Super Potion', price: 100, category: 'potion', stat: '+60 HP', spriteOffset: { x: 0, y: 128 }, cursorOffset: { x: 0, y: 160 } },
+    { id: 'hyper_potion', name: 'Hyper Potion', price: 200, category: 'potion', stat: '+120 HP', spriteOffset: { x: 32, y: 128 }, cursorOffset: { x: 32, y: 160 } },
+    { id: 'fire_stone', name: 'Fire Stone', price: 1000, category: 'stone', spriteOffset: { x: 64, y: 128 }, cursorOffset: { x: 64, y: 160 } },
+    { id: 'water_stone', name: 'Water Stone', price: 1000, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 1000, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 1000, category: 'stone', spriteOffset: { x: 256, y: 0 }, cursorOffset: { x: 256, y: 32 } },
+    { id: 'moon_stone', name: 'Moon Stone', price: 1200, category: 'stone', spriteOffset: { x: 288, y: 0 }, cursorOffset: { x: 288, y: 32 } },
+    { id: 'sun_stone', name: 'Sun Stone', price: 1200, category: 'stone', spriteOffset: { x: 320, y: 0 }, cursorOffset: { x: 320, y: 32 } },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 1200, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 1500, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
+    { id: 'ice_stone', name: 'Ice Stone', price: 1000, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
 ];
 
 //Plant catalog (must match extension's PlantTypes array)
 // harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.02, 0.02, 0.02, 0.02, 0.02], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 450, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.1, 0.3, 0.2, 0.2, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
 //Actions menu
@@ -161,7 +163,6 @@ function openBackpack() {
                 sellOne.onclick = (e) => {
                     e.stopPropagation();
                     vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: 1 });
-                    openBackpack();
                 };
                 sellRow.appendChild(sellOne);
 
@@ -173,7 +174,6 @@ function openBackpack() {
                     sellAll.onclick = (e) => {
                         e.stopPropagation();
                         vscode.postMessage({ type: 'sell_consumable', consumableId: id, quantity: count });
-                        openBackpack();
                     };
                     sellRow.appendChild(sellAll);
                 }
@@ -276,6 +276,47 @@ function renderPokedex() {
             staminaBar.appendChild(staminaLabel);
             info.appendChild(staminaBar);
 
+            // Action buttons row
+            const actions = document.createElement('div');
+            actions.classList.add('pokedexActions');
+
+            // Feed Candy button
+            const candyCount = (Game.inventory && Game.inventory['candy']) || 0;
+            const candyBtn = document.createElement('button');
+            candyBtn.type = 'button';
+            candyBtn.classList.add('pokedexFeedBtn');
+            candyBtn.innerText = `Feed Candy x1`;
+            candyBtn.disabled = candyCount <= 0;
+            candyBtn.onclick = (e) => {
+                e.stopPropagation();
+                const petIndex = pokedexData.indexOf(pet);
+                if (petIndex < 0) return;
+                vscode.postMessage({ type: 'use_consumable', consumableId: 'candy', index: petIndex });
+            };
+            actions.appendChild(candyBtn);
+
+            // Feed Food button — find first food/potion that restores stamina in inventory
+            const foodItems = ConsumableCatalog.filter(c =>
+                (c.category === 'food' || c.category === 'potion') &&
+                Game.inventory && Game.inventory[c.id] > 0
+            );
+            const bestFood = foodItems[0]; // first available food
+            const foodBtn = document.createElement('button');
+            foodBtn.type = 'button';
+            foodBtn.classList.add('pokedexFeedBtn');
+            foodBtn.innerText = bestFood ? `Feed ${bestFood.name}` : 'No food';
+            foodBtn.disabled = !bestFood;
+            foodBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (!bestFood) return;
+                const petIndex = pokedexData.indexOf(pet);
+                if (petIndex < 0) return;
+                vscode.postMessage({ type: 'use_consumable', consumableId: bestFood.id, index: petIndex });
+            };
+            actions.appendChild(foodBtn);
+
+            info.appendChild(actions);
+
             entry.appendChild(info);
             content.appendChild(entry);
         }
@@ -342,7 +383,7 @@ function openStoreMenu() {
     //Create consumables category
     const consumablesElement = createStoreItem('Consumables');
     const consumablesIcon = document.createElement('img');
-    consumablesIcon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+    consumablesIcon.src = `${Game.mediaURI}sprites/ui/consumables.png`;
     consumablesIcon.alt = 'Consumables';
     consumablesElement.prepend(consumablesIcon);
     consumablesElement.onclick = () => openStoreConsumablesMenu();
@@ -351,7 +392,7 @@ function openStoreMenu() {
     //Create seeds category
     const seedsElement = createStoreItem('Seeds');
     const seedsIcon = document.createElement('img');
-    seedsIcon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+    seedsIcon.src = `${Game.mediaURI}sprites/ui/seeds.png`;
     seedsIcon.alt = 'Seeds';
     seedsElement.prepend(seedsIcon);
     seedsElement.onclick = () => openStoreSeedsMenu();
@@ -362,7 +403,7 @@ function openStoreMenu() {
         //Create item element
         const element = createStoreItem(category);
         const icon = document.createElement('img');
-        icon.src = `${Game.mediaURI}sprites/ui/candy.png`;
+        icon.src = `${Game.mediaURI}sprites/ui/${category.toLowerCase()}.png`;
         icon.alt = category;
         element.prepend(icon);
         element.onclick = () => openStoreCategoryMenu(category);
@@ -417,14 +458,12 @@ function openStoreCategoryMenu(category) {
             //Check if player has enough money
             if (Game.money < preset.price) { return; }
 
-            //Consume money
-            Game.addMoney(-preset.price);
-
             //Close actions menu
             Menus.close();
 
-            //Create decoration
+            //Create decoration (money deducted on placement, not now)
             const decor = new Decoration(preset);
+            decor.setPendingPurchase(category, name);
 
             //Enter decor mode (after creating decoration, else it will ask the user to buy one)
             DecorMode.toggle(true);
@@ -433,15 +472,6 @@ function openStoreCategoryMenu(category) {
             const decorCenterRelativePos = decor.size.mult(0.5);
             decor.moveTo(decor.snapPos(Cursor.posScaled.sub(decorCenterRelativePos)));
             decor.startDragging(decorCenterRelativePos);
-
-            //Notify decor added
-            vscode.postMessage({
-                type: 'add_decor',
-                x: decor.pos.x,
-                y: decor.pos.y,
-                category: category,
-                name: name
-            });
         };
     }
 
@@ -513,14 +543,17 @@ function openStoreSeedsMenu() {
         const element = createStoreItem(seed.name, seed.price, stat);
 
         //Add sprite preview (last phase = ripe)
-        const maxPhase = seed.growthHours.length - 1;
+        // Seed sprites in the shop
+        const maxPhase = seed.growthHours.length;
         const ripeX = seed.spriteOffset[0] + seed.phaseStep[0] * maxPhase;
         const ripeY = seed.spriteOffset[1] + seed.phaseStep[1] * maxPhase;
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
         img.style.setProperty('--image', `url('./sprites/plants.png')`);
-        img.style.setProperty('--width', `${seed.size[0]}px`);
-        img.style.setProperty('--height', `${seed.size[1]}px`);
+        img.style.setProperty('--width', `32px`);
+        img.style.setProperty('--height', `32px`);
+        // img.style.setProperty('--width', `${seed.size[0]}px`)
+        // img.style.setProperty('--height', `${seed.size[1]}px`)
         img.style.setProperty('--scale', `${50 / Math.max(seed.size[0], seed.size[1])}`);
         img.style.setProperty('--spriteOffset', `${-ripeX}px ${-ripeY}px`);
         imgBox.prepend(img);
@@ -533,10 +566,7 @@ function openStoreSeedsMenu() {
                 return;
             }
 
-            //Consume money
-            Game.addMoney(-seed.price);
-
-            //Close menu
+            //Close menu (money deducted on placement, not now)
             Menus.close();
 
             //Create plant
@@ -549,6 +579,7 @@ function openStoreSeedsMenu() {
                 phaseStep: seed.phaseStep,
                 price: seed.price,
             });
+            plant.setPendingPurchase();
 
             //Enter decor mode (after creating plant, else it will ask the user to buy one)
             DecorMode.toggle(true);
@@ -557,14 +588,6 @@ function openStoreSeedsMenu() {
             const plantCenterRelativePos = plant.size.mult(0.5);
             plant.moveTo(plant.snapPos(Cursor.posScaled.sub(plantCenterRelativePos)));
             plant.startDragging(plantCenterRelativePos);
-
-            //Notify extension to save the plant
-            vscode.postMessage({
-                type: 'add_plant',
-                plantId: seed.id,
-                x: plant.pos.x,
-                y: plant.pos.y,
-            });
         };
         content.appendChild(element);
     }
@@ -618,6 +641,10 @@ function handleGameMessage(message) {
             if (typeof message.value === 'object') {
                 Game.setInventory(message.value);
             }
+            // Re-render backpack if open so owned counts stay fresh
+            if (Menus.current === 'backpack') { openBackpack(); }
+            // Refresh pokédex if open (candy counts, food availability may have changed)
+            if (Menus.current === 'pokedex') { vscode.postMessage({ type: 'request_pokedex' }); }
             break;
         case 'day_night':
             updateNightOverlay(message.timeOfDay, message.opacity);
@@ -709,6 +736,11 @@ function handleGameMessage(message) {
             break;
         case 'consumable_failed':
             Game.showMessage('It had no effect!');
+            break;
+        case 'rename_pet':
+            if (typeof message.index === 'number' && Game.pets[message.index]) {
+                Game.pets[message.index].name = message.name;
+            }
             break;
         case 'harvest_result':
             Game.showMessage(`Harvested ${message.count}x ${message.name}!`, true);

@@ -2,9 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = void 0;
 exports.Consumables = [
-    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 1 },
-    { id: 'oran_berry', name: 'Oran Berry', price: 15, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
-    { id: 'potion', name: 'Potion', price: 25, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 3 },
+    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 3 },
+    { id: 'oran_berry', name: 'Oran Berry', price: 30, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
+    { id: 'potion', name: 'Potion', price: 100, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 1 },
+    { id: 'super_potion', name: 'Super Potion', price: 280, description: 'Restores a large amount of HP to a Pokémon.', category: 'potion', restoreHp: 60, friendshipGain: 5 },
+    { id: 'hyper_potion', name: 'Hyper Potion', price: 500, description: 'Restores a massive amount of HP to a Pokémon.', category: 'potion', restoreHp: 120, friendshipGain: 10 },
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
@@ -17,18 +19,7 @@ exports.Consumables = [
 ];
 exports.PlantTypes = [
     {
-        id: 'oran_berry_plant',
-        name: 'Oran Berry Seed',
-        price: 50,
-        description: 'Grows Oran Berries. Regrows after each harvest!',
-        producesId: 'oran_berry',
-        harvestType: 'repeatable',
-        growthHours: [0.02, 0.02, 0.02, 0.02, 0.02],
-        minFruits: 1,
-        maxFruits: 3,
-        size: [16, 32],
-        spriteOffset: [0, 0],
-        phaseStep: [16, 0],
+        id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.1, 0.3, 0.2, 0.2, 0.2], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
     },
 ];
 exports.WildPokemonSpecies = [

@@ -74,4 +74,9 @@ class DecorationPreset {
         OBJECT_29: { name: 'Object 29', size: new Vec2(16), spriteOffset: new Vec2(448, 32), price: 100 },
         OBJECT_30: { name: 'Object 30', size: new Vec2(16), spriteOffset: new Vec2(464, 32), price: 100 },
     };
+
+        static SPECIAL = {
+        OBJECT_01: { name: 'Object 01', size: new Vec2(32, 48), spriteOffset: new Vec2(0, 464), nightSpriteOffsetY: 256, price: 0 },
+        OBJECT_02: { name: 'Object 02', size: new Vec2(32, 48), spriteOffset: new Vec2(32, 464), nightSpriteOffsetY: 256, price: 0 },
+    };
 }

@@ -21,8 +21,14 @@ class Plant extends GameObject {
     #moving = false;
     #movingOffset = new Vec2();
     #dirty = false;
+    #pendingPurchase = false; // true when bought from store, cleared on first placement
 
     get moving() { return this.#moving; }
+    get isPendingPurchase() { return this.#pendingPurchase; }
+
+    setPendingPurchase() {
+        this.#pendingPurchase = true;
+    }
 
     /**
      * @param {object} config
@@ -72,10 +78,15 @@ class Plant extends GameObject {
         Game.plants.removeItem(this);
         Game.decoration.removeItem(this);
 
-        vscode.postMessage({
-            type: 'remove_plant',
-            index: idx >= 0 ? idx : this.#plantIndex,
-        });
+        // If this was a pending purchase that was never placed, just remove from frontend
+        if (!this.#pendingPurchase) {
+            vscode.postMessage({
+                type: 'remove_plant',
+                index: idx >= 0 ? idx : this.#plantIndex,
+            });
+        } else {
+            this.#pendingPurchase = false;
+        }
 
         if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
     }
@@ -141,7 +152,18 @@ class Plant extends GameObject {
     }
 
     stopDragging() {
-        if (this.#dirty) {
+        // Finalize pending purchase on first placement
+        if (this.#pendingPurchase) {
+            Game.addMoney(-this.price);
+            vscode.postMessage({
+                type: 'add_plant',
+                plantId: this.#plantId,
+                x: this.pos.x,
+                y: this.pos.y,
+            });
+            this.#pendingPurchase = false;
+            this.#dirty = false;
+        } else if (this.#dirty) {
             const idx = Game.plants.indexOf(this);
             vscode.postMessage({
                 type: 'move_plant',
