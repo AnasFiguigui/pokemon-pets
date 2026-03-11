@@ -22,7 +22,7 @@ body {
     /* Text */
     font-family: Pokemon, sans-serif;
     color: var(--text);
-    font-size: 19px;
+    font-size: 16px;
     user-select: none;
 
     /* Vars */
@@ -402,18 +402,18 @@ body[cursor="none"] {
 
 .storeButtonMoney {
     /* Text */
-    font-size: 17px;
-    color: #a7a7a7;
+    font-size: 14px;
+    color: #525252;
 }
 
 .storeButtonMoney[expensive] {
     /* Text */
-    color: #e44;
+    color: rgb(167, 19, 19);
 }
 
 .storeButtonStat {
     font-size: 14px;
-    color: #2eb32e;
+    color: #208f20;
 }
 
 .backpackRow {
@@ -440,11 +440,11 @@ body[cursor="none"] {
     line-height: 1.2;
     white-space: nowrap;
     text-align: center;
-    color: #e8a83a;
+    color: #b17a1c;
 }
 
 .sellButton:hover {
-    color: #ff4444;
+    color: #991313;
 }
 
 /* Top bar */
@@ -474,8 +474,8 @@ body[cursor="none"] {
 }
 
 .topBarIcon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     image-rendering: pixelated;
 }
 
@@ -526,7 +526,7 @@ body[cursor="none"] {
     margin: 0 10px;
 
     /* Text */
-    --border: #ffd889bd;
+    --border: #464646ce;
     letter-spacing: 0.3px;
     text-shadow: -1px -1px 1px var(--border), 1px -1px 1px var(--border), -1px 1px 1px var(--border), 1px 1px 1px var(--border);
 }
@@ -662,7 +662,7 @@ body[cursor="none"] {
 }
 
 .pokedexEntry:hover {
-    background-color: #4b4b4b30;
+    background-color: #52525227;
     box-shadow: inset 0 0 0 1px #4b4b4b30;
 }
 
@@ -697,7 +697,7 @@ body[cursor="none"] {
 /* Pokédex stat bars */
 .pokedexBar {
     position: relative;
-    width: 100%;
+    width: 90%;
     height: 12px;
     background: #333;
     border-radius: 3px;
