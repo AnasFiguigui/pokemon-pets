@@ -52,6 +52,9 @@ export const Consumables: Consumable[] = [
     { id: 'potion', name: 'Potion', price: 100, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 1 },
     { id: 'super_potion', name: 'Super Potion', price: 280, description: 'Restores a large amount of HP to a Pokémon.', category: 'potion', restoreHp: 60, friendshipGain: 5 },
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, description: 'Restores a massive amount of HP to a Pokémon.', category: 'potion', restoreHp: 120, friendshipGain: 10 },
+    
+    
+    
     { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
     { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
     { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
