@@ -61,11 +61,6 @@ const PlantCatalog = [
 ];
 
 //Actions menu
-function requestRenamePet() {
-    Menus.close();
-    vscode.postMessage({ type: 'request_rename_pet' });
-}
-
 function toggleActionBall() {
     //Close actions menu & decor mode UI
     Menus.close();
@@ -240,6 +235,13 @@ function renderPokedex() {
             const nameEl = document.createElement('span');
             nameEl.classList.add('pokedexName');
             nameEl.innerText = pet.name;
+            nameEl.title = 'Click to rename';
+            nameEl.onclick = (e) => {
+                e.stopPropagation();
+                const petIndex = pokedexData.indexOf(pet);
+                if (petIndex < 0) return;
+                vscode.postMessage({ type: 'request_rename_specific_pet', index: petIndex });
+            };
             info.appendChild(nameEl);
 
             // Level + friendship row
@@ -411,6 +413,7 @@ function openStoreMenu() {
 
     //Create consumables category
     const consumablesElement = createStoreItem('Consumables');
+    consumablesElement.classList.add('storeCategoryButton');
     const consumablesIcon = document.createElement('img');
     consumablesIcon.src = `${Game.mediaURI}sprites/ui/consumables.png`;
     consumablesIcon.alt = 'Consumables';
@@ -420,6 +423,7 @@ function openStoreMenu() {
 
     //Create seeds category
     const seedsElement = createStoreItem('Seeds');
+    seedsElement.classList.add('storeCategoryButton');
     const seedsIcon = document.createElement('img');
     seedsIcon.src = `${Game.mediaURI}sprites/ui/seeds.png`;
     seedsIcon.alt = 'Seeds';
@@ -431,6 +435,7 @@ function openStoreMenu() {
     for (const category of Object.keys(DecorationPreset)) {
         //Create item element
         const element = createStoreItem(category);
+        element.classList.add('storeCategoryButton');
         const icon = document.createElement('img');
         icon.src = `${Game.mediaURI}sprites/ui/${category.toLowerCase()}.png`;
         icon.alt = category;
@@ -685,15 +690,23 @@ function handleGameMessage(message) {
                 const oldPet = Game.pets[message.index];
                 const idx = message.index;
 
-                // Freeze the pet at idle during evolution
+                // Freeze the pet at idle during evolution — prevent AI from moving it
                 oldPet.animate('idle', true);
+                oldPet._frozenForEvolution = true;
+                const origUpdate = oldPet.update.bind(oldPet);
+                oldPet.update = function () {
+                    // Skip AI updates (no movement), only run base rendering
+                };
 
-                // Blink: toggle visibility every 100ms for 2 seconds (accelerating)
-                let blinkStep = 0;
+                // Accelerating blink: starts slow, builds tension, rapid climax
                 const blinkPhases = [
-                    { count: 5, interval: 200 },  // Slow blinks (1 second)
-                    { count: 5, interval: 100 },   // Medium blinks (0.5 second)
-                    { count: 10, interval: 50 },   // Fast blinks (0.5 second) 
+                    { count: 3, interval: 300 },   // Very slow (0.9s)
+                    { count: 4, interval: 200 },   // Slow (0.8s)
+                    { count: 5, interval: 140 },   // Medium-slow (0.7s)
+                    { count: 6, interval: 100 },   // Medium (0.6s)
+                    { count: 8, interval: 70 },    // Fast (0.56s)
+                    { count: 12, interval: 40 },   // Very fast (0.48s)
+                    { count: 16, interval: 25 },   // Rapid (0.4s)
                 ];
                 let phaseIdx = 0;
                 let phaseStep = 0;

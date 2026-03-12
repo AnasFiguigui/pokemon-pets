@@ -2,6 +2,7 @@ import type { Pet } from './models';
 import type { SaveManager } from './save-manager';
 import type { PokemonForm, PokemonSpecies } from './game-data';
 import { Pokemons } from './game-data';
+import { DayNightCycle } from './day-night';
 
 export interface EvolutionResult {
     evolved: boolean;
@@ -72,38 +73,47 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
-        const nextFormIdx = currentIdx + 1;
 
-        // Check if evolution is possible
-        if (nextFormIdx < species.forms.length) {
-            const nextForm = species.forms[nextFormIdx];
-            // Only evolve via candy if the form does NOT require a special item
-            // and friendship requirement is met (if any)
+        // Scan all forms after the current one for a valid candy evolution
+        // (supports branching evolutions like Eevee)
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const nextForm = species.forms[i];
+            // Skip forms that require a special item (those use useItem())
+            if (nextForm.requiredItem) { continue; }
+            // Check friendship requirement
             const friendshipMet = typeof nextForm.requiredFriendship !== 'number'
                 || (pet.friendship ?? 0) >= nextForm.requiredFriendship;
-            if (!nextForm.requiredItem && friendshipMet && pet.candyFed >= nextForm.candyCost) {
-                // Evolve!
-                pet.form = nextForm.name;
-                pet.sprite = nextForm.sprite;
-                pet.spriteSize = nextForm.spriteSize;
-                this.saveManager.scheduleSave();
-
-                const furtherIdx = nextFormIdx + 1;
-                const nextEvolutionAt = furtherIdx < species.forms.length
-                    ? species.forms[furtherIdx].candyCost
-                    : undefined;
-
-                return {
-                    evolved: true,
-                    newForm: nextForm,
-                    totalCandy: pet.candyFed,
-                    nextEvolutionAt,
-                };
+            if (!friendshipMet) { continue; }
+            // Check time-of-day requirement (e.g. Espeon = day, Umbreon = night)
+            if (nextForm.requiredTimeOfDay) {
+                const timeOfDay = DayNightCycle.getTimeOfDay();
+                if (timeOfDay !== nextForm.requiredTimeOfDay) { continue; }
             }
+            // Check candy requirement
+            if (pet.candyFed < nextForm.candyCost) { continue; }
+
+            // Evolve!
+            pet.form = nextForm.name;
+            pet.sprite = nextForm.sprite;
+            pet.spriteSize = nextForm.spriteSize;
+            this.saveManager.scheduleSave();
+
+            const furtherIdx = i + 1;
+            const nextEvolutionAt = furtherIdx < species.forms.length
+                ? species.forms[furtherIdx].candyCost
+                : undefined;
+
+            return {
+                evolved: true,
+                newForm: nextForm,
+                totalCandy: pet.candyFed,
+                nextEvolutionAt,
+            };
         }
 
         this.saveManager.scheduleSave();
 
+        const nextFormIdx = currentIdx + 1;
         const nextEvolutionAt = nextFormIdx < species.forms.length
             ? species.forms[nextFormIdx].candyCost
             : undefined;

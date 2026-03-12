@@ -5,6 +5,7 @@ export type PokemonForm = {
     candyCost: number;  // Cumulative candy needed to reach this form (0 = base form)
     requiredItem?: string; // Consumable ID required for this evolution (in addition to candy)
     requiredFriendship?: number; // Minimum friendship needed for this evolution
+    requiredTimeOfDay?: 'day' | 'night'; // Time of day required for this evolution
 };
 
 export type PokemonSpecies = {
@@ -113,8 +114,8 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
                 { name: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32, candyCost: 25, requiredItem: 'water_stone' },
                 { name: 'Jolteon', sprite: 'jolteon', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
                 { name: 'Flareon', sprite: 'flareon', spriteSize: 32, candyCost: 25, requiredItem: 'fire_stone' },
-                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredItem: 'sun_stone', requiredFriendship: 220 },
-                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredItem: 'moon_stone', requiredFriendship: 220 },
+                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredFriendship: 220, requiredTimeOfDay: 'day' },
+                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredFriendship: 220, requiredTimeOfDay: 'night' },
                 { name: 'Leafeon', sprite: 'leafeon', spriteSize: 32, candyCost: 25, requiredItem: 'leaf_stone' },
                 { name: 'Glaceon', sprite: 'glaceon', spriteSize: 32, candyCost: 25, requiredItem: 'ice_stone' },
                 { name: 'Sylveon', sprite: 'sylveon', spriteSize: 32, candyCost: 25, requiredItem: 'shiny_stone', requiredFriendship: 200 },

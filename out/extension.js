@@ -342,7 +342,7 @@ function stopPlantTickTimer() {
     }
 }
 // ── Webview Message Handler ─────────────────────────────────────────────
-function handleWebviewMessage(message) {
+async function handleWebviewMessage(message) {
     if (typeof message?.type !== 'string') {
         return;
     }
@@ -700,6 +700,33 @@ function handleWebviewMessage(message) {
         case 'request_rename_pet':
             renamePetCommand();
             break;
+        case 'request_rename_specific_pet': {
+            const petIdx = message.index;
+            const pet = saveManager.save.pets[petIdx];
+            if (!pet) {
+                break;
+            }
+            const newName = await vscode.window.showInputBox({
+                title: 'Rename Pokémon',
+                prompt: `Rename ${pet.name}`,
+                value: pet.name,
+                validateInput: (v) => v.trim().length === 0 ? 'Name cannot be empty' : undefined,
+            });
+            if (!newName) {
+                break;
+            }
+            const trimmed = newName.trim();
+            pet.name = trimmed;
+            saveManager.scheduleSave();
+            webview.postMessage({ type: 'rename_pet', index: petIdx, name: trimmed });
+            // Refresh pokédex to show updated name
+            webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+                    name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize, candyFed: p.candyFed ?? 0,
+                    friendship: p.friendship ?? 0, hp: p.hp, stamina: p.stamina,
+                    maxHp: (0, models_1.getMaxHp)(p), maxStamina: (0, models_1.getMaxStamina)(p),
+                })) });
+            break;
+        }
         case 'request_pokedex': {
             const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
                 name: p.name,
