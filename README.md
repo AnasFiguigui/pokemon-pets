@@ -105,3 +105,12 @@ You might also enjoy my other extensions:
 <!-- ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE). -->
+
+## About the Project
+
+This project is a fan-made extension created for fun and experimentation.  
+It is **not affiliated with, endorsed by, or supported by** Nintendo, Game Freak, or The Pokémon Company.
+
+All Pokémon names, characters, images, and related assets are trademarks and copyrights of their respective owners.
+
+This project is **non-commercial** and is not intended to generate profit. It exists purely for learning, creativity, and for the community to enjoy.
