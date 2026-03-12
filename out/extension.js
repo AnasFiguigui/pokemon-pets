@@ -246,12 +246,12 @@ function drainStamina() {
         webview.postMessage({ type: 'remove_pet', index: idx });
         vscode.window.showWarningMessage(`💔 ${petName} fainted from exhaustion and left...`);
     }
-    // Broadcast updated stats so Pokédex stays fresh
-    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
     // Auto-feed pets that are low
     if (autoFeedEnabled) {
         autoFeedPets();
     }
+    // Broadcast updated stats once (after auto-feed, so we include any heals)
+    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
 }
 /** Auto-feeds pets at ≤25% HP or stamina using cheapest available food, then potions. */
 function autoFeedPets() {
@@ -305,7 +305,7 @@ function autoFeedPets() {
     }
     if (inventoryChanged) {
         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-        webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+        // pet_stats is sent by drainStamina after autoFeedPets returns
     }
 }
 /** Builds an array of { hp, stamina, maxHp, maxStamina } for each pet. */
@@ -807,20 +807,7 @@ async function handleWebviewMessage(message) {
                 break;
             }
             case 'request_pokedex': {
-                const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
-                    name: p.name,
-                    specie: p.specie,
-                    sprite: p.sprite,
-                    spriteSize: p.spriteSize,
-                    candyFed: p.candyFed ?? 0,
-                    hp: p.hp ?? (0, models_1.getMaxHp)(p),
-                    stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
-                    maxHp: (0, models_1.getMaxHp)(p),
-                    maxStamina: (0, models_1.getMaxStamina)(p),
-                    friendship: p.friendship ?? 0,
-                    heldItem: p.heldItem,
-                }));
-                webview.postMessage({ type: 'pokedex', value: pets });
+                refreshPokedex();
                 break;
             }
             case 'unequip_item': {

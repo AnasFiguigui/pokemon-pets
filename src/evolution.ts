@@ -15,6 +15,11 @@ export interface EvolutionResult {
 /**
  * Handles candy feeding and Pokémon evolution through the form chain.
  */
+/** Pre-built map from lowercase species name → PokemonSpecies for O(1) lookup. */
+const SpeciesMap: ReadonlyMap<string, PokemonSpecies> = new Map(
+    Object.values(Pokemons).flat().map(s => [s.name.toLowerCase(), s]),
+);
+
 export class EvolutionService {
     private readonly saveManager: SaveManager;
 
@@ -24,12 +29,7 @@ export class EvolutionService {
 
     /** Finds the species data for a pet by matching specie name across all generations. */
     public findSpecies(pet: Pet): PokemonSpecies | undefined {
-        for (const species of Object.values(Pokemons).flat()) {
-            if (species.name.toLowerCase() === pet.specie.toLowerCase()) {
-                return species;
-            }
-        }
-        return undefined;
+        return SpeciesMap.get(pet.specie.toLowerCase());
     }
 
     /** Returns the current form index of a pet within its species. */

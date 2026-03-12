@@ -60,6 +60,9 @@ const PlantCatalog = [
     { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, produces: 'Oran Berry', harvestType: 'single', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
+/** Pre-built map from consumable id → catalog entry for O(1) lookup. */
+const ConsumableCatalogMap = new Map(ConsumableCatalog.map(c => [c.id, c]));
+
 //Actions menu
 function toggleActionBall() {
     //Close actions menu & decor mode UI
@@ -87,7 +90,7 @@ function selectConsumable(id) {
     Game.setAction(Action.CANDY);
 
     //Update cursor to show the selected consumable sprite
-    const info = ConsumableCatalog.find(c => c.id === id);
+    const info = ConsumableCatalogMap.get(id);
     if (info) {
         const el = document.getElementById('cursor');
         el.style.setProperty('--consumable-x', `${-info.cursorOffset.x}px`);
@@ -115,7 +118,7 @@ function openBackpack() {
     } else {
         //List owned consumables
         for (const id of ownedIds) {
-            const info = ConsumableCatalog.find(c => c.id === id);
+            const info = ConsumableCatalogMap.get(id);
             const name = info ? info.name : Util.titleCase(id.replaceAll('_', ' '));
             const count = inv[id];
             const sellPrice = info ? Math.floor(info.price * 0.7) : 0;
@@ -237,15 +240,11 @@ function renderPokedex(preserveScroll) {
             const heldSlot = document.createElement('div');
             heldSlot.classList.add('pokedexHeldSlot');
             if (pet.heldItem) {
-                const itemInfo = ConsumableCatalog.find(c => c.id === pet.heldItem);
+                const itemInfo = ConsumableCatalogMap.get(pet.heldItem);
                 if (itemInfo) {
                     const itemIcon = document.createElement('div');
                     itemIcon.classList.add('pokedexHeldIcon');
-                    // Scale 32px sprite offsets down to 16px display
-                    const sx = itemInfo.spriteOffset.x / 2;
-                    const sy = itemInfo.spriteOffset.y / 2;
-                    itemIcon.style.backgroundPosition = `${-sx}px ${-sy}px`;
-                    itemIcon.style.backgroundSize = `${448 / 2}px ${256 / 2}px`;
+                    itemIcon.style.backgroundPosition = `${-itemInfo.cursorOffset.x}px ${-itemInfo.cursorOffset.y}px`;
                     itemIcon.title = `${itemInfo.name} (click to remove)`;
                     itemIcon.onclick = (e) => {
                         e.stopPropagation();
@@ -359,8 +358,8 @@ function renderPokedex(preserveScroll) {
 
             // Feed Food button — find first food/potion that restores stamina in inventory
             const bestFood = ConsumableCatalog.find(c =>
-                (c.category === 'food' || c.category === 'potion') &&
-                Game.inventory?.[c.id] > 0
+                (c.category === 'food' || c.category === 'potion')
+                && Game.inventory?.[c.id] > 0
             );
             const foodBtn = document.createElement('button');
             foodBtn.type = 'button';
@@ -937,34 +936,7 @@ function handleSpawnMessage(message) {
             }
             break;
         }
-        case 'update_pet': {
-            // Evolution: replace the pet at the same index to keep indices in sync
-            const oldPet = Game.pets[message.index];
-            let preservedPos = null;
-            if (oldPet) {
-                // Preserve position before removing so the new pet doesn't jump
-                preservedPos = oldPet.pos;
-                // Remove old pet from game objects without sending remove_pet to extension
-                Game.objects.removeItem(oldPet);
-                Game.pets.splice(message.index, 1);
-            }
-            const specie = message.specie.toLowerCase();
-            const generation = (message.color ?? 'generation 1').toString();
-            const form = (message.form ?? message.specie).toString();
-            const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
-            const spriteSize = message.spriteSize === 48 ? 48 : 32;
-            const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
-            // Restore the old position so the pet doesn't teleport on evolution
-            if (preservedPos) {
-                newPet.moveTo(preservedPos);
-            }
-            // Play evolve animation
-            newPet.animate('evolve', true);
-            // Move from end of Game.pets to correct index
-            Game.pets.removeItem(newPet);
-            Game.pets.splice(message.index, 0, newPet);
-            break;
-        }
+
         case 'retry_wild_spawn':
             Game.wildPokemonSpawner.wait(30 * 1000);
             break;

@@ -242,11 +242,11 @@ function drainStamina(): void {
         vscode.window.showWarningMessage(`💔 ${petName} fainted from exhaustion and left...`);
     }
 
-    // Broadcast updated stats so Pokédex stays fresh
-    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
-
     // Auto-feed pets that are low
     if (autoFeedEnabled) { autoFeedPets(); }
+
+    // Broadcast updated stats once (after auto-feed, so we include any heals)
+    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
 }
 
 /** Auto-feeds pets at ≤25% HP or stamina using cheapest available food, then potions. */
@@ -302,7 +302,7 @@ function autoFeedPets(): void {
 
     if (inventoryChanged) {
         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-        webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+        // pet_stats is sent by drainStamina after autoFeedPets returns
     }
 }
 
@@ -766,20 +766,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
             break;
         }
         case 'request_pokedex': {
-            const pets = saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS).map(p => ({
-                name: p.name,
-                specie: p.specie,
-                sprite: p.sprite,
-                spriteSize: p.spriteSize,
-                candyFed: p.candyFed ?? 0,
-                hp: p.hp ?? getMaxHp(p),
-                stamina: p.stamina ?? getMaxStamina(p),
-                maxHp: getMaxHp(p),
-                maxStamina: getMaxStamina(p),
-                friendship: p.friendship ?? 0,
-                heldItem: p.heldItem,
-            }));
-            webview.postMessage({ type: 'pokedex', value: pets });
+            refreshPokedex();
             break;
         }
         case 'unequip_item': {
