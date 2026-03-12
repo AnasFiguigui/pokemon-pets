@@ -364,7 +364,7 @@ async function handleWebviewMessage(message) {
             case 'money': {
                 const oldMoney = saveManager.save.money;
                 const newMoney = message.value;
-                if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) {
+                if (typeof newMoney !== 'number' || !Number.isFinite(newMoney) || newMoney < 0) {
                     break;
                 }
                 // Cap single transaction delta to prevent exploits
@@ -544,7 +544,7 @@ async function handleWebviewMessage(message) {
                     break;
                 }
                 const rawQty = message.quantity ?? 1;
-                if (typeof rawQty !== 'number' || !isFinite(rawQty)) {
+                if (typeof rawQty !== 'number' || !Number.isFinite(rawQty)) {
                     break;
                 }
                 const qty = Math.max(1, Math.min(100, Math.floor(rawQty)));
@@ -570,7 +570,7 @@ async function handleWebviewMessage(message) {
                     break;
                 }
                 const rawSellQty = message.quantity ?? 1;
-                if (typeof rawSellQty !== 'number' || !isFinite(rawSellQty)) {
+                if (typeof rawSellQty !== 'number' || !Number.isFinite(rawSellQty)) {
                     break;
                 }
                 const sellQty = Math.max(1, Math.floor(rawSellQty));
@@ -589,14 +589,14 @@ async function handleWebviewMessage(message) {
             }
             case 'move_decor':
                 if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
-                    && typeof message.x === 'number' && isFinite(message.x)
-                    && typeof message.y === 'number' && isFinite(message.y)) {
+                    && typeof message.x === 'number' && Number.isFinite(message.x)
+                    && typeof message.y === 'number' && Number.isFinite(message.y)) {
                     saveManager.moveDecor(message.index, message.x, message.y);
                 }
                 break;
             case 'add_decor':
-                if (typeof message.x === 'number' && isFinite(message.x)
-                    && typeof message.y === 'number' && isFinite(message.y)
+                if (typeof message.x === 'number' && Number.isFinite(message.x)
+                    && typeof message.y === 'number' && Number.isFinite(message.y)
                     && typeof message.category === 'string' && typeof message.name === 'string') {
                     saveManager.addDecor({
                         x: message.x,
@@ -690,7 +690,7 @@ async function handleWebviewMessage(message) {
             case 'apply_mulch': {
                 const mulchId = message.mulchId;
                 const mulchItem = ConsumablesMap.get(mulchId);
-                if (!mulchItem || mulchItem.category !== 'mulch') {
+                if (mulchItem?.category !== 'mulch') {
                     break;
                 }
                 const mulchCount = saveManager.getConsumableCount(mulchId);
@@ -920,7 +920,7 @@ async function importSaveCommand() {
         }
         // Only accept known Save fields to prevent excess property injection
         const sanitized = new models_1.Save();
-        if (typeof imported.money === 'number' && isFinite(imported.money)) {
+        if (typeof imported.money === 'number' && Number.isFinite(imported.money)) {
             sanitized.money = Math.max(0, Math.floor(imported.money));
         }
         if (Array.isArray(imported.pets)) {
@@ -956,7 +956,7 @@ async function importSaveCommand() {
         }
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
             for (const [key, val] of Object.entries(imported.inventory)) {
-                if (typeof val === 'number' && val > 0 && isFinite(val)) {
+                if (typeof val === 'number' && val > 0 && Number.isFinite(val)) {
                     sanitized.inventory[key] = Math.floor(val);
                 }
             }
@@ -1030,17 +1030,9 @@ function activate(context) {
             sendDayNightTint();
         }
     });
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(webview_provider_1.WebViewProvider.viewType, webview));
-    // Start day/night cycle timer
-    if (config.get('dayNightCycle', true)) {
-        startDayNightTimer();
-    }
-    // Start stamina drain timer
-    startStaminaDrainTimer();
-    // Start plant growth tick timer (every 60s)
-    startPlantTickTimer();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(webview_provider_1.WebViewProvider.viewType, webview), 
     // Listen for configuration changes
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+    vscode.workspace.onDidChangeConfiguration(event => {
         config = vscode.workspace.getConfiguration('pokemon-pets');
         if (event.affectsConfiguration('pokemon-pets.background')) {
             webview.postMessage({ type: 'background', value: config.get('background') });
@@ -1067,9 +1059,9 @@ function activate(context) {
                 webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
         }
-    }));
+    }), 
     // Register commands
-    context.subscriptions.push(vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.toggleAutoFeed', () => {
+    vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand), vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand), vscode.commands.registerCommand('pokemon-pets.toggleAutoFeed', () => {
         autoFeedEnabled = !autoFeedEnabled;
         saveManager.save.autoFeed = autoFeedEnabled;
         saveManager.scheduleSave();
@@ -1094,6 +1086,14 @@ function activate(context) {
         saveManager.loadGame();
         initGame();
     }), vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand), vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand), vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand), vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand));
+    // Start day/night cycle timer
+    if (config.get('dayNightCycle', true)) {
+        startDayNightTimer();
+    }
+    // Start stamina drain timer
+    startStaminaDrainTimer();
+    // Start plant growth tick timer (every 60s)
+    startPlantTickTimer();
 }
 function deactivate() {
     saveManager.flushSave();

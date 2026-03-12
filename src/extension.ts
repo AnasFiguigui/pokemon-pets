@@ -363,7 +363,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
         case 'money': {
             const oldMoney = saveManager.save.money;
             const newMoney = message.value as number;
-            if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) { break; }
+            if (typeof newMoney !== 'number' || !Number.isFinite(newMoney) || newMoney < 0) { break; }
             // Cap single transaction delta to prevent exploits
             const maxDelta = 100_000;
             const delta = newMoney - oldMoney;
@@ -534,7 +534,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
             const consumable = ConsumablesMap.get(itemId);
             if (!consumable) { break; }
             const rawQty = message.quantity ?? 1;
-            if (typeof rawQty !== 'number' || !isFinite(rawQty)) { break; }
+            if (typeof rawQty !== 'number' || !Number.isFinite(rawQty)) { break; }
             const qty = Math.max(1, Math.min(100, Math.floor(rawQty)));
             const totalCost = consumable.price * qty;
             if (saveManager.save.money < totalCost) { break; }
@@ -552,7 +552,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
             const sellItem = ConsumablesMap.get(sellId);
             if (!sellItem) { break; }
             const rawSellQty = message.quantity ?? 1;
-            if (typeof rawSellQty !== 'number' || !isFinite(rawSellQty)) { break; }
+            if (typeof rawSellQty !== 'number' || !Number.isFinite(rawSellQty)) { break; }
             const sellQty = Math.max(1, Math.floor(rawSellQty));
             const owned = saveManager.getConsumableCount(sellId);
             const actualQty = Math.min(sellQty, owned);
@@ -567,14 +567,14 @@ async function handleWebviewMessage(message: any): Promise<void> {
         }
         case 'move_decor':
             if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
-                && typeof message.x === 'number' && isFinite(message.x)
-                && typeof message.y === 'number' && isFinite(message.y)) {
+                && typeof message.x === 'number' && Number.isFinite(message.x)
+                && typeof message.y === 'number' && Number.isFinite(message.y)) {
                 saveManager.moveDecor(message.index, message.x, message.y);
             }
             break;
         case 'add_decor':
-            if (typeof message.x === 'number' && isFinite(message.x)
-                && typeof message.y === 'number' && isFinite(message.y)
+            if (typeof message.x === 'number' && Number.isFinite(message.x)
+                && typeof message.y === 'number' && Number.isFinite(message.y)
                 && typeof message.category === 'string' && typeof message.name === 'string') {
                 saveManager.addDecor({
                     x: message.x,
@@ -656,7 +656,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
         case 'apply_mulch': {
             const mulchId = message.mulchId as string;
             const mulchItem = ConsumablesMap.get(mulchId);
-            if (!mulchItem || mulchItem.category !== 'mulch') { break; }
+            if (mulchItem?.category !== 'mulch') { break; }
             const mulchCount = saveManager.getConsumableCount(mulchId);
             if (mulchCount <= 0) { break; }
             const plantIdx = message.index as number;
@@ -894,7 +894,7 @@ async function importSaveCommand(): Promise<void> {
 
         // Only accept known Save fields to prevent excess property injection
         const sanitized = new Save();
-        if (typeof imported.money === 'number' && isFinite(imported.money)) {
+        if (typeof imported.money === 'number' && Number.isFinite(imported.money)) {
             sanitized.money = Math.max(0, Math.floor(imported.money));
         }
         if (Array.isArray(imported.pets)) {
@@ -930,7 +930,7 @@ async function importSaveCommand(): Promise<void> {
         }
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
             for (const [key, val] of Object.entries(imported.inventory)) {
-                if (typeof val === 'number' && val > 0 && isFinite(val)) {
+                if (typeof val === 'number' && val > 0 && Number.isFinite(val)) {
                     sanitized.inventory[key] = Math.floor(val);
                 }
             }
@@ -1017,21 +1017,9 @@ export function activate(context: vscode.ExtensionContext): void {
     });
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(WebViewProvider.viewType, webview),
-    );
 
-    // Start day/night cycle timer
-    if (config.get<boolean>('dayNightCycle', true)) {
-        startDayNightTimer();
-    }
-
-    // Start stamina drain timer
-    startStaminaDrainTimer();
-
-    // Start plant growth tick timer (every 60s)
-    startPlantTickTimer();
-
-    // Listen for configuration changes
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+        // Listen for configuration changes
+        vscode.workspace.onDidChangeConfiguration(event => {
         config = vscode.workspace.getConfiguration('pokemon-pets');
 
         if (event.affectsConfiguration('pokemon-pets.background')) {
@@ -1058,10 +1046,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
         }
-    }));
+        }),
 
-    // Register commands
-    context.subscriptions.push(
+        // Register commands
         vscode.commands.registerCommand('pokemon-pets.addPet', addPetCommand),
         vscode.commands.registerCommand('pokemon-pets.removePet', removePetCommand),
         vscode.commands.registerCommand('pokemon-pets.toggleAutoFeed', () => {
@@ -1100,6 +1087,17 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand),
         vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand),
     );
+
+    // Start day/night cycle timer
+    if (config.get<boolean>('dayNightCycle', true)) {
+        startDayNightTimer();
+    }
+
+    // Start stamina drain timer
+    startStaminaDrainTimer();
+
+    // Start plant growth tick timer (every 60s)
+    startPlantTickTimer();
 }
 
 export function deactivate(): void {

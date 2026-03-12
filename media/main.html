@@ -31,7 +31,7 @@
             <span id="decorHelp">Drag to place</span>
             
             <!-- Toggle action & exit buttons -->
-            <div class="decorButtons" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+            <div class="decorButtons" role="toolbar" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
                 <!-- Toggle action -->
                 <button type="button" class="menu" button show onclick="DecorMode.toggleAction();">
                     <span id="decorAction">Mode</span>
@@ -52,9 +52,9 @@
         <div id="night-overlay"></div>
 
         <!-- Menus -->
-        <div id="menus" onclick="Menus.close();" onkeydown="if(event.key==='Escape')Menus.close();" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <div id="menus" role="dialog" onclick="Menus.close();" onkeydown="if(event.key==='Escape')Menus.close();" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
             <!-- Actions menu -->
-            <div id="actions" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="actions" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
                 <div class="menuTopBar">
                     <span></span>
                     <button id="actionsCloseBtn" class="menuTopButton" onclick="Menus.close();">X</button>
@@ -86,7 +86,7 @@
             </div>
 
             <!-- Store menu -->
-            <div id="store" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="store" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
                 <div class="menuTopBar">
                     <button id="storeBackBtn" class="menuTopButton" onclick="openStoreMenu();">Back</button>
                     <button id="storeCloseBtn" class="menuTopButton" onclick="Menus.close();">X</button>
@@ -97,7 +97,7 @@
             </div>
 
             <!-- Backpack menu -->
-            <div id="backpack" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="backpack" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
                 <div class="menuTopBar">
                     <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
                     <button class="menuTopButton" onclick="Menus.close();">X</button>
@@ -108,7 +108,7 @@
             </div>
 
             <!-- Pokédex menu -->
-            <div id="pokedex" class="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="pokedex" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
                 <div class="menuTopBar">
                     <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
                     <button class="menuTopButton" onclick="Menus.close();">X</button>

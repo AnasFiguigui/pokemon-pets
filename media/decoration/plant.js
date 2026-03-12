@@ -81,22 +81,26 @@ class Plant extends GameObject {
         Game.decoration.removeItem(this);
 
         // If this was a pending purchase that was never placed, just remove from frontend
-        if (!this.#pendingPurchase) {
+        if (this.#pendingPurchase) {
+            this.#pendingPurchase = false;
+        } else {
             vscode.postMessage({
                 type: 'remove_plant',
                 index: idx >= 0 ? idx : this.#plantIndex,
             });
-        } else {
-            this.#pendingPurchase = false;
         }
 
-        if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
+        if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) {
+            DecorMode.toggle(false);
+        }
     }
 
     update() {
         super.update();
 
-        if (!this.#moving || !DecorMode.isAction(DecorMode.ACTION_MOVE)) return;
+        if (!this.#moving || !DecorMode.isAction(DecorMode.ACTION_MOVE)) {
+            return;
+        }
 
         const mousePos = Cursor.posScaled.sub(this.#movingOffset);
         const snappedPos = this.snapPos(mousePos);
@@ -104,14 +108,18 @@ class Plant extends GameObject {
         snappedPos.x = Util.clamp(snappedPos.x, 0, Math.floor((Game.windowSizeScaled.x - this.size.x + this.#snap) / this.#snap) * this.#snap);
         snappedPos.y = Util.clamp(snappedPos.y, 0, Math.floor((Game.windowSizeScaled.y - this.size.y + this.#snap) / this.#snap) * this.#snap);
 
-        if (snappedPos.equals(this.pos)) return;
+        if (snappedPos.equals(this.pos)) {
+            return;
+        }
 
         this.moveTo(snappedPos, { ignoreWalls: true });
         this.#dirty = true;
     }
 
     mouseDown(pos) {
-        if (!Game.isAction(Action.DECOR)) return false;
+        if (!Game.isAction(Action.DECOR)) {
+            return false;
+        }
 
         switch (DecorMode.action) {
             case DecorMode.ACTION_MOVE:
@@ -128,10 +136,10 @@ class Plant extends GameObject {
         // If mulch consumable selected, apply it to this plant
         if (Game.isAction(Action.CANDY) && Game.selectedConsumable) {
             const consumableId = Game.selectedConsumable;
-            const info = typeof ConsumableCatalog !== 'undefined'
-                ? ConsumableCatalog.find(c => c.id === consumableId)
-                : null;
-            if (info && info.category === 'mulch') {
+            const info = typeof ConsumableCatalog === 'undefined'
+                ? null
+                : ConsumableCatalog.find(c => c.id === consumableId);
+            if (info?.category === 'mulch') {
                 if (Game.getItemCount(consumableId) <= 0) {
                     Game.showMessage('None left!');
                     Game.setAction(Action.NONE);
@@ -163,7 +171,9 @@ class Plant extends GameObject {
                 this.stopDragging();
                 break;
             case DecorMode.ACTION_SELL:
-                if (typeof this.price === 'number') Game.addMoney(Math.floor(this.price * 0.8));
+                if (typeof this.price === 'number') {
+                    Game.addMoney(Math.floor(this.price * 0.8));
+                }
                 this.remove();
                 break;
         }

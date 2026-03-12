@@ -143,7 +143,7 @@ function openBackpack() {
 
             const text = document.createElement('span');
             text.innerText = `${name} x${count}`;
-            if (info && info.stat) {
+            if (info?.stat) {
                 text.appendChild(document.createElement('br'));
                 const statSpan = document.createElement('span');
                 statSpan.classList.add('storeButtonStat');
@@ -195,7 +195,7 @@ function openBackpack() {
 }
 
 //Pokédex
-let pokedexData = []; // { name, specie, sprite, spriteSize, candyFed }
+let pokedexData = [];
 
 function openPokedex() {
     //Request fresh pet data from extension
@@ -240,7 +240,7 @@ function renderPokedex(preserveScroll) {
             nameEl.onclick = (e) => {
                 e.stopPropagation();
                 const petIndex = pokedexData.indexOf(pet);
-                if (petIndex < 0) return;
+                if (petIndex < 0) {return;}
                 vscode.postMessage({ type: 'request_rename_specific_pet', index: petIndex });
             };
             info.appendChild(nameEl);
@@ -313,7 +313,7 @@ function renderPokedex(preserveScroll) {
             actions.classList.add('pokedexActions');
 
             // Feed Candy button
-            const candyCount = (Game.inventory && Game.inventory['candy']) || 0;
+            const candyCount = Game.inventory?.['candy'] || 0;
             const candyBtn = document.createElement('button');
             candyBtn.type = 'button';
             candyBtn.classList.add('pokedexFeedBtn');
@@ -322,17 +322,16 @@ function renderPokedex(preserveScroll) {
             candyBtn.onclick = (e) => {
                 e.stopPropagation();
                 const petIndex = pokedexData.indexOf(pet);
-                if (petIndex < 0) return;
+                if (petIndex < 0) {return;}
                 vscode.postMessage({ type: 'use_consumable', consumableId: 'candy', index: petIndex });
             };
             actions.appendChild(candyBtn);
 
             // Feed Food button — find first food/potion that restores stamina in inventory
-            const foodItems = ConsumableCatalog.filter(c =>
+            const bestFood = ConsumableCatalog.find(c =>
                 (c.category === 'food' || c.category === 'potion') &&
-                Game.inventory && Game.inventory[c.id] > 0
+                Game.inventory?.[c.id] > 0
             );
-            const bestFood = foodItems[0]; // first available food
             const foodBtn = document.createElement('button');
             foodBtn.type = 'button';
             foodBtn.classList.add('pokedexFeedBtn');
@@ -340,9 +339,9 @@ function renderPokedex(preserveScroll) {
             foodBtn.disabled = !bestFood;
             foodBtn.onclick = (e) => {
                 e.stopPropagation();
-                if (!bestFood) return;
+                if (!bestFood) {return;}
                 const petIndex = pokedexData.indexOf(pet);
-                if (petIndex < 0) return;
+                if (petIndex < 0) {return;}
                 vscode.postMessage({ type: 'use_consumable', consumableId: bestFood.id, index: petIndex });
             };
             actions.appendChild(foodBtn);
@@ -636,8 +635,8 @@ function openStoreSeedsMenu() {
 function refreshStorePrices() {
     const priceElements = document.querySelectorAll('#storeContent .storeButtonMoney');
     for (const el of priceElements) {
-        const price = parseInt(el.innerText);
-        if (!isNaN(price)) {
+        const price = Number.parseInt(el.innerText);
+        if (!Number.isNaN(price)) {
             if (price > Game.money) {
                 el.setAttribute('expensive', '');
             } else {
@@ -694,7 +693,6 @@ function handleGameMessage(message) {
                 // Freeze the pet at idle during evolution — prevent AI from moving it
                 oldPet.animate('idle', true);
                 oldPet._frozenForEvolution = true;
-                const origUpdate = oldPet.update.bind(oldPet);
                 oldPet.update = function () {
                     // Skip AI updates (no movement), only run base rendering
                 };
@@ -894,7 +892,7 @@ function handleSpawnMessage(message) {
                 Game.objects.removeItem(plantToRemove);
                 Game.plants.removeItem(plantToRemove);
                 Game.decoration.removeItem(plantToRemove);
-                if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
+                if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) {DecorMode.toggle(false);}
             }
             break;
         }
