@@ -34,7 +34,7 @@ function showTopBarTemporary() {
 
 //Consumable catalog (must match extension's Consumables array)
 const ConsumableCatalog = [
-    { id: 'candy', name: 'Rare Candy', price: 30, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
+    { id: 'candy', name: 'Rare Candy', price: 100, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 0, y: 64 }, cursorOffset: { x: 0, y: 96 } },
     { id: 'potion', name: 'Potion', price: 100, category: 'potion', stat: '+20 HP', spriteOffset: { x: 0, y: 128 }, cursorOffset: { x: 0, y: 160 } },
     { id: 'super_potion', name: 'Super Potion', price: 280, category: 'potion', stat: '+60 HP', spriteOffset: { x: 32, y: 128 }, cursorOffset: { x: 32, y: 160 } },
@@ -43,21 +43,21 @@ const ConsumableCatalog = [
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, category: 'mulch', stat: '+1 yield (1 harvest)', spriteOffset: { x: 32, y: 192 }, cursorOffset: { x: 32, y: 224 } },
     { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 window (1 harvest)', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, category: 'mulch', stat: '+1 regrow (1 harvest)', spriteOffset: { x: 96, y: 192 }, cursorOffset: { x: 96, y: 224 } },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
-    { id: 'water_stone', name: 'Water Stone', price: 100, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, category: 'stone', spriteOffset: { x: 256, y: 0 }, cursorOffset: { x: 256, y: 32 } },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, category: 'stone', spriteOffset: { x: 288, y: 0 }, cursorOffset: { x: 288, y: 32 } },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, category: 'stone', spriteOffset: { x: 320, y: 0 }, cursorOffset: { x: 320, y: 32 } },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
+    { id: 'fire_stone', name: 'Fire Stone', price: 1000, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
+    { id: 'water_stone', name: 'Water Stone', price: 1000, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 1000, category: 'stone', spriteOffset: { x: 224, y: 0 }, cursorOffset: { x: 224, y: 32 } },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 1000, category: 'stone', spriteOffset: { x: 256, y: 0 }, cursorOffset: { x: 256, y: 32 } },
+    { id: 'moon_stone', name: 'Moon Stone', price: 1200, category: 'stone', spriteOffset: { x: 288, y: 0 }, cursorOffset: { x: 288, y: 32 } },
+    { id: 'sun_stone', name: 'Sun Stone', price: 1200, category: 'stone', spriteOffset: { x: 320, y: 0 }, cursorOffset: { x: 320, y: 32 } },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 1200, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 1200, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
+    { id: 'ice_stone', name: 'Ice Stone', price: 1000, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
 ];
 
 //Plant catalog (must match extension's PlantTypes array)
 // harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, produces: 'Oran Berry', harvestType: 'single', growthHours: [0.01, 0.01, 0.01, 0.01, 0.01], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, produces: 'Oran Berry', harvestType: 'single', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
 ];
 
 //Actions menu

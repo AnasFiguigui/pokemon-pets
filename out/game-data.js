@@ -2,20 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = void 0;
 exports.Consumables = [
-    { id: 'candy', name: 'Rare Candy', price: 30, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 3 },
+    { id: 'candy', name: 'Rare Candy', price: 100, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 5 },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
     { id: 'potion', name: 'Potion', price: 100, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 1 },
     { id: 'super_potion', name: 'Super Potion', price: 280, description: 'Restores a large amount of HP to a Pokémon.', category: 'potion', restoreHp: 60, friendshipGain: 5 },
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, description: 'Restores a massive amount of HP to a Pokémon.', category: 'potion', restoreHp: 120, friendshipGain: 10 },
-    { id: 'fire_stone', name: 'Fire Stone', price: 100, description: 'A stone that radiates warmth.', category: 'stone' },
-    { id: 'water_stone', name: 'Water Stone', price: 100, description: 'A stone that shimmers like water.', category: 'stone' },
-    { id: 'thunder_stone', name: 'Thunder Stone', price: 100, description: 'A stone that crackles with electricity.', category: 'stone' },
-    { id: 'leaf_stone', name: 'Leaf Stone', price: 100, description: 'A stone that smells of fresh leaves.', category: 'stone' },
-    { id: 'moon_stone', name: 'Moon Stone', price: 120, description: 'A stone that glows in moonlight.', category: 'stone' },
-    { id: 'sun_stone', name: 'Sun Stone', price: 120, description: 'A stone that sparkles in sunlight.', category: 'stone' },
-    { id: 'dusk_stone', name: 'Dusk Stone', price: 120, description: 'A stone that absorbs darkness.', category: 'stone' },
-    { id: 'shiny_stone', name: 'Shiny Stone', price: 120, description: 'A stone that shines brilliantly.', category: 'stone' },
-    { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.', category: 'stone' },
+    { id: 'fire_stone', name: 'Fire Stone', price: 1000, description: 'A stone that radiates warmth.', category: 'stone' },
+    { id: 'water_stone', name: 'Water Stone', price: 1000, description: 'A stone that shimmers like water.', category: 'stone' },
+    { id: 'thunder_stone', name: 'Thunder Stone', price: 1000, description: 'A stone that crackles with electricity.', category: 'stone' },
+    { id: 'leaf_stone', name: 'Leaf Stone', price: 1000, description: 'A stone that smells of fresh leaves.', category: 'stone' },
+    { id: 'moon_stone', name: 'Moon Stone', price: 1200, description: 'A stone that glows in moonlight.', category: 'stone' },
+    { id: 'sun_stone', name: 'Sun Stone', price: 1200, description: 'A stone that sparkles in sunlight.', category: 'stone' },
+    { id: 'dusk_stone', name: 'Dusk Stone', price: 1200, description: 'A stone that absorbs darkness.', category: 'stone' },
+    { id: 'shiny_stone', name: 'Shiny Stone', price: 1200, description: 'A stone that shines brilliantly.', category: 'stone' },
+    { id: 'ice_stone', name: 'Ice Stone', price: 1000, description: 'A stone that feels cold to the touch.', category: 'stone' },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces growth time by 25% for 1 hour.', category: 'mulch' },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1. Consumed after one harvest.', category: 'mulch' },
     { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },
@@ -23,7 +23,7 @@ exports.Consumables = [
 ];
 exports.PlantTypes = [
     {
-        id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 50, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.01, 0.01, 0.01, 0.01, 0.01], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
+        id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
     },
 ];
 exports.WildPokemonSpecies = [
@@ -75,14 +75,14 @@ exports.Pokemons = {
             name: 'Eevee',
             forms: [
                 { name: 'Eevee', sprite: 'eevee', spriteSize: 32, candyCost: 0 },
-                { name: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32, candyCost: 25, requiredItem: 'water_stone' },
-                { name: 'Jolteon', sprite: 'jolteon', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
-                { name: 'Flareon', sprite: 'flareon', spriteSize: 32, candyCost: 25, requiredItem: 'fire_stone' },
-                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredFriendship: 200, requiredTimeOfDay: 'day' },
-                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredFriendship: 200, requiredTimeOfDay: 'night' },
-                { name: 'Leafeon', sprite: 'leafeon', spriteSize: 32, candyCost: 25, requiredItem: 'leaf_stone' },
-                { name: 'Glaceon', sprite: 'glaceon', spriteSize: 32, candyCost: 25, requiredItem: 'ice_stone' },
-                { name: 'Sylveon', sprite: 'sylveon', spriteSize: 32, candyCost: 25, requiredItem: 'shiny_stone', requiredFriendship: 200 },
+                { name: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32, candyCost: 5, requiredItem: 'water_stone' },
+                { name: 'Jolteon', sprite: 'jolteon', spriteSize: 32, candyCost: 5, requiredItem: 'thunder_stone' },
+                { name: 'Flareon', sprite: 'flareon', spriteSize: 32, candyCost: 5, requiredItem: 'fire_stone' },
+                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 5, requiredFriendship: 200, requiredTimeOfDay: 'day' },
+                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 5, requiredFriendship: 200, requiredTimeOfDay: 'night' },
+                { name: 'Leafeon', sprite: 'leafeon', spriteSize: 32, candyCost: 5, requiredItem: 'leaf_stone' },
+                { name: 'Glaceon', sprite: 'glaceon', spriteSize: 32, candyCost: 5, requiredItem: 'ice_stone' },
+                { name: 'Sylveon', sprite: 'sylveon', spriteSize: 32, candyCost: 5, requiredItem: 'shiny_stone', requiredFriendship: 200 },
             ],
         },
     ],
