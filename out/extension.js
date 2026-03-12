@@ -317,6 +317,39 @@ function buildPetStats() {
         maxStamina: (0, models_1.getMaxStamina)(p),
     }));
 }
+/** Sends fresh pokédex data to the webview. */
+function refreshPokedex() {
+    webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+            name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize,
+            candyFed: p.candyFed ?? 0, friendship: p.friendship ?? 0,
+            hp: p.hp ?? (0, models_1.getMaxHp)(p), stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
+            maxHp: (0, models_1.getMaxHp)(p), maxStamina: (0, models_1.getMaxStamina)(p),
+            heldItem: p.heldItem,
+        })) });
+}
+/**
+ * Checks held-item evolution for a pet and handles the result
+ * (evolution animation, messages, etc.). Called after friendship changes.
+ */
+function checkAndHandleHeldItemEvolution(petIndex) {
+    const result = evolution.checkHeldItemEvolution(petIndex);
+    if (result.evolved && result.newForm) {
+        const pet = saveManager.save.pets[petIndex];
+        const { form, sprite, spriteSize } = (0, models_1.normalizePet)(pet);
+        webview.postMessage({
+            type: 'evolution',
+            index: petIndex,
+            name: pet.name,
+            specie: pet.specie,
+            color: pet.color,
+            form, sprite, spriteSize,
+            newForm: result.newForm.name,
+        });
+        telemetry.trackPokemonEvolved(pet.specie);
+        refreshPokedex();
+        vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+    }
+}
 // ── Unified Tick (single 60s interval for all periodic tasks) ───────────
 /** How many unified ticks between stamina drains (6 × 60s = 360s). */
 const STAMINA_DRAIN_TICKS = STAMINA_DRAIN_INTERVAL_MS / 60_000;
@@ -411,6 +444,8 @@ async function handleWebviewMessage(message) {
                 const ballPetIndex = message.index;
                 if (typeof ballPetIndex === 'number' && ballPetIndex >= 0 && ballPetIndex < saveManager.save.pets.length) {
                     addFriendship(ballPetIndex, 0.5);
+                    // Check if held item evolution triggers from friendship gain
+                    checkAndHandleHeldItemEvolution(ballPetIndex);
                 }
                 break;
             }
@@ -504,18 +539,25 @@ async function handleWebviewMessage(message) {
                         // Increase friendship from food/potion
                         if (consumable.friendshipGain) {
                             addFriendship(petIndex, consumable.friendshipGain);
+                            // Check if held item evolution triggers from friendship gain
+                            checkAndHandleHeldItemEvolution(petIndex);
                         }
                     }
                     else {
-                        // Evolution stones: only consumed if evolution succeeds
+                        // Evolution stones: consumed if evolution succeeds, or equipped as held item
                         if (typeof petIndex !== 'number' || petIndex < 0 || petIndex >= saveManager.save.pets.length) {
+                            break;
+                        }
+                        const pet = saveManager.save.pets[petIndex];
+                        // If the pet already holds an item, don't overwrite it
+                        if (pet.heldItem) {
+                            webview.postMessage({ type: 'consumable_failed' });
                             break;
                         }
                         const result = evolution.useItem(petIndex, consumableId);
                         if (result.evolved && result.newForm) {
                             saveManager.updateInventory(consumableId, currentCount - 1);
                             webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                            const pet = saveManager.save.pets[petIndex];
                             const { form, sprite, spriteSize } = (0, models_1.normalizePet)(pet);
                             webview.postMessage({
                                 type: 'evolution',
@@ -530,6 +572,13 @@ async function handleWebviewMessage(message) {
                             });
                             telemetry.trackPokemonEvolved(pet.specie);
                             vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+                        }
+                        else if (result.equipped) {
+                            // Item equipped as held item — consume from inventory
+                            saveManager.updateInventory(consumableId, currentCount - 1);
+                            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                            refreshPokedex();
+                            vscode.window.showInformationMessage(`${pet.name} is now holding ${consumable.name}.`);
                         }
                         else {
                             // Stone had no effect — not consumed
@@ -754,11 +803,7 @@ async function handleWebviewMessage(message) {
                 saveManager.scheduleSave();
                 webview.postMessage({ type: 'rename_pet', index: petIdx, name: trimmed });
                 // Refresh pokédex to show updated name
-                webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
-                        name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize, candyFed: p.candyFed ?? 0,
-                        friendship: p.friendship ?? 0, hp: p.hp, stamina: p.stamina,
-                        maxHp: (0, models_1.getMaxHp)(p), maxStamina: (0, models_1.getMaxStamina)(p),
-                    })) });
+                refreshPokedex();
                 break;
             }
             case 'request_pokedex': {
@@ -773,8 +818,29 @@ async function handleWebviewMessage(message) {
                     maxHp: (0, models_1.getMaxHp)(p),
                     maxStamina: (0, models_1.getMaxStamina)(p),
                     friendship: p.friendship ?? 0,
+                    heldItem: p.heldItem,
                 }));
                 webview.postMessage({ type: 'pokedex', value: pets });
+                break;
+            }
+            case 'unequip_item': {
+                const uIdx = message.index;
+                if (typeof uIdx !== 'number' || uIdx < 0 || uIdx >= saveManager.save.pets.length) {
+                    break;
+                }
+                const uPet = saveManager.save.pets[uIdx];
+                if (!uPet?.heldItem) {
+                    break;
+                }
+                const returnedItem = uPet.heldItem;
+                const prevCount = saveManager.getConsumableCount(returnedItem);
+                saveManager.updateInventory(returnedItem, prevCount + 1);
+                uPet.heldItem = undefined;
+                saveManager.scheduleSave();
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                refreshPokedex();
+                const itemInfo = ConsumablesMap.get(returnedItem);
+                vscode.window.showInformationMessage(`${uPet.name} dropped ${itemInfo?.name ?? returnedItem}. Returned to backpack.`);
                 break;
             }
         }

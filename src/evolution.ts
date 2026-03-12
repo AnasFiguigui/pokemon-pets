@@ -9,6 +9,7 @@ export interface EvolutionResult {
     newForm?: PokemonForm;
     totalCandy: number;
     nextEvolutionAt?: number;   // candy needed for next form, undefined if max
+    equipped?: boolean;         // true if item was equipped as held item instead of evolving
 }
 
 /**
@@ -81,6 +82,35 @@ export class EvolutionService {
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
 
+        // ── Priority 1: Check held-item evolution ──────────────────────
+        // If the pet holds an item, check forms matching that item FIRST.
+        // This gives held-item evolutions priority over time-of-day forms
+        // (e.g. Eevee holding shiny_stone → Sylveon before Espeon/Umbreon).
+        if (pet.heldItem) {
+            for (let i = currentIdx + 1; i < species.forms.length; i++) {
+                const form = species.forms[i];
+                if (form.requiredItem !== pet.heldItem) { continue; }
+                const friendshipMet = typeof form.requiredFriendship !== 'number'
+                    || (pet.friendship ?? 0) >= form.requiredFriendship;
+                if (!friendshipMet) { continue; }
+                if (pet.candyFed < form.candyCost) { continue; }
+
+                // Evolve via held item!
+                pet.form = form.name;
+                pet.sprite = form.sprite;
+                pet.spriteSize = form.spriteSize;
+                pet.heldItem = undefined; // consumed
+                this.saveManager.scheduleSave();
+
+                return {
+                    evolved: true,
+                    newForm: form,
+                    totalCandy: pet.candyFed,
+                };
+            }
+        }
+
+        // ── Priority 2: Normal candy evolution ─────────────────────────
         // Scan all forms after the current one for a valid candy evolution
         // (supports branching evolutions like Eevee)
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
@@ -152,11 +182,17 @@ export class EvolutionService {
         const candyFed = pet.candyFed ?? 0;
 
         // Scan all forms after the current one for a matching requiredItem
+        let canEquip = false;
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const form = species.forms[i];
+            if (form.requiredItem !== itemId) { continue; }
+
+            // This item is relevant to at least one future form
+            canEquip = true;
+
             const friendshipMet = typeof form.requiredFriendship !== 'number'
                 || (pet.friendship ?? 0) >= form.requiredFriendship;
-            if (form.requiredItem === itemId && friendshipMet && candyFed >= form.candyCost) {
+            if (friendshipMet && candyFed >= form.candyCost) {
                 // Evolve!
                 pet.form = form.name;
                 pet.sprite = form.sprite;
@@ -171,9 +207,60 @@ export class EvolutionService {
             }
         }
 
+        // Item didn't trigger evolution but matches a future form → equip it
+        if (canEquip) {
+            pet.heldItem = itemId;
+            this.saveManager.scheduleSave();
+            return { evolved: false, totalCandy: candyFed, equipped: true };
+        }
+
         return {
             evolved: false,
             totalCandy: candyFed,
         };
+    }
+
+    /**
+     * Checks whether a pet's held item now triggers evolution (e.g. after
+     * friendship changed from feeding, ball catch, etc.).
+     * Returns an evolution result — callers should handle the same way as feedCandy.
+     */
+    public checkHeldItemEvolution(petIndex: number): EvolutionResult {
+        const pet = this.saveManager.save.pets[petIndex];
+        if (!pet || !pet.heldItem) {
+            return { evolved: false, totalCandy: pet?.candyFed ?? 0 };
+        }
+
+        const species = this.findSpecies(pet);
+        if (!species) {
+            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
+        }
+
+        const currentIdx = this.getCurrentFormIndex(pet, species);
+        const candyFed = pet.candyFed ?? 0;
+
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const form = species.forms[i];
+            if (form.requiredItem !== pet.heldItem) { continue; }
+            const friendshipMet = typeof form.requiredFriendship !== 'number'
+                || (pet.friendship ?? 0) >= form.requiredFriendship;
+            if (!friendshipMet) { continue; }
+            if (candyFed < form.candyCost) { continue; }
+
+            // Evolve via held item!
+            pet.form = form.name;
+            pet.sprite = form.sprite;
+            pet.spriteSize = form.spriteSize;
+            pet.heldItem = undefined;
+            this.saveManager.scheduleSave();
+
+            return {
+                evolved: true,
+                newForm: form,
+                totalCandy: candyFed,
+            };
+        }
+
+        return { evolved: false, totalCandy: candyFed };
     }
 }

@@ -713,6 +713,39 @@ body[cursor="none"] {
     flex-shrink: 0;
 }
 
+.pokedexSpriteCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.pokedexHeldSlot {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #88744ece;
+    border-radius: 4px;
+    background: #ffffff08;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pokedexHeldIcon {
+    width: 16px;
+    height: 16px;
+    background-image: url('./sprites/consumables.png');
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    cursor: pointer;
+}
+
+.pokedexHeldIcon:hover {
+    filter: brightness(1.3);
+}
+
 .pokedexInfo {
     /* Layout */
     display: flex;

@@ -218,6 +218,10 @@ function renderPokedex(preserveScroll) {
             const entry = document.createElement('div');
             entry.classList.add('pokedexEntry');
 
+            //Sprite column (pokemon + held item slot)
+            const spriteCol = document.createElement('div');
+            spriteCol.classList.add('pokedexSpriteCol');
+
             //Sprite (sized per pokemon, vec 0,0)
             const spriteSize = pet.spriteSize === 48 ? 48 : 32;
             const sprite = document.createElement('img');
@@ -227,7 +231,33 @@ function renderPokedex(preserveScroll) {
             sprite.classList.add('pokedexSprite');
             sprite.style.width = `${spriteSize}px`;
             sprite.style.height = `${spriteSize}px`;
-            entry.appendChild(sprite);
+            spriteCol.appendChild(sprite);
+
+            //Held item slot
+            const heldSlot = document.createElement('div');
+            heldSlot.classList.add('pokedexHeldSlot');
+            if (pet.heldItem) {
+                const itemInfo = ConsumableCatalog.find(c => c.id === pet.heldItem);
+                if (itemInfo) {
+                    const itemIcon = document.createElement('div');
+                    itemIcon.classList.add('pokedexHeldIcon');
+                    // Scale 32px sprite offsets down to 16px display
+                    const sx = itemInfo.spriteOffset.x / 2;
+                    const sy = itemInfo.spriteOffset.y / 2;
+                    itemIcon.style.backgroundPosition = `${-sx}px ${-sy}px`;
+                    itemIcon.style.backgroundSize = `${448 / 2}px ${256 / 2}px`;
+                    itemIcon.title = `${itemInfo.name} (click to remove)`;
+                    itemIcon.onclick = (e) => {
+                        e.stopPropagation();
+                        const petIndex = pokedexData.indexOf(pet);
+                        if (petIndex < 0) { return; }
+                        vscode.postMessage({ type: 'unequip_item', index: petIndex });
+                    };
+                    heldSlot.appendChild(itemIcon);
+                }
+            }
+            spriteCol.appendChild(heldSlot);
+            entry.appendChild(spriteCol);
 
             //Info column
             const info = document.createElement('div');

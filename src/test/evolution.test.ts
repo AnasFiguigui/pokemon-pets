@@ -317,16 +317,18 @@ describe('EvolutionService', () => {
             expect(result.newForm?.name).toBe('Glaceon');
         });
 
-        it('does not evolve Eevee without enough candy', () => {
+        it('equips stone as held item when Eevee lacks enough candy', () => {
             const pet: Pet = {
                 name: 'Eve', specie: 'Eevee', color: 'Generation 1',
-                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 5,
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 2,
             };
             sm.save.pets.push(pet);
 
             const result = evo.useItem(0, 'water_stone');
 
             expect(result.evolved).toBe(false);
+            expect(result.equipped).toBe(true);
+            expect(pet.heldItem).toBe('water_stone');
         });
 
         it('does not evolve Eevee with candy alone (no stone)', () => {
@@ -340,6 +342,103 @@ describe('EvolutionService', () => {
 
             expect(result.evolved).toBe(false);
             expect(pet.form).toBe('Eevee');
+        });
+    });
+
+    // ── Held Item Evolution ─────────────────────────────────────────────
+
+    describe('heldItem', () => {
+        it('feedCandy evolves via held item when requirements met', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 4,
+                heldItem: 'water_stone',
+            };
+            sm.save.pets.push(pet);
+
+            // Feed candy → candyFed becomes 5 (meets Vaporeon candyCost: 5)
+            const result = evo.feedCandy(0);
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Vaporeon');
+            expect(pet.heldItem).toBeUndefined(); // consumed
+        });
+
+        it('feedCandy does not evolve via held item when candy insufficient', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 2,
+                heldItem: 'water_stone',
+            };
+            sm.save.pets.push(pet);
+
+            // Feed candy → candyFed becomes 3 (still < Vaporeon candyCost: 5)
+            const result = evo.feedCandy(0);
+
+            expect(result.evolved).toBe(false);
+            expect(pet.heldItem).toBe('water_stone'); // still held
+        });
+
+        it('held shiny_stone + friendship prioritizes Sylveon over Espeon/Umbreon', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 4,
+                friendship: 200,
+                heldItem: 'shiny_stone',
+            };
+            sm.save.pets.push(pet);
+
+            // Feed candy → candyFed becomes 5
+            // Held item (shiny_stone) check runs first, matches Sylveon
+            const result = evo.feedCandy(0);
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Sylveon');
+            expect(pet.heldItem).toBeUndefined();
+        });
+
+        it('checkHeldItemEvolution evolves when friendship reaches threshold', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 5,
+                friendship: 200,
+                heldItem: 'shiny_stone',
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.checkHeldItemEvolution(0);
+
+            expect(result.evolved).toBe(true);
+            expect(result.newForm?.name).toBe('Sylveon');
+            expect(pet.heldItem).toBeUndefined();
+        });
+
+        it('checkHeldItemEvolution does nothing without held item', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 5,
+                friendship: 200,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.checkHeldItemEvolution(0);
+
+            expect(result.evolved).toBe(false);
+        });
+
+        it('useItem equips when pet already meets some but not all requirements', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 5,
+                friendship: 100, // needs 200 for Sylveon
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'shiny_stone');
+
+            expect(result.evolved).toBe(false);
+            expect(result.equipped).toBe(true);
+            expect(pet.heldItem).toBe('shiny_stone');
         });
     });
 });

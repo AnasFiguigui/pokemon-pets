@@ -104,6 +104,11 @@ export class SaveManager {
                 pet.friendship = 50 + Math.floor(Math.random() * 50);
                 saveUpdated = true;
             }
+            // Validate heldItem (must be string or undefined)
+            if (pet.heldItem !== undefined && typeof pet.heldItem !== 'string') {
+                pet.heldItem = undefined;
+                saveUpdated = true;
+            }
             // Clamp friendship to [0, 255]
             if (pet.friendship < 0) { pet.friendship = 0; saveUpdated = true; }
             if (pet.friendship > 255) { pet.friendship = 255; saveUpdated = true; }
