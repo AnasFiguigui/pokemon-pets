@@ -40,8 +40,9 @@ let saveManager;
 let telemetry;
 let evolution;
 let streakService;
-let dayNightInterval;
-let staminaDrainInterval;
+let unifiedTickInterval;
+let unifiedTickCounter = 0;
+let dayNightEnabled = false;
 let autoFeedEnabled = false;
 function syncAutoFeedState() {
     autoFeedEnabled = saveManager?.save?.autoFeed ?? false;
@@ -133,6 +134,7 @@ function loadPlant(plant, index) {
         size: plantType.size,
         spriteOffset: plantType.spriteOffset,
         phaseStep: plantType.phaseStep,
+        mulch: plant.mulch ?? null,
     });
 }
 /** Calculates a plant's current visual phase (0–4) based on elapsed time. */
@@ -180,6 +182,7 @@ function tickPlants() {
                 plant.mulch = undefined;
                 plant.mulchAppliedAt = undefined;
                 saveManager.scheduleSave();
+                webview.postMessage({ type: 'clear_mulch', index: i });
             }
         }
         // Check harvest window expiry for ripe plants
@@ -204,14 +207,11 @@ function sendDayNightTint() {
     webview.postMessage({ type: 'day_night', timeOfDay, opacity });
 }
 function startDayNightTimer() {
-    stopDayNightTimer();
-    dayNightInterval = setInterval(() => sendDayNightTint(), 60_000);
+    dayNightEnabled = true;
+    ensureUnifiedTick();
 }
 function stopDayNightTimer() {
-    if (dayNightInterval !== undefined) {
-        clearInterval(dayNightInterval);
-        dayNightInterval = undefined;
-    }
+    dayNightEnabled = false;
 }
 // ── Stamina / HP Drain ──────────────────────────────────────────────────
 function drainStamina() {
@@ -317,28 +317,33 @@ function buildPetStats() {
         maxStamina: (0, models_1.getMaxStamina)(p),
     }));
 }
-function startStaminaDrainTimer() {
-    stopStaminaDrainTimer();
-    staminaDrainInterval = setInterval(() => {
-        drainStamina();
-    }, STAMINA_DRAIN_INTERVAL_MS);
-}
-function stopStaminaDrainTimer() {
-    if (staminaDrainInterval !== undefined) {
-        clearInterval(staminaDrainInterval);
-        staminaDrainInterval = undefined;
+// ── Unified Tick (single 60s interval for all periodic tasks) ───────────
+/** How many unified ticks between stamina drains (6 × 60s = 360s). */
+const STAMINA_DRAIN_TICKS = STAMINA_DRAIN_INTERVAL_MS / 60_000;
+/** Ensures the single unified interval is running. */
+function ensureUnifiedTick() {
+    if (unifiedTickInterval !== undefined) {
+        return;
     }
+    unifiedTickCounter = 0;
+    unifiedTickInterval = setInterval(() => {
+        unifiedTickCounter++;
+        // Day/night update (every tick = 60s)
+        if (dayNightEnabled) {
+            sendDayNightTint();
+        }
+        // Plant growth check (every tick = 60s)
+        tickPlants();
+        // Stamina drain (every STAMINA_DRAIN_TICKS ticks)
+        if (unifiedTickCounter % STAMINA_DRAIN_TICKS === 0) {
+            drainStamina();
+        }
+    }, 60_000);
 }
-let plantTickInterval;
-const PLANT_TICK_INTERVAL_MS = 60_000; // check plant growth every 60 seconds
-function startPlantTickTimer() {
-    stopPlantTickTimer();
-    plantTickInterval = setInterval(() => tickPlants(), PLANT_TICK_INTERVAL_MS);
-}
-function stopPlantTickTimer() {
-    if (plantTickInterval !== undefined) {
-        clearInterval(plantTickInterval);
-        plantTickInterval = undefined;
+function stopUnifiedTick() {
+    if (unifiedTickInterval !== undefined) {
+        clearInterval(unifiedTickInterval);
+        unifiedTickInterval = undefined;
     }
 }
 // ── Webview Message Handler ─────────────────────────────────────────────
@@ -666,6 +671,7 @@ async function handleWebviewMessage(message) {
                         plant.mulchAppliedAt = undefined;
                         saveManager.updatePlantPhase(harvestIndex, 2);
                         webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+                        webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
                     }
                     else {
                         saveManager.removePlant(harvestIndex);
@@ -682,6 +688,7 @@ async function handleWebviewMessage(message) {
                     plant.mulch = undefined;
                     plant.mulchAppliedAt = undefined;
                     saveManager.scheduleSave();
+                    webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
                 }
                 webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                 webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
@@ -707,11 +714,11 @@ async function handleWebviewMessage(message) {
                     webview.postMessage({ type: 'consumable_failed' });
                     break;
                 }
-                // Restrict stable_mulch and gooey_mulch to single-harvest plants
+                // Restrict gooey_mulch to single-harvest plants (regrow makes no sense for repeatable)
                 const targetPlantType = PlantTypesMap.get(targetPlant.plantId);
-                if ((mulchId === 'stable_mulch' || mulchId === 'gooey_mulch') &&
+                if (mulchId === 'gooey_mulch' &&
                     targetPlantType && targetPlantType.harvestType !== 'single') {
-                    webview.postMessage({ type: 'show_message', text: 'This mulch only works on single-harvest plants.' });
+                    webview.postMessage({ type: 'show_message', text: 'Gooey Mulch only works on single-harvest plants.' });
                     break;
                 }
                 // Consume mulch and apply to plant
@@ -720,6 +727,7 @@ async function handleWebviewMessage(message) {
                 targetPlant.mulchAppliedAt = new Date().toISOString();
                 saveManager.scheduleSave();
                 webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                webview.postMessage({ type: 'set_mulch', index: plantIdx, mulch: mulchId });
                 webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
                 break;
             }
@@ -1086,20 +1094,16 @@ function activate(context) {
         saveManager.loadGame();
         initGame();
     }), vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand), vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand), vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand), vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand));
-    // Start day/night cycle timer
+    // Start day/night cycle if enabled
     if (config.get('dayNightCycle', true)) {
         startDayNightTimer();
     }
-    // Start stamina drain timer
-    startStaminaDrainTimer();
-    // Start plant growth tick timer (every 60s)
-    startPlantTickTimer();
+    // Start unified tick (handles stamina drain + plant growth + day/night)
+    ensureUnifiedTick();
 }
 function deactivate() {
     saveManager.flushSave();
-    stopDayNightTimer();
-    stopStaminaDrainTimer();
-    stopPlantTickTimer();
+    stopUnifiedTick();
     console.log('Pokemon Pets is now deactivated 😿');
 }
 //# sourceMappingURL=extension.js.map

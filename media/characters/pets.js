@@ -276,8 +276,8 @@ class PokemonAnimations {
     static get DEFAULT() {
         return {
             'idle': new Animation(
-                [[0, 8], [1, 8], [2, 8], [3, 8]],
-                5,
+                [[0, 8], [1, 8], [2, 8], [3, 8], [0, 8], [1, 8], [2, 8], [3, 8], [0, 8], [1, 8], [2, 8], [3, 8]],
+                4,
                 { loop: false }
             ),
             'moveDown': new Animation(
@@ -313,7 +313,7 @@ class PokemonAnimations {
                 3
             ),
             'special': new Animation(
-                [[0, 9], [1, 9], [2, 9], [3, 9]],
+                [[0, 9], [1, 9], [2, 9], [3, 9], ],
                 4,
                 { loop: false }
             ),

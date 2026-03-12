@@ -18,7 +18,7 @@ exports.Consumables = [
     { id: 'ice_stone', name: 'Ice Stone', price: 100, description: 'A stone that feels cold to the touch.', category: 'stone' },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces growth time by 25% for 1 hour.', category: 'mulch' },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1. Consumed after one harvest.', category: 'mulch' },
-    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles harvest window. Single-harvest only, one use.', category: 'mulch' },
+    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, description: 'Grants 1 extra regrow. Single-harvest only, one use.', category: 'mulch' },
 ];
 exports.PlantTypes = [
@@ -28,6 +28,7 @@ exports.PlantTypes = [
 ];
 exports.WildPokemonSpecies = [
     { specie: 'meowth', nightOnly: false },
+    { specie: 'golbat', nightOnly: true },
 ];
 exports.Pokemons = {
     'generation 1': [
@@ -44,7 +45,7 @@ exports.Pokemons = {
             forms: [
                 { name: 'Charmander', sprite: 'charmander', spriteSize: 32, candyCost: 0 },
                 { name: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyCost: 10 },
-                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredItem: 'fire_stone', requiredFriendship: 220 },
+                { name: 'Charizard', sprite: 'charizard', spriteSize: 48, candyCost: 25, requiredFriendship: 200 },
             ],
         },
         {
@@ -56,14 +57,29 @@ exports.Pokemons = {
             ],
         },
         {
+            name: 'Pichu',
+            forms: [
+                { name: 'Pichu', sprite: 'pichu', spriteSize: 32, candyCost: 0 },
+                { name: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyCost: 25, requiredFriendship: 200 },
+                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
+            ],
+        },
+        {
+            name: 'Pikachu',
+            forms: [
+                { name: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyCost: 0 },
+                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
+            ],
+        },
+        {
             name: 'Eevee',
             forms: [
                 { name: 'Eevee', sprite: 'eevee', spriteSize: 32, candyCost: 0 },
                 { name: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32, candyCost: 25, requiredItem: 'water_stone' },
                 { name: 'Jolteon', sprite: 'jolteon', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
                 { name: 'Flareon', sprite: 'flareon', spriteSize: 32, candyCost: 25, requiredItem: 'fire_stone' },
-                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredFriendship: 220, requiredTimeOfDay: 'day' },
-                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredFriendship: 220, requiredTimeOfDay: 'night' },
+                { name: 'Espeon', sprite: 'espeon', spriteSize: 32, candyCost: 25, requiredFriendship: 200, requiredTimeOfDay: 'day' },
+                { name: 'Umbreon', sprite: 'umbreon', spriteSize: 32, candyCost: 25, requiredFriendship: 200, requiredTimeOfDay: 'night' },
                 { name: 'Leafeon', sprite: 'leafeon', spriteSize: 32, candyCost: 25, requiredItem: 'leaf_stone' },
                 { name: 'Glaceon', sprite: 'glaceon', spriteSize: 32, candyCost: 25, requiredItem: 'ice_stone' },
                 { name: 'Sylveon', sprite: 'sylveon', spriteSize: 32, candyCost: 25, requiredItem: 'shiny_stone', requiredFriendship: 200 },

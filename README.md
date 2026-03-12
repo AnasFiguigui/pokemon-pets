@@ -2,7 +2,7 @@
 
 <div align="center">
 
-To celebrate the release of the new Pokémon game, I created this extension so you can keep your favorite Pokémon by your side while coding in VS Code.
+This extension allows you to interact with Pokémon, feed them, track stats, and enjoy a mini in-editor experience inspired by classic Pokémon mechanics.
 
 ![Pokemon Pets](https://i.ibb.co/W4FDnf57/Pokemons.gif)
 
@@ -33,7 +33,11 @@ Use the server to:
 - **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.
 - **Rename Pokémon** — Give your Pokémon custom nicknames from the actions menu or command palette.
 - **Seeds & Plants** — Buy seeds, plant them with a ghost preview of the grown plant, and harvest berries when they mature.
-- **Mulch System** — Apply mulch to plants for bonuses: Growth Mulch (−25% growth time), Damp Mulch (+1 yield), Stable Mulch (×2 harvest window), Gooey Mulch (+1 regrow).
+- **Mulch System** — Apply mulch to plants for bonuses. A colored dot appears below mulched plants so you always know which type is active:
+  - 🟢 **Growth Mulch** — Reduces growth time by 25% for 1 hour. *(green dot)*
+  - 🔵 **Damp Mulch** — Increases harvest yield by +1. Consumed after one harvest. *(blue dot)*
+  - 🟠 **Stable Mulch** — Doubles the harvest window before a ripe plant wilts. Consumed after one harvest. *(orange dot)*
+  - 🟣 **Gooey Mulch** — Grants 1 extra regrow cycle. Single-harvest plants only. *(purple dot)*
 - **Consumables & Backpack** — Food, potions, candy, mulch, and 9 evolution stones with a backpack UI.
 - **Friendship** — Pokémon build friendship over time through feeding and catching; shown in the Pokédex.
 - **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
@@ -42,6 +46,8 @@ Use the server to:
 - **Import / Export saves** — Backup and restore your save via clipboard.
 - **Local stats** — Opt-in local telemetry (nothing sent externally).
 - **8-direction movement** — Pokémon walk in all directions with matching sprites.
+
+<div align="center"> Maybe I went a little too far with the features 👀 </div>
 
 ## Settings
 
@@ -101,6 +107,30 @@ You might also enjoy my other extensions:
 
 - **[Dark Reign Themes](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.dark-reign-theme)** — A collection of dark themes for VS Code.
 - **[Kaomoji Status](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.kaomoji-status)** — Fun kaomoji in your status bar.
+
+## Resource Consumption
+
+This extension is designed to be **lightweight** and won't slow down your editor:
+
+| Resource | Details |
+|---|---|
+| **Package size** | ~450 KB (compressed VSIX) |
+| **CPU** | 20 FPS game loop via `requestAnimationFrame`, only active when the panel is visible. VS Code automatically suspends hidden webviews. |
+| **Memory** | Minimal — sprite sheets are shared, no persistent connections or file watchers. |
+| **Background timers** | A single 60-second interval handles all periodic tasks (day/night, plant growth, stamina drain). No work is done when there are no pets or plants. |
+| **Disk I/O** | Save file writes are debounced — only written when data actually changes, not on every tick. |
+
+## Thanks & Credits
+
+- **[BOTPanzer](https://github.com/BOTPanzer)** — This project was inspired by their [Stardew Pets](https://marketplace.visualstudio.com/items?itemName=botpa.stardew-pets) extension for VS Code. Thank you for the amazing work and inspiration!
+
+### Sprite Credits
+
+All custom graphics not originating from official PMD games are licensed under [Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](http://creativecommons.org/licenses/by/4.0/).
+
+All sprites used in this project can be found at [PMD Sprite Collab](http://sprites.pmdcollab.org/).
+
+A full list of contributing artists is available at the [PMD Sprite Collab Contributors page](https://sprites.pmdcollab.org/#/Contributors).
 
 <!-- ## License
 

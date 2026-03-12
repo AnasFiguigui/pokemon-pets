@@ -12,11 +12,21 @@ class Plant extends GameObject {
     #stepY = 0;
     #price = 0;
     #totalPhases = 5; // total growth phases (growthHours.length)
+    #mulch = null; // applied mulch id (e.g. 'growth_mulch') or null
+
+    /** Mulch type → indicator dot color. */
+    static #MULCH_COLORS = {
+        growth_mulch:  '#44ff44', // green
+        damp_mulch:    '#4488ff', // blue
+        stable_mulch:  '#ffaa22', // orange
+        gooey_mulch:   '#cc44ff', // purple
+    };
 
     get plantId() { return this.#plantId; }
     get plantIndex() { return this.#plantIndex; }
     get phase() { return this.#phase; }
     get price() { return this.#price; }
+    get mulch() { return this.#mulch; }
 
     #snap = 16;
     #moving = false;
@@ -53,6 +63,7 @@ class Plant extends GameObject {
         this.#stepY = Array.isArray(config.phaseStep) ? config.phaseStep[1] : 16;
         this.#price = typeof config.price === 'number' ? config.price : 0;
         this.#totalPhases = typeof config.totalPhases === 'number' ? config.totalPhases : 5;
+        this.#mulch = config.mulch ?? null;
 
         // Set initial sprite based on phase
         this.#updateSprite();
@@ -71,6 +82,15 @@ class Plant extends GameObject {
     setPhase(phase) {
         this.#phase = phase;
         this.#updateSprite();
+    }
+
+    /** Sets or clears the applied mulch type. */
+    setMulch(mulchId) {
+        this.#mulch = mulchId ?? null;
+    }
+
+    clearMulch() {
+        this.#mulch = null;
     }
 
     remove() {
@@ -245,6 +265,20 @@ class Plant extends GameObject {
             ctx.fillStyle = '#ffdd44';
             ctx.beginPath();
             ctx.arc(drawPos.x + this.size.x / 2, drawPos.y + 4, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Draw mulch indicator dot below the plant
+        if (this.#mulch && Plant.#MULCH_COLORS[this.#mulch]) {
+            const drawPos = options.pos ?? this.pos;
+            const cx = drawPos.x + this.size.x / 2;
+            const cy = drawPos.y + this.size.y + 2;
+            ctx.save();
+            ctx.globalAlpha = 0.7 + 0.15 * Math.sin(Game.frames * 0.1);
+            ctx.fillStyle = Plant.#MULCH_COLORS[this.#mulch];
+            ctx.beginPath();
+            ctx.arc(cx, cy, 2, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }

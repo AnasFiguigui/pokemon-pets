@@ -877,12 +877,23 @@ function handleSpawnMessage(message) {
                 phaseStep: message.phaseStep ?? (plantInfo ? plantInfo.phaseStep : [0, 16]),
                 price: plantInfo ? plantInfo.price : 0,
                 pos: new Vec2(message.x, message.y),
+                mulch: message.mulch ?? null,
             });
             break;
         }
         case 'update_plant': {
             const plant = Game.plants[message.index];
             if (plant) { plant.setPhase(message.phase); }
+            break;
+        }
+        case 'set_mulch': {
+            const mulchPlant = Game.plants[message.index];
+            if (mulchPlant) { mulchPlant.setMulch(message.mulch); }
+            break;
+        }
+        case 'clear_mulch': {
+            const clearPlant = Game.plants[message.index];
+            if (clearPlant) { clearPlant.clearMulch(); }
             break;
         }
         case 'destroy_plant': {
