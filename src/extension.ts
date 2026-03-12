@@ -752,9 +752,9 @@ async function addPetCommand(): Promise<void> {
         placeHolder: 'Generation',
     });
     if (generation === undefined) { return; }
-
+    // Menu of selection Pokémon species, showing number of evolutions
     const pokemonItems = Pokemons[generation].map((poke, idx) =>
-        new PetItem(idx, poke.name, `${poke.forms.length} forms`),
+        new PetItem(idx, poke.name, `${poke.forms.length} Possible Evolutions`),
     );
     const selectedPokemon = await vscode.window.showQuickPick(pokemonItems, {
         title: 'Select a Pokémon',

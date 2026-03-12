@@ -390,8 +390,8 @@ function createStoreItem(name, price, stat) {
         text.appendChild(document.createElement('br'));
         const priceSpan = document.createElement('span');
         priceSpan.classList.add('storeButtonMoney');
-        if (price > Game.money) { priceSpan.setAttribute('expensive', ''); }
-        priceSpan.innerText = `${price}$`;
+        if (price > 0 && price > Game.money) { priceSpan.setAttribute('expensive', ''); }
+        priceSpan.innerText = price === 0 ? 'Free' : `${price}$`;
         text.appendChild(priceSpan);
     }
 

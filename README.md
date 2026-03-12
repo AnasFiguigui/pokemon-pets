@@ -28,6 +28,7 @@ Use the server to:
 - Pet moods and interactions (including candy and pokéball actions).
 - Wild Pokémon spawn system with catch rewards.
 - In-game store and decoration mode (move/sell/place decor).
+- **Decoration Categories** — Decor Plants, Lamps, Mid Misc, Small Misc, Fences, and Special (programming language banners — free!).
 - **HP & Stamina** — Pokémon have health and stamina that drain over time; fainted Pokémon leave.
 - **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions.
 - **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.

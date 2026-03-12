@@ -796,7 +796,8 @@ async function addPetCommand() {
     if (generation === undefined) {
         return;
     }
-    const pokemonItems = game_data_1.Pokemons[generation].map((poke, idx) => new models_1.PetItem(idx, poke.name, `${poke.forms.length} forms`));
+    // Menu of selection Pokémon species, showing number of evolutions
+    const pokemonItems = game_data_1.Pokemons[generation].map((poke, idx) => new models_1.PetItem(idx, poke.name, `${poke.forms.length} Possible Evolutions`));
     const selectedPokemon = await vscode.window.showQuickPick(pokemonItems, {
         title: 'Select a Pokémon',
         placeHolder: 'Pokémon',
