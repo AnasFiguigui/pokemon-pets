@@ -46,19 +46,31 @@ class Decoration extends GameObject {
         if (this.#isLamp) { Game.lampMaskDirty = true; }
     }
 
+    // Returns the decoration-only index (excluding plants) for backend sync
+    getDecorIndex() {
+        let decorIdx = 0;
+        for (const item of Game.decoration) {
+            if (item === this) { return decorIdx; }
+            if (!item.isPlant) { decorIdx++; }
+        }
+        return -1;
+    }
+
     remove() {
         super.remove();
         if (this.#isLamp) { Game.lampMaskDirty = true; }
 
-        const index = Game.decoration.removeItem(this);
+        // Compute decoration-only index BEFORE removing from the array
+        const decorIndex = this.getDecorIndex();
+        Game.decoration.removeItem(this);
 
         // If this was a pending purchase that was never placed, just remove from frontend
         if (this.#pendingPurchase) {
             this.#pendingPurchase = null;
-        } else {
+        } else if (decorIndex >= 0) {
             vscode.postMessage({
                 type: 'remove_decor',
-                index: index,
+                index: decorIndex,
             });
         }
 
@@ -134,7 +146,7 @@ class Decoration extends GameObject {
         } else if (this.#dirty) {
             vscode.postMessage({
                 type: 'move_decor',
-                index: Game.decoration.indexOf(this),
+                index: this.getDecorIndex(),
                 x: this.pos.x,
                 y: this.pos.y
             });

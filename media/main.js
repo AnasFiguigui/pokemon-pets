@@ -951,6 +951,8 @@ function handleMenuMessage(message) {
     switch (message.type.toLowerCase()) {
         case 'actions':
             if (Game.isAction(Action.BALL) || Game.isAction(Action.CANDY)) { Game.setAction(Action.NONE); }
+            // Sync decor mode button text with actual state
+            document.getElementById('actionsDecor').innerText = Game.isAction(Action.DECOR) ? 'Exit Build Mode' : 'Enter Build Mode';
             Menus.toggle('actions');
             document.getElementById('actionsContent').scrollTop = 0;
             break;

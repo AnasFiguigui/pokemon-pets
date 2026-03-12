@@ -1,0 +1,2 @@
+ID,Name,Price,Produces,Harvest Type,Phase 1 (Seed),Phase 2 (Sprout),Phase 3 (Blossom),Phase 4 (Fruit),Phase 5 (Ripe),Total Growth Time,Min Fruits,Max Fruits
+oran_berry_plant,Oran Berry Seed,350,Oran Berry,Repeatable,6 min,12 min,12 min,18 min,12 min,60 min,1,3

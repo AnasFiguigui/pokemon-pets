@@ -192,7 +192,7 @@ describe('EvolutionService', () => {
             expect(result.totalCandy).toBe(1);
         });
 
-        it('does not evolve Charmeleon to Charizard via candy (requires Fire Stone)', () => {
+        it('does not evolve Charmeleon to Charizard via candy (requires friendship)', () => {
             const pet: Pet = {
                 name: 'Char', specie: 'Charmander', color: 'Generation 1',
                 form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 24,
@@ -203,22 +203,22 @@ describe('EvolutionService', () => {
 
             expect(result.evolved).toBe(false);
             expect(result.totalCandy).toBe(25);
-            expect(pet.form).toBe('Charmeleon'); // Still Charmeleon!
+            expect(pet.form).toBe('Charmeleon'); // Still Charmeleon — not enough friendship!
         });
     });
 
     // ── useItem ─────────────────────────────────────────────────────────
 
     describe('useItem', () => {
-        it('evolves Charmeleon to Charizard with Fire Stone when enough candy', () => {
+        it('evolves Charmeleon to Charizard with candy when friendship is met', () => {
             const pet: Pet = {
                 name: 'Char', specie: 'Charmander', color: 'Generation 1',
-                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 25,
+                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 24,
                 friendship: 220,
             };
             sm.save.pets.push(pet);
 
-            const result = evo.useItem(0, 'fire_stone');
+            const result = evo.feedCandy(0);
 
             expect(result.evolved).toBe(true);
             expect(result.newForm?.name).toBe('Charizard');
@@ -227,8 +227,8 @@ describe('EvolutionService', () => {
 
         it('does not evolve with wrong item', () => {
             const pet: Pet = {
-                name: 'Char', specie: 'Charmander', color: 'Generation 1',
-                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 25,
+                name: 'Pika', specie: 'Pikachu', color: 'Generation 1',
+                form: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyFed: 25,
             };
             sm.save.pets.push(pet);
 
@@ -239,12 +239,12 @@ describe('EvolutionService', () => {
 
         it('does not evolve with right item but not enough candy', () => {
             const pet: Pet = {
-                name: 'Char', specie: 'Charmander', color: 'Generation 1',
-                form: 'Charmeleon', sprite: 'charmeleon', spriteSize: 32, candyFed: 20,
+                name: 'Pika', specie: 'Pikachu', color: 'Generation 1',
+                form: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyFed: 20,
             };
             sm.save.pets.push(pet);
 
-            const result = evo.useItem(0, 'fire_stone');
+            const result = evo.useItem(0, 'thunder_stone');
 
             expect(result.evolved).toBe(false);
         });
@@ -320,7 +320,7 @@ describe('EvolutionService', () => {
         it('does not evolve Eevee without enough candy', () => {
             const pet: Pet = {
                 name: 'Eve', specie: 'Eevee', color: 'Generation 1',
-                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 10,
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32, candyFed: 5,
             };
             sm.save.pets.push(pet);
 

@@ -13,4 +13,4 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 coverage/**
 .editorconfig
-CONTRIBUTING.md
+CONTRIBUTING.mddocs/**
