@@ -129,7 +129,7 @@ function getPlantPhase(plant: PlantInstance, plantType: PlantType): number {
     const elapsedHours = elapsedMs / 3_600_000;
     const maxPhase = plantType.growthHours.length - 1;
     const growthMultiplier = plant.mulch === 'growth_mulch' ? 0.75 : 1;
-    let phase = plant.phase;
+    let phase = Math.min(plant.phase, maxPhase);
     let hoursConsumed = 0;
     while (phase < maxPhase) {
         const needed = plantType.growthHours[phase] * growthMultiplier;
@@ -349,12 +349,13 @@ function stopPlantTickTimer(): void {
 
 async function handleWebviewMessage(message: any): Promise<void> {
     if (typeof message?.type !== 'string') { return; }
+    try {
     switch (message.type.toLowerCase()) {
         case 'error':
-            vscode.window.showErrorMessage(message.text);
+            if (typeof message.text === 'string') { vscode.window.showErrorMessage(message.text.slice(0, 200)); }
             break;
         case 'info':
-            vscode.window.showInformationMessage(message.text);
+            if (typeof message.text === 'string') { vscode.window.showInformationMessage(message.text.slice(0, 200)); }
             break;
         case 'init':
             initGame();
@@ -395,7 +396,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
         case 'ball_caught': {
             // Pet caught the ball — increase friendship by 0.5
             const ballPetIndex = message.index as number;
-            if (typeof ballPetIndex === 'number' && ballPetIndex >= 0) {
+            if (typeof ballPetIndex === 'number' && ballPetIndex >= 0 && ballPetIndex < saveManager.save.pets.length) {
                 addFriendship(ballPetIndex, 0.5);
             }
             break;
@@ -414,7 +415,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
                 webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
                 telemetry.trackCandyFed();
 
-                if (typeof petIndex === 'number' && petIndex >= 0) {
+                if (typeof petIndex === 'number' && petIndex >= 0 && petIndex < saveManager.save.pets.length) {
                     const pet = saveManager.save.pets[petIndex];
 
                     // Increase friendship from candy
@@ -461,8 +462,6 @@ async function handleWebviewMessage(message: any): Promise<void> {
                                 `🎉 ${pet.name} evolved into ${result.newForm.name}!`,
                             );
                         }
-                    } else {
-                        evolution.feedCandy(petIndex);
                     }
                 }
             } else {
@@ -472,7 +471,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
 
                 if (consumable.category === 'food' || consumable.category === 'potion') {
                     // Food/potion: restores HP and/or stamina
-                    if (typeof petIndex !== 'number' || petIndex < 0) { break; }
+                    if (typeof petIndex !== 'number' || petIndex < 0 || petIndex >= saveManager.save.pets.length) { break; }
                     const pet = saveManager.save.pets[petIndex];
                     if (!pet) { break; }
                     const maxHp = getMaxHp(pet);
@@ -498,7 +497,7 @@ async function handleWebviewMessage(message: any): Promise<void> {
                     }
                 } else {
                     // Evolution stones: only consumed if evolution succeeds
-                    if (typeof petIndex !== 'number' || petIndex < 0) { break; }
+                    if (typeof petIndex !== 'number' || petIndex < 0 || petIndex >= saveManager.save.pets.length) { break; }
                     const result = evolution.useItem(petIndex, consumableId);
                     if (result.evolved && result.newForm) {
                         saveManager.updateInventory(consumableId, currentCount - 1);
@@ -531,9 +530,12 @@ async function handleWebviewMessage(message: any): Promise<void> {
         }
         case 'buy_consumable': {
             const itemId = message.consumableId as string;
+            if (typeof itemId !== 'string') { break; }
             const consumable = ConsumablesMap.get(itemId);
             if (!consumable) { break; }
-            const qty = Math.max(1, Math.floor(message.quantity ?? 1));
+            const rawQty = message.quantity ?? 1;
+            if (typeof rawQty !== 'number' || !isFinite(rawQty)) { break; }
+            const qty = Math.max(1, Math.min(100, Math.floor(rawQty)));
             const totalCost = consumable.price * qty;
             if (saveManager.save.money < totalCost) { break; }
             saveManager.updateMoney(saveManager.save.money - totalCost);
@@ -546,9 +548,12 @@ async function handleWebviewMessage(message: any): Promise<void> {
         }
         case 'sell_consumable': {
             const sellId = message.consumableId as string;
+            if (typeof sellId !== 'string') { break; }
             const sellItem = ConsumablesMap.get(sellId);
             if (!sellItem) { break; }
-            const sellQty = Math.max(1, Math.floor(message.quantity ?? 1));
+            const rawSellQty = message.quantity ?? 1;
+            if (typeof rawSellQty !== 'number' || !isFinite(rawSellQty)) { break; }
+            const sellQty = Math.max(1, Math.floor(rawSellQty));
             const owned = saveManager.getConsumableCount(sellId);
             const actualQty = Math.min(sellQty, owned);
             if (actualQty <= 0) { break; }
@@ -561,19 +566,29 @@ async function handleWebviewMessage(message: any): Promise<void> {
             break;
         }
         case 'move_decor':
-            saveManager.moveDecor(message.index, message.x, message.y);
+            if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
+                && typeof message.x === 'number' && isFinite(message.x)
+                && typeof message.y === 'number' && isFinite(message.y)) {
+                saveManager.moveDecor(message.index, message.x, message.y);
+            }
             break;
         case 'add_decor':
-            saveManager.addDecor({
-                x: message.x,
-                y: message.y,
-                category: message.category,
-                name: message.name,
-            });
-            telemetry.trackDecorationPlaced();
+            if (typeof message.x === 'number' && isFinite(message.x)
+                && typeof message.y === 'number' && isFinite(message.y)
+                && typeof message.category === 'string' && typeof message.name === 'string') {
+                saveManager.addDecor({
+                    x: message.x,
+                    y: message.y,
+                    category: message.category,
+                    name: message.name,
+                });
+                telemetry.trackDecorationPlaced();
+            }
             break;
         case 'remove_decor':
-            saveManager.removeDecor(message.index);
+            if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0) {
+                saveManager.removeDecor(message.index);
+            }
             break;
         case 'add_plant': {
             const plantId = message.plantId as string;
@@ -710,6 +725,9 @@ async function handleWebviewMessage(message: any): Promise<void> {
             webview.postMessage({ type: 'pokedex', value: pets });
             break;
         }
+    }
+    } catch (err) {
+        console.error('[Pokemon Pets] Error handling webview message:', err);
     }
 }
 

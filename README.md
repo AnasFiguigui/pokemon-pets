@@ -95,7 +95,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## Enjoying Pokemon Pets?
 
-If you like this extension, please consider leaving a ⭐⭐⭐⭐⭐ rating on the [Marketplace](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.pokemon-pets)!
+If you like this extension, please share it with your firends and consider leaving a ⭐⭐⭐⭐⭐ rating on the [Marketplace](https://marketplace.visualstudio.com/items?itemName=AnasFiguigui.pokemon-pets)!
 
 You might also enjoy my other extensions:
 

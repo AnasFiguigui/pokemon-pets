@@ -202,8 +202,9 @@ function openPokedex() {
     vscode.postMessage({ type: 'request_pokedex' });
 }
 
-function renderPokedex() {
+function renderPokedex(preserveScroll) {
     const content = document.getElementById('pokedexContent');
+    const prevScroll = preserveScroll ? content.scrollTop : 0;
     content.innerHTML = '';
 
     if (pokedexData.length === 0) {
@@ -353,7 +354,7 @@ function renderPokedex() {
         }
     }
 
-    content.scrollTop = 0;
+    content.scrollTop = prevScroll;
     Menus.toggle('pokedex', true);
 }
 
@@ -712,6 +713,11 @@ function handleGameMessage(message) {
                 let phaseStep = 0;
 
                 function doBlink() {
+                    // Safety: abort if pet was removed during animation
+                    if (Game.pets[idx] !== oldPet) {
+                        oldPet.setActive(true);
+                        return;
+                    }
                     if (phaseIdx >= blinkPhases.length) {
                         // Blinking done — ensure visible, then swap
                         oldPet.setActive(true);
@@ -762,7 +768,7 @@ function handleGameMessage(message) {
             break;
         case 'pokedex':
             pokedexData = Array.isArray(message.value) ? message.value : [];
-            renderPokedex();
+            renderPokedex(Menus.current === 'pokedex');
             break;
         case 'pet_stats':
             // Update cached pokedex data with fresh stats
@@ -774,7 +780,7 @@ function handleGameMessage(message) {
                     pokedexData[i].maxStamina = message.value[i].maxStamina;
                 }
                 // Re-render if pokedex is open
-                if (Menus.current === 'pokedex') { renderPokedex(); }
+                if (Menus.current === 'pokedex') { renderPokedex(true); }
             }
             break;
         case 'consumable_failed':

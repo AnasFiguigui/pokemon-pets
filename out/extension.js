@@ -141,7 +141,7 @@ function getPlantPhase(plant, plantType) {
     const elapsedHours = elapsedMs / 3_600_000;
     const maxPhase = plantType.growthHours.length - 1;
     const growthMultiplier = plant.mulch === 'growth_mulch' ? 0.75 : 1;
-    let phase = plant.phase;
+    let phase = Math.min(plant.phase, maxPhase);
     let hoursConsumed = 0;
     while (phase < maxPhase) {
         const needed = plantType.growthHours[phase] * growthMultiplier;
@@ -346,102 +346,171 @@ async function handleWebviewMessage(message) {
     if (typeof message?.type !== 'string') {
         return;
     }
-    switch (message.type.toLowerCase()) {
-        case 'error':
-            vscode.window.showErrorMessage(message.text);
-            break;
-        case 'info':
-            vscode.window.showInformationMessage(message.text);
-            break;
-        case 'init':
-            initGame();
-            break;
-        case 'money': {
-            const oldMoney = saveManager.save.money;
-            const newMoney = message.value;
-            if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) {
+    try {
+        switch (message.type.toLowerCase()) {
+            case 'error':
+                if (typeof message.text === 'string') {
+                    vscode.window.showErrorMessage(message.text.slice(0, 200));
+                }
+                break;
+            case 'info':
+                if (typeof message.text === 'string') {
+                    vscode.window.showInformationMessage(message.text.slice(0, 200));
+                }
+                break;
+            case 'init':
+                initGame();
+                break;
+            case 'money': {
+                const oldMoney = saveManager.save.money;
+                const newMoney = message.value;
+                if (typeof newMoney !== 'number' || !isFinite(newMoney) || newMoney < 0) {
+                    break;
+                }
+                // Cap single transaction delta to prevent exploits
+                const maxDelta = 100_000;
+                const delta = newMoney - oldMoney;
+                const clampedMoney = delta > maxDelta ? oldMoney + maxDelta : newMoney;
+                saveManager.updateMoney(clampedMoney);
+                const diff = clampedMoney - oldMoney;
+                if (diff > 0) {
+                    telemetry.trackGoldEarned(diff);
+                }
+                else if (diff < 0) {
+                    telemetry.trackGoldSpent(Math.abs(diff));
+                }
                 break;
             }
-            // Cap single transaction delta to prevent exploits
-            const maxDelta = 100_000;
-            const delta = newMoney - oldMoney;
-            const clampedMoney = delta > maxDelta ? oldMoney + maxDelta : newMoney;
-            saveManager.updateMoney(clampedMoney);
-            const diff = clampedMoney - oldMoney;
-            if (diff > 0) {
-                telemetry.trackGoldEarned(diff);
-            }
-            else if (diff < 0) {
-                telemetry.trackGoldSpent(Math.abs(diff));
-            }
-            break;
-        }
-        case 'spawn_wild_pokemon': {
-            const specie = day_night_1.DayNightCycle.pickWildPokemon();
-            if (specie) {
-                webview.postMessage({ type: 'spawn_wild_pokemon', specie });
-            }
-            else {
-                // No eligible species right now — tell webview to retry later
-                webview.postMessage({ type: 'retry_wild_spawn' });
-            }
-            break;
-        }
-        case 'wild_pokemon_caught': {
-            // Compute catch reward server-side (60–100 gold)
-            const catchReward = 60 + Math.floor(Math.random() * 9) * 5;
-            saveManager.updateMoney(saveManager.save.money + catchReward);
-            webview.postMessage({ type: 'money', value: saveManager.save.money, reward: catchReward });
-            telemetry.trackGoldEarned(catchReward);
-            telemetry.trackWildPokemonCaught();
-            break;
-        }
-        case 'ball_caught': {
-            // Pet caught the ball — increase friendship by 0.5
-            const ballPetIndex = message.index;
-            if (typeof ballPetIndex === 'number' && ballPetIndex >= 0) {
-                addFriendship(ballPetIndex, 0.5);
-            }
-            break;
-        }
-        case 'use_consumable': {
-            const consumableId = message.consumableId;
-            if (!consumableId) {
+            case 'spawn_wild_pokemon': {
+                const specie = day_night_1.DayNightCycle.pickWildPokemon();
+                if (specie) {
+                    webview.postMessage({ type: 'spawn_wild_pokemon', specie });
+                }
+                else {
+                    // No eligible species right now — tell webview to retry later
+                    webview.postMessage({ type: 'retry_wild_spawn' });
+                }
                 break;
             }
-            const currentCount = saveManager.getConsumableCount(consumableId);
-            if (currentCount <= 0) {
+            case 'wild_pokemon_caught': {
+                // Compute catch reward server-side (60–100 gold)
+                const catchReward = 60 + Math.floor(Math.random() * 9) * 5;
+                saveManager.updateMoney(saveManager.save.money + catchReward);
+                webview.postMessage({ type: 'money', value: saveManager.save.money, reward: catchReward });
+                telemetry.trackGoldEarned(catchReward);
+                telemetry.trackWildPokemonCaught();
                 break;
             }
-            const petIndex = message.index;
-            if (consumableId === 'candy') {
-                // Candy is always consumed
-                saveManager.updateInventory(consumableId, currentCount - 1);
-                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                telemetry.trackCandyFed();
-                if (typeof petIndex === 'number' && petIndex >= 0) {
-                    const pet = saveManager.save.pets[petIndex];
-                    // Increase friendship from candy
-                    if (pet) {
-                        const candyConsumable = ConsumablesMap.get('candy');
-                        if (candyConsumable?.friendshipGain) {
-                            addFriendship(petIndex, candyConsumable.friendshipGain);
+            case 'ball_caught': {
+                // Pet caught the ball — increase friendship by 0.5
+                const ballPetIndex = message.index;
+                if (typeof ballPetIndex === 'number' && ballPetIndex >= 0 && ballPetIndex < saveManager.save.pets.length) {
+                    addFriendship(ballPetIndex, 0.5);
+                }
+                break;
+            }
+            case 'use_consumable': {
+                const consumableId = message.consumableId;
+                if (!consumableId) {
+                    break;
+                }
+                const currentCount = saveManager.getConsumableCount(consumableId);
+                if (currentCount <= 0) {
+                    break;
+                }
+                const petIndex = message.index;
+                if (consumableId === 'candy') {
+                    // Candy is always consumed
+                    saveManager.updateInventory(consumableId, currentCount - 1);
+                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                    telemetry.trackCandyFed();
+                    if (typeof petIndex === 'number' && petIndex >= 0 && petIndex < saveManager.save.pets.length) {
+                        const pet = saveManager.save.pets[petIndex];
+                        // Increase friendship from candy
+                        if (pet) {
+                            const candyConsumable = ConsumablesMap.get('candy');
+                            if (candyConsumable?.friendshipGain) {
+                                addFriendship(petIndex, candyConsumable.friendshipGain);
+                            }
+                        }
+                        // Boost HP/Stamina by the level-up delta (max increases by 2 per candy)
+                        if (pet) {
+                            const oldMaxHp = (0, models_1.getMaxHp)(pet);
+                            const oldMaxStamina = (0, models_1.getMaxStamina)(pet);
+                            const result = evolution.feedCandy(petIndex);
+                            const newMaxHp = (0, models_1.getMaxHp)(pet);
+                            const newMaxStamina = (0, models_1.getMaxStamina)(pet);
+                            const hpGain = newMaxHp - oldMaxHp;
+                            const staminaGain = newMaxStamina - oldMaxStamina;
+                            if (hpGain > 0 || staminaGain > 0) {
+                                saveManager.updatePetStats(petIndex, Math.min(newMaxHp, (pet.hp ?? oldMaxHp) + hpGain), Math.min(newMaxStamina, (pet.stamina ?? oldMaxStamina) + staminaGain));
+                                webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                            }
+                            if (result.evolved && result.newForm) {
+                                const { form, sprite, spriteSize } = (0, models_1.normalizePet)(pet);
+                                webview.postMessage({
+                                    type: 'evolution',
+                                    index: petIndex,
+                                    name: pet.name,
+                                    specie: pet.specie,
+                                    color: pet.color,
+                                    form,
+                                    sprite,
+                                    spriteSize,
+                                    newForm: result.newForm.name,
+                                });
+                                telemetry.trackPokemonEvolved(pet.specie);
+                                vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
+                            }
                         }
                     }
-                    // Boost HP/Stamina by the level-up delta (max increases by 2 per candy)
-                    if (pet) {
-                        const oldMaxHp = (0, models_1.getMaxHp)(pet);
-                        const oldMaxStamina = (0, models_1.getMaxStamina)(pet);
-                        const result = evolution.feedCandy(petIndex);
-                        const newMaxHp = (0, models_1.getMaxHp)(pet);
-                        const newMaxStamina = (0, models_1.getMaxStamina)(pet);
-                        const hpGain = newMaxHp - oldMaxHp;
-                        const staminaGain = newMaxStamina - oldMaxStamina;
-                        if (hpGain > 0 || staminaGain > 0) {
-                            saveManager.updatePetStats(petIndex, Math.min(newMaxHp, (pet.hp ?? oldMaxHp) + hpGain), Math.min(newMaxStamina, (pet.stamina ?? oldMaxStamina) + staminaGain));
-                            webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                }
+                else {
+                    // Look up consumable to determine category
+                    const consumable = ConsumablesMap.get(consumableId);
+                    if (!consumable) {
+                        break;
+                    }
+                    if (consumable.category === 'food' || consumable.category === 'potion') {
+                        // Food/potion: restores HP and/or stamina
+                        if (typeof petIndex !== 'number' || petIndex < 0 || petIndex >= saveManager.save.pets.length) {
+                            break;
                         }
+                        const pet = saveManager.save.pets[petIndex];
+                        if (!pet) {
+                            break;
+                        }
+                        const maxHp = (0, models_1.getMaxHp)(pet);
+                        const maxStamina = (0, models_1.getMaxStamina)(pet);
+                        const currentHp = pet.hp ?? maxHp;
+                        const currentStamina = pet.stamina ?? maxStamina;
+                        const canHealHp = (consumable.restoreHp ?? 0) > 0 && currentHp < maxHp;
+                        const canHealSta = (consumable.restoreStamina ?? 0) > 0 && currentStamina < maxStamina;
+                        if (!canHealHp && !canHealSta) {
+                            webview.postMessage({ type: 'consumable_failed' });
+                            break;
+                        }
+                        saveManager.updateInventory(consumableId, currentCount - 1);
+                        const newHp = Math.min(maxHp, currentHp + (consumable.restoreHp ?? 0));
+                        const newStamina = Math.min(maxStamina, currentStamina + (consumable.restoreStamina ?? 0));
+                        saveManager.updatePetStats(petIndex, newHp, newStamina);
+                        webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                        webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+                        // Increase friendship from food/potion
+                        if (consumable.friendshipGain) {
+                            addFriendship(petIndex, consumable.friendshipGain);
+                        }
+                    }
+                    else {
+                        // Evolution stones: only consumed if evolution succeeds
+                        if (typeof petIndex !== 'number' || petIndex < 0 || petIndex >= saveManager.save.pets.length) {
+                            break;
+                        }
+                        const result = evolution.useItem(petIndex, consumableId);
                         if (result.evolved && result.newForm) {
+                            saveManager.updateInventory(consumableId, currentCount - 1);
+                            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                            const pet = saveManager.save.pets[petIndex];
                             const { form, sprite, spriteSize } = (0, models_1.normalizePet)(pet);
                             webview.postMessage({
                                 type: 'evolution',
@@ -457,292 +526,253 @@ async function handleWebviewMessage(message) {
                             telemetry.trackPokemonEvolved(pet.specie);
                             vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
                         }
-                    }
-                    else {
-                        evolution.feedCandy(petIndex);
+                        else {
+                            // Stone had no effect — not consumed
+                            webview.postMessage({ type: 'consumable_failed' });
+                        }
                     }
                 }
+                break;
             }
-            else {
-                // Look up consumable to determine category
-                const consumable = ConsumablesMap.get(consumableId);
+            case 'buy_consumable': {
+                const itemId = message.consumableId;
+                if (typeof itemId !== 'string') {
+                    break;
+                }
+                const consumable = ConsumablesMap.get(itemId);
                 if (!consumable) {
                     break;
                 }
-                if (consumable.category === 'food' || consumable.category === 'potion') {
-                    // Food/potion: restores HP and/or stamina
-                    if (typeof petIndex !== 'number' || petIndex < 0) {
-                        break;
+                const rawQty = message.quantity ?? 1;
+                if (typeof rawQty !== 'number' || !isFinite(rawQty)) {
+                    break;
+                }
+                const qty = Math.max(1, Math.min(100, Math.floor(rawQty)));
+                const totalCost = consumable.price * qty;
+                if (saveManager.save.money < totalCost) {
+                    break;
+                }
+                saveManager.updateMoney(saveManager.save.money - totalCost);
+                const prev = saveManager.getConsumableCount(itemId);
+                saveManager.updateInventory(itemId, prev + qty);
+                webview.postMessage({ type: 'money', value: saveManager.save.money });
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                telemetry.trackGoldSpent(totalCost);
+                break;
+            }
+            case 'sell_consumable': {
+                const sellId = message.consumableId;
+                if (typeof sellId !== 'string') {
+                    break;
+                }
+                const sellItem = ConsumablesMap.get(sellId);
+                if (!sellItem) {
+                    break;
+                }
+                const rawSellQty = message.quantity ?? 1;
+                if (typeof rawSellQty !== 'number' || !isFinite(rawSellQty)) {
+                    break;
+                }
+                const sellQty = Math.max(1, Math.floor(rawSellQty));
+                const owned = saveManager.getConsumableCount(sellId);
+                const actualQty = Math.min(sellQty, owned);
+                if (actualQty <= 0) {
+                    break;
+                }
+                const sellPrice = Math.floor(sellItem.price * 0.7) * actualQty;
+                saveManager.updateInventory(sellId, owned - actualQty);
+                saveManager.updateMoney(saveManager.save.money + sellPrice);
+                webview.postMessage({ type: 'money', value: saveManager.save.money });
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                telemetry.trackGoldEarned(sellPrice);
+                break;
+            }
+            case 'move_decor':
+                if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
+                    && typeof message.x === 'number' && isFinite(message.x)
+                    && typeof message.y === 'number' && isFinite(message.y)) {
+                    saveManager.moveDecor(message.index, message.x, message.y);
+                }
+                break;
+            case 'add_decor':
+                if (typeof message.x === 'number' && isFinite(message.x)
+                    && typeof message.y === 'number' && isFinite(message.y)
+                    && typeof message.category === 'string' && typeof message.name === 'string') {
+                    saveManager.addDecor({
+                        x: message.x,
+                        y: message.y,
+                        category: message.category,
+                        name: message.name,
+                    });
+                    telemetry.trackDecorationPlaced();
+                }
+                break;
+            case 'remove_decor':
+                if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0) {
+                    saveManager.removeDecor(message.index);
+                }
+                break;
+            case 'add_plant': {
+                const plantId = message.plantId;
+                const plantType = PlantTypesMap.get(plantId);
+                if (!plantType) {
+                    break;
+                }
+                const plantInstance = {
+                    x: message.x ?? 0,
+                    y: message.y ?? 0,
+                    plantId,
+                    phase: 0,
+                    phaseStartTime: new Date().toISOString(),
+                };
+                saveManager.addPlant(plantInstance);
+                telemetry.trackGoldSpent(plantType.price);
+                break;
+            }
+            case 'move_plant':
+                saveManager.movePlant(message.index, message.x, message.y);
+                break;
+            case 'remove_plant':
+                saveManager.removePlant(message.index);
+                break;
+            case 'harvest_plant': {
+                const harvestIndex = message.index;
+                const plant = saveManager.save.plants[harvestIndex];
+                if (!plant) {
+                    break;
+                }
+                const pType = PlantTypesMap.get(plant.plantId);
+                if (!pType) {
+                    break;
+                }
+                const phase = getPlantPhase(plant, pType);
+                const maxPhase = pType.growthHours.length - 1;
+                if (phase < maxPhase) {
+                    break;
+                } // Not ripe yet
+                // Random fruit count (damp_mulch: +1 yield)
+                let fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
+                if (plant.mulch === 'damp_mulch') {
+                    fruits += 1;
+                }
+                const prevCount = saveManager.getConsumableCount(pType.producesId);
+                saveManager.updateInventory(pType.producesId, prevCount + fruits);
+                const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
+                if (pType.harvestType === 'single') {
+                    // Single-harvest: gooey_mulch grants 1 extra regrow cycle
+                    if (plant.mulch === 'gooey_mulch') {
+                        // Regrow once, then consume the mulch
+                        plant.mulch = undefined;
+                        plant.mulchAppliedAt = undefined;
+                        saveManager.updatePlantPhase(harvestIndex, 2);
+                        webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
                     }
-                    const pet = saveManager.save.pets[petIndex];
-                    if (!pet) {
-                        break;
-                    }
-                    const maxHp = (0, models_1.getMaxHp)(pet);
-                    const maxStamina = (0, models_1.getMaxStamina)(pet);
-                    const currentHp = pet.hp ?? maxHp;
-                    const currentStamina = pet.stamina ?? maxStamina;
-                    const canHealHp = (consumable.restoreHp ?? 0) > 0 && currentHp < maxHp;
-                    const canHealSta = (consumable.restoreStamina ?? 0) > 0 && currentStamina < maxStamina;
-                    if (!canHealHp && !canHealSta) {
-                        webview.postMessage({ type: 'consumable_failed' });
-                        break;
-                    }
-                    saveManager.updateInventory(consumableId, currentCount - 1);
-                    const newHp = Math.min(maxHp, currentHp + (consumable.restoreHp ?? 0));
-                    const newStamina = Math.min(maxStamina, currentStamina + (consumable.restoreStamina ?? 0));
-                    saveManager.updatePetStats(petIndex, newHp, newStamina);
-                    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
-                    // Increase friendship from food/potion
-                    if (consumable.friendshipGain) {
-                        addFriendship(petIndex, consumable.friendshipGain);
+                    else {
+                        saveManager.removePlant(harvestIndex);
+                        webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
                     }
                 }
                 else {
-                    // Evolution stones: only consumed if evolution succeeds
-                    if (typeof petIndex !== 'number' || petIndex < 0) {
-                        break;
-                    }
-                    const result = evolution.useItem(petIndex, consumableId);
-                    if (result.evolved && result.newForm) {
-                        saveManager.updateInventory(consumableId, currentCount - 1);
-                        webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-                        const pet = saveManager.save.pets[petIndex];
-                        const { form, sprite, spriteSize } = (0, models_1.normalizePet)(pet);
-                        webview.postMessage({
-                            type: 'evolution',
-                            index: petIndex,
-                            name: pet.name,
-                            specie: pet.specie,
-                            color: pet.color,
-                            form,
-                            sprite,
-                            spriteSize,
-                            newForm: result.newForm.name,
-                        });
-                        telemetry.trackPokemonEvolved(pet.specie);
-                        vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${result.newForm.name}!`);
-                    }
-                    else {
-                        // Stone had no effect — not consumed
-                        webview.postMessage({ type: 'consumable_failed' });
-                    }
-                }
-            }
-            break;
-        }
-        case 'buy_consumable': {
-            const itemId = message.consumableId;
-            const consumable = ConsumablesMap.get(itemId);
-            if (!consumable) {
-                break;
-            }
-            const qty = Math.max(1, Math.floor(message.quantity ?? 1));
-            const totalCost = consumable.price * qty;
-            if (saveManager.save.money < totalCost) {
-                break;
-            }
-            saveManager.updateMoney(saveManager.save.money - totalCost);
-            const prev = saveManager.getConsumableCount(itemId);
-            saveManager.updateInventory(itemId, prev + qty);
-            webview.postMessage({ type: 'money', value: saveManager.save.money });
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            telemetry.trackGoldSpent(totalCost);
-            break;
-        }
-        case 'sell_consumable': {
-            const sellId = message.consumableId;
-            const sellItem = ConsumablesMap.get(sellId);
-            if (!sellItem) {
-                break;
-            }
-            const sellQty = Math.max(1, Math.floor(message.quantity ?? 1));
-            const owned = saveManager.getConsumableCount(sellId);
-            const actualQty = Math.min(sellQty, owned);
-            if (actualQty <= 0) {
-                break;
-            }
-            const sellPrice = Math.floor(sellItem.price * 0.7) * actualQty;
-            saveManager.updateInventory(sellId, owned - actualQty);
-            saveManager.updateMoney(saveManager.save.money + sellPrice);
-            webview.postMessage({ type: 'money', value: saveManager.save.money });
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            telemetry.trackGoldEarned(sellPrice);
-            break;
-        }
-        case 'move_decor':
-            saveManager.moveDecor(message.index, message.x, message.y);
-            break;
-        case 'add_decor':
-            saveManager.addDecor({
-                x: message.x,
-                y: message.y,
-                category: message.category,
-                name: message.name,
-            });
-            telemetry.trackDecorationPlaced();
-            break;
-        case 'remove_decor':
-            saveManager.removeDecor(message.index);
-            break;
-        case 'add_plant': {
-            const plantId = message.plantId;
-            const plantType = PlantTypesMap.get(plantId);
-            if (!plantType) {
-                break;
-            }
-            const plantInstance = {
-                x: message.x ?? 0,
-                y: message.y ?? 0,
-                plantId,
-                phase: 0,
-                phaseStartTime: new Date().toISOString(),
-            };
-            saveManager.addPlant(plantInstance);
-            telemetry.trackGoldSpent(plantType.price);
-            break;
-        }
-        case 'move_plant':
-            saveManager.movePlant(message.index, message.x, message.y);
-            break;
-        case 'remove_plant':
-            saveManager.removePlant(message.index);
-            break;
-        case 'harvest_plant': {
-            const harvestIndex = message.index;
-            const plant = saveManager.save.plants[harvestIndex];
-            if (!plant) {
-                break;
-            }
-            const pType = PlantTypesMap.get(plant.plantId);
-            if (!pType) {
-                break;
-            }
-            const phase = getPlantPhase(plant, pType);
-            const maxPhase = pType.growthHours.length - 1;
-            if (phase < maxPhase) {
-                break;
-            } // Not ripe yet
-            // Random fruit count (damp_mulch: +1 yield)
-            let fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
-            if (plant.mulch === 'damp_mulch') {
-                fruits += 1;
-            }
-            const prevCount = saveManager.getConsumableCount(pType.producesId);
-            saveManager.updateInventory(pType.producesId, prevCount + fruits);
-            const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
-            if (pType.harvestType === 'single') {
-                // Single-harvest: gooey_mulch grants 1 extra regrow cycle
-                if (plant.mulch === 'gooey_mulch') {
-                    // Regrow once, then consume the mulch
-                    plant.mulch = undefined;
-                    plant.mulchAppliedAt = undefined;
+                    // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
                     saveManager.updatePlantPhase(harvestIndex, 2);
                     webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
                 }
-                else {
-                    saveManager.removePlant(harvestIndex);
-                    webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
+                // Consume one-use mulch after harvest (damp, stable)
+                if (plant.mulch === 'damp_mulch' || plant.mulch === 'stable_mulch') {
+                    plant.mulch = undefined;
+                    plant.mulchAppliedAt = undefined;
+                    saveManager.scheduleSave();
                 }
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
+                break;
             }
-            else {
-                // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
-                saveManager.updatePlantPhase(harvestIndex, 2);
-                webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
-            }
-            // Consume one-use mulch after harvest (damp, stable)
-            if (plant.mulch === 'damp_mulch' || plant.mulch === 'stable_mulch') {
-                plant.mulch = undefined;
-                plant.mulchAppliedAt = undefined;
+            case 'apply_mulch': {
+                const mulchId = message.mulchId;
+                const mulchItem = ConsumablesMap.get(mulchId);
+                if (!mulchItem || mulchItem.category !== 'mulch') {
+                    break;
+                }
+                const mulchCount = saveManager.getConsumableCount(mulchId);
+                if (mulchCount <= 0) {
+                    break;
+                }
+                const plantIdx = message.index;
+                const targetPlant = saveManager.save.plants[plantIdx];
+                if (!targetPlant) {
+                    break;
+                }
+                if (targetPlant.mulch) {
+                    // Plant already has mulch applied
+                    webview.postMessage({ type: 'consumable_failed' });
+                    break;
+                }
+                // Restrict stable_mulch and gooey_mulch to single-harvest plants
+                const targetPlantType = PlantTypesMap.get(targetPlant.plantId);
+                if ((mulchId === 'stable_mulch' || mulchId === 'gooey_mulch') &&
+                    targetPlantType && targetPlantType.harvestType !== 'single') {
+                    webview.postMessage({ type: 'show_message', text: 'This mulch only works on single-harvest plants.' });
+                    break;
+                }
+                // Consume mulch and apply to plant
+                saveManager.updateInventory(mulchId, mulchCount - 1);
+                targetPlant.mulch = mulchId;
+                targetPlant.mulchAppliedAt = new Date().toISOString();
                 saveManager.scheduleSave();
+                webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+                webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
+                break;
             }
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
-            break;
+            case 'request_rename_pet':
+                renamePetCommand();
+                break;
+            case 'request_rename_specific_pet': {
+                const petIdx = message.index;
+                const pet = saveManager.save.pets[petIdx];
+                if (!pet) {
+                    break;
+                }
+                const newName = await vscode.window.showInputBox({
+                    title: 'Rename Pokémon',
+                    prompt: `Rename ${pet.name}`,
+                    value: pet.name,
+                    validateInput: (v) => v.trim().length === 0 ? 'Name cannot be empty' : undefined,
+                });
+                if (!newName) {
+                    break;
+                }
+                const trimmed = newName.trim();
+                pet.name = trimmed;
+                saveManager.scheduleSave();
+                webview.postMessage({ type: 'rename_pet', index: petIdx, name: trimmed });
+                // Refresh pokédex to show updated name
+                webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+                        name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize, candyFed: p.candyFed ?? 0,
+                        friendship: p.friendship ?? 0, hp: p.hp, stamina: p.stamina,
+                        maxHp: (0, models_1.getMaxHp)(p), maxStamina: (0, models_1.getMaxStamina)(p),
+                    })) });
+                break;
+            }
+            case 'request_pokedex': {
+                const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+                    name: p.name,
+                    specie: p.specie,
+                    sprite: p.sprite,
+                    spriteSize: p.spriteSize,
+                    candyFed: p.candyFed ?? 0,
+                    hp: p.hp ?? (0, models_1.getMaxHp)(p),
+                    stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
+                    maxHp: (0, models_1.getMaxHp)(p),
+                    maxStamina: (0, models_1.getMaxStamina)(p),
+                    friendship: p.friendship ?? 0,
+                }));
+                webview.postMessage({ type: 'pokedex', value: pets });
+                break;
+            }
         }
-        case 'apply_mulch': {
-            const mulchId = message.mulchId;
-            const mulchItem = ConsumablesMap.get(mulchId);
-            if (!mulchItem || mulchItem.category !== 'mulch') {
-                break;
-            }
-            const mulchCount = saveManager.getConsumableCount(mulchId);
-            if (mulchCount <= 0) {
-                break;
-            }
-            const plantIdx = message.index;
-            const targetPlant = saveManager.save.plants[plantIdx];
-            if (!targetPlant) {
-                break;
-            }
-            if (targetPlant.mulch) {
-                // Plant already has mulch applied
-                webview.postMessage({ type: 'consumable_failed' });
-                break;
-            }
-            // Restrict stable_mulch and gooey_mulch to single-harvest plants
-            const targetPlantType = PlantTypesMap.get(targetPlant.plantId);
-            if ((mulchId === 'stable_mulch' || mulchId === 'gooey_mulch') &&
-                targetPlantType && targetPlantType.harvestType !== 'single') {
-                webview.postMessage({ type: 'show_message', text: 'This mulch only works on single-harvest plants.' });
-                break;
-            }
-            // Consume mulch and apply to plant
-            saveManager.updateInventory(mulchId, mulchCount - 1);
-            targetPlant.mulch = mulchId;
-            targetPlant.mulchAppliedAt = new Date().toISOString();
-            saveManager.scheduleSave();
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
-            break;
-        }
-        case 'request_rename_pet':
-            renamePetCommand();
-            break;
-        case 'request_rename_specific_pet': {
-            const petIdx = message.index;
-            const pet = saveManager.save.pets[petIdx];
-            if (!pet) {
-                break;
-            }
-            const newName = await vscode.window.showInputBox({
-                title: 'Rename Pokémon',
-                prompt: `Rename ${pet.name}`,
-                value: pet.name,
-                validateInput: (v) => v.trim().length === 0 ? 'Name cannot be empty' : undefined,
-            });
-            if (!newName) {
-                break;
-            }
-            const trimmed = newName.trim();
-            pet.name = trimmed;
-            saveManager.scheduleSave();
-            webview.postMessage({ type: 'rename_pet', index: petIdx, name: trimmed });
-            // Refresh pokédex to show updated name
-            webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
-                    name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize, candyFed: p.candyFed ?? 0,
-                    friendship: p.friendship ?? 0, hp: p.hp, stamina: p.stamina,
-                    maxHp: (0, models_1.getMaxHp)(p), maxStamina: (0, models_1.getMaxStamina)(p),
-                })) });
-            break;
-        }
-        case 'request_pokedex': {
-            const pets = saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
-                name: p.name,
-                specie: p.specie,
-                sprite: p.sprite,
-                spriteSize: p.spriteSize,
-                candyFed: p.candyFed ?? 0,
-                hp: p.hp ?? (0, models_1.getMaxHp)(p),
-                stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
-                maxHp: (0, models_1.getMaxHp)(p),
-                maxStamina: (0, models_1.getMaxStamina)(p),
-                friendship: p.friendship ?? 0,
-            }));
-            webview.postMessage({ type: 'pokedex', value: pets });
-            break;
-        }
+    }
+    catch (err) {
+        console.error('[Pokemon Pets] Error handling webview message:', err);
     }
 }
 // ── Commands ────────────────────────────────────────────────────────────

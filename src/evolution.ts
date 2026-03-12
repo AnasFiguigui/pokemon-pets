@@ -46,11 +46,18 @@ export class EvolutionService {
         const currentIdx = this.getCurrentFormIndex(pet, species);
         if (currentIdx >= species.forms.length - 1) { return undefined; }
 
-        const nextForm = species.forms[currentIdx + 1];
         const candyFed = pet.candyFed ?? 0;
-        const candyNeeded = nextForm.candyCost - candyFed;
 
-        return { nextForm, candyNeeded: Math.max(0, candyNeeded) };
+        // Scan forms in the same order as feedCandy — skip requiredItem forms
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const form = species.forms[i];
+            if (form.requiredItem) { continue; }
+            return { nextForm: form, candyNeeded: Math.max(0, form.candyCost - candyFed) };
+        }
+
+        // All remaining forms require items — show the immediate next one
+        const nextForm = species.forms[currentIdx + 1];
+        return { nextForm, candyNeeded: Math.max(0, nextForm.candyCost - candyFed) };
     }
 
     /**
