@@ -110,6 +110,53 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Enable local telemetry to track your personal stats (Pokémon added, candy fed, gold earned, etc.). All data stays in your save file — nothing is sent externally."
+                },
+                "pokemon-pets.rewards.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable coding activity rewards — earn gold and friendship for your Pokémon as you code."
+                },
+                "pokemon-pets.rewards.saveGold": {
+                    "type": "number",
+                    "default": 2,
+                    "minimum": 0,
+                    "maximum": 1000,
+                    "description": "Gold earned per file save."
+                },
+                "pokemon-pets.rewards.savesPerFriendship": {
+                    "type": "number",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Number of file saves needed to grant +1 friendship to a random pet."
+                },
+                "pokemon-pets.rewards.saveCooldownSeconds": {
+                    "type": "number",
+                    "default": 120,
+                    "minimum": 0,
+                    "maximum": 3600,
+                    "description": "Per-file cooldown in seconds — repeated saves of the same file within this window are ignored."
+                },
+                "pokemon-pets.rewards.pushGold": {
+                    "type": "number",
+                    "default": 200,
+                    "minimum": 0,
+                    "maximum": 10000,
+                    "description": "Gold earned per Git push."
+                },
+                "pokemon-pets.rewards.pushCandy": {
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Candy given to a random pet per Git push."
+                },
+                "pokemon-pets.rewards.pushFriendship": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 0,
+                    "maximum": 255,
+                    "description": "Friendship added to all pets per Git push."
                 }
             }
         },

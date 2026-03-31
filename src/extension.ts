@@ -7,6 +7,7 @@ import { TelemetryService } from './telemetry';
 import { EvolutionService } from './evolution';
 import { DayNightCycle } from './day-night';
 import { StreakService } from './streak';
+import { CodingRewardsTracker, type CodingRewardsConfig } from './coding-rewards';
 
 let config = vscode.workspace.getConfiguration('pokemon-pets');
 let webview: WebViewProvider;
@@ -14,6 +15,7 @@ let saveManager: SaveManager;
 let telemetry: TelemetryService;
 let evolution: EvolutionService;
 let streakService: StreakService;
+let rewardsTracker: CodingRewardsTracker;
 let unifiedTickInterval: ReturnType<typeof setInterval> | undefined;
 let unifiedTickCounter = 0;
 let dayNightEnabled = false;
@@ -40,6 +42,20 @@ const PlantTypesMap: ReadonlyMap<string, PlantType> = new Map(PlantTypes.map(p =
 /** Max friendship value. */
 const MAX_FRIENDSHIP = 255;
 
+/** Reads coding-reward settings from VS Code configuration. */
+function getRewardsConfig(): CodingRewardsConfig {
+    const cfg = vscode.workspace.getConfiguration('pokemon-pets.rewards');
+    return {
+        enabled: cfg.get<boolean>('enabled', true),
+        saveGold: cfg.get<number>('saveGold', 2),
+        savesPerFriendship: cfg.get<number>('savesPerFriendship', 10),
+        saveCooldownSeconds: cfg.get<number>('saveCooldownSeconds', 120),
+        pushGold: cfg.get<number>('pushGold', 200),
+        pushCandy: cfg.get<number>('pushCandy', 1),
+        pushFriendship: cfg.get<number>('pushFriendship', 5),
+    };
+}
+
 /**
  * Increase a pet's friendship by the given amount, clamped to [0, 255].
  * Saves automatically.
@@ -49,6 +65,92 @@ function addFriendship(petIndex: number, amount: number): void {
     if (!pet) { return; }
     pet.friendship = Math.min(MAX_FRIENDSHIP, (pet.friendship ?? 0) + amount);
     saveManager.scheduleSave();
+}
+
+// ── Coding Activity Rewards ─────────────────────────────────────────────
+
+import type { RewardEvent } from './coding-rewards';
+
+/** Applies a coding-reward event: distributes gold, friendship, and optional candy. */
+function applyReward(reward: RewardEvent): void {
+    if (reward.gold > 0) {
+        saveManager.save.money += reward.gold;
+        telemetry.trackGoldEarned(reward.gold);
+        webview.postMessage({ type: 'money', value: saveManager.save.money });
+    }
+
+    for (const [idx, amount] of reward.friendship) {
+        addFriendship(idx, amount);
+        checkAndHandleHeldItemEvolution(idx);
+    }
+
+    if (reward.candyPetIndex >= 0 && reward.candyPetIndex < saveManager.save.pets.length) {
+        const pet = saveManager.save.pets[reward.candyPetIndex];
+        if (pet) {
+            const oldMaxHp = getMaxHp(pet);
+            const oldMaxStamina = getMaxStamina(pet);
+            const result = evolution.feedCandy(reward.candyPetIndex);
+            const newMaxHp = getMaxHp(pet);
+            const newMaxStamina = getMaxStamina(pet);
+            const hpGain = newMaxHp - oldMaxHp;
+            const staminaGain = newMaxStamina - oldMaxStamina;
+            if (hpGain > 0 || staminaGain > 0) {
+                saveManager.updatePetStats(
+                    reward.candyPetIndex,
+                    Math.min(newMaxHp, (pet.hp ?? oldMaxHp) + hpGain),
+                    Math.min(newMaxStamina, (pet.stamina ?? oldMaxStamina) + staminaGain),
+                );
+            }
+            if (result.evolved && result.newForm) {
+                const { form, sprite, spriteSize } = normalizePet(pet);
+                webview.postMessage({
+                    type: 'evolution',
+                    index: reward.candyPetIndex,
+                    name: pet.name, specie: pet.specie, color: pet.color,
+                    form, sprite, spriteSize,
+                    newForm: result.newForm.name,
+                });
+                telemetry.trackPokemonEvolved(pet.specie);
+                refreshPokedex();
+            }
+            webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+        }
+    }
+
+    saveManager.scheduleSave();
+}
+
+/** Watches the built-in Git extension for push events. */
+function watchGitPushes(context: vscode.ExtensionContext): void {
+    const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports;
+    if (!gitExtension) { return; }
+    const git = gitExtension.getAPI(1);
+    if (!git) { return; }
+
+    // Track HEAD commit per repo to detect pushes
+    const lastHeadMap = new Map<string, string | undefined>();
+
+    for (const repo of git.repositories) {
+        lastHeadMap.set(repo.rootUri.toString(), repo.state?.HEAD?.commit);
+        const disposable = repo.state?.onDidChange(() => {
+            const newHead = repo.state?.HEAD?.commit;
+            const key = repo.rootUri.toString();
+            const oldHead = lastHeadMap.get(key);
+            if (oldHead && newHead && oldHead !== newHead) {
+                // HEAD changed — treat as push
+                const cfg = getRewardsConfig();
+                const reward = rewardsTracker.onGitPush(saveManager.save.pets.length, cfg);
+                if (reward) {
+                    applyReward(reward);
+                    vscode.window.showInformationMessage(
+                        `🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`,
+                    );
+                }
+            }
+            lastHeadMap.set(key, newHead);
+        });
+        if (disposable) { context.subscriptions.push(disposable); }
+    }
 }
 
 // ── Game Initialization ─────────────────────────────────────────────────
@@ -1053,6 +1155,7 @@ export function activate(context: vscode.ExtensionContext): void {
     telemetry = new TelemetryService(saveManager, telemetryEnabled);
     evolution = new EvolutionService(saveManager);
     streakService = new StreakService(saveManager);
+    rewardsTracker = new CodingRewardsTracker();
 
     // Track session
     telemetry.trackSession();
@@ -1148,7 +1251,19 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand),
         vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand),
         vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand),
+
+        // ── Coding activity rewards ─────────────────────────────────────
+        vscode.workspace.onDidSaveTextDocument(doc => {
+            const cfg = getRewardsConfig();
+            const codingReward = rewardsTracker.onFileSave(
+                doc.uri.toString(), saveManager.save.pets.length, cfg,
+            );
+            if (codingReward) { applyReward(codingReward); }
+        }),
     );
+
+    // Watch for git pushes (non-critical — fails silently if git extension unavailable)
+    try { watchGitPushes(context); } catch { /* git extension not available */ }
 
     // Start day/night cycle if enabled
     if (config.get<boolean>('dayNightCycle', true)) {
