@@ -440,5 +440,47 @@ describe('EvolutionService', () => {
             expect(result.equipped).toBe(true);
             expect(pet.heldItem).toBe('shiny_stone');
         });
+
+        it('already-evolved eeveelution does not laterally evolve via candy', () => {
+            // Eevee already evolved to Jolteon via thunder_stone
+            const pet: Pet = {
+                name: 'Jolty', specie: 'Eevee', color: 'Generation 1',
+                form: 'Jolteon', sprite: 'jolteon', spriteSize: 32,
+                candyFed: 20, friendship: 250,
+            };
+            sm.save.pets.push(pet);
+
+            // Feed candy — should NOT evolve to Espeon/Umbreon/etc.
+            const result = evo.feedCandy(0);
+            expect(result.evolved).toBe(false);
+            expect(pet.form).toBe('Jolteon');
+        });
+
+        it('already-evolved eeveelution shows no next evolution', () => {
+            const pet: Pet = {
+                name: 'Vapor', specie: 'Eevee', color: 'Generation 1',
+                form: 'Vaporeon', sprite: 'vaporeon', spriteSize: 32,
+                candyFed: 30, friendship: 300,
+            };
+            sm.save.pets.push(pet);
+
+            const next = evo.getNextEvolution(pet);
+            expect(next).toBeUndefined();
+        });
+
+        it('already-evolved eeveelution cannot use stone for sibling form', () => {
+            // Jolteon should not be able to use water_stone to become Vaporeon
+            const pet: Pet = {
+                name: 'Jolty', specie: 'Eevee', color: 'Generation 1',
+                form: 'Jolteon', sprite: 'jolteon', spriteSize: 32,
+                candyFed: 20, friendship: 250,
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'water_stone');
+            expect(result.evolved).toBe(false);
+            expect(result.equipped).toBeUndefined(); // should not equip either
+            expect(pet.form).toBe('Jolteon');
+        });
     });
 });

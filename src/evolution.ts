@@ -47,18 +47,24 @@ export class EvolutionService {
         const currentIdx = this.getCurrentFormIndex(pet, species);
         if (currentIdx >= species.forms.length - 1) { return undefined; }
 
+        const currentCandyCost = species.forms[currentIdx].candyCost;
         const candyFed = pet.candyFed ?? 0;
 
         // Scan forms in the same order as feedCandy — skip requiredItem forms
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const form = species.forms[i];
+            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
             if (form.requiredItem) { continue; }
             return { nextForm: form, candyNeeded: Math.max(0, form.candyCost - candyFed) };
         }
 
-        // All remaining forms require items — show the immediate next one
-        const nextForm = species.forms[currentIdx + 1];
-        return { nextForm, candyNeeded: Math.max(0, nextForm.candyCost - candyFed) };
+        // All remaining forms require items — show the first valid one
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const form = species.forms[i];
+            if (form.candyCost <= currentCandyCost) { continue; }
+            return { nextForm: form, candyNeeded: Math.max(0, form.candyCost - candyFed) };
+        }
+        return undefined; // no forward evolution possible (all siblings)
     }
 
     /**
@@ -81,6 +87,7 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
+        const currentCandyCost = species.forms[currentIdx].candyCost;
 
         // ── Priority 1: Check held-item evolution ──────────────────────
         // If the pet holds an item, check forms matching that item FIRST.
@@ -89,6 +96,7 @@ export class EvolutionService {
         if (pet.heldItem) {
             for (let i = currentIdx + 1; i < species.forms.length; i++) {
                 const form = species.forms[i];
+                if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
                 if (form.requiredItem !== pet.heldItem) { continue; }
                 const friendshipMet = typeof form.requiredFriendship !== 'number'
                     || (pet.friendship ?? 0) >= form.requiredFriendship;
@@ -115,6 +123,8 @@ export class EvolutionService {
         // (supports branching evolutions like Eevee)
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const nextForm = species.forms[i];
+            // Skip sibling forms at the same candy level (prevents lateral evolution)
+            if (nextForm.candyCost <= currentCandyCost) { continue; }
             // Skip forms that require a special item (those use useItem())
             if (nextForm.requiredItem) { continue; }
             // Check friendship requirement
@@ -179,12 +189,14 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
+        const currentCandyCost = species.forms[currentIdx].candyCost;
         const candyFed = pet.candyFed ?? 0;
 
         // Scan all forms after the current one for a matching requiredItem
         let canEquip = false;
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const form = species.forms[i];
+            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
             if (form.requiredItem !== itemId) { continue; }
 
             // This item is relevant to at least one future form
@@ -237,10 +249,12 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
+        const currentCandyCost = species.forms[currentIdx].candyCost;
         const candyFed = pet.candyFed ?? 0;
 
         for (let i = currentIdx + 1; i < species.forms.length; i++) {
             const form = species.forms[i];
+            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
             if (form.requiredItem !== pet.heldItem) { continue; }
             const friendshipMet = typeof form.requiredFriendship !== 'number'
                 || (pet.friendship ?? 0) >= form.requiredFriendship;
