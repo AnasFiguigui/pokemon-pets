@@ -239,7 +239,7 @@ export class EvolutionService {
      */
     public checkHeldItemEvolution(petIndex: number): EvolutionResult {
         const pet = this.saveManager.save.pets[petIndex];
-        if (!pet || !pet.heldItem) {
+        if (!pet?.heldItem) {
             return { evolved: false, totalCandy: pet?.candyFed ?? 0 };
         }
 

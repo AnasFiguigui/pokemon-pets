@@ -87,6 +87,7 @@ function addFriendship(petIndex, amount) {
     pet.friendship = Math.min(MAX_FRIENDSHIP, (pet.friendship ?? 0) + amount);
     saveManager.scheduleSave();
 }
+// ── Coding Activity Rewards ─────────────────────────────────────────────
 /** Applies a coding-reward event: distributes gold, friendship, and optional candy. */
 function applyReward(reward) {
     if (reward.gold > 0) {

@@ -27,8 +27,8 @@ describe('CodingRewardsTracker', () => {
         it('returns gold on save', () => {
             const reward = tracker.onFileSave('file:///a.ts', 2, defaultConfig());
             expect(reward).toBeDefined();
-            expect(reward!.gold).toBe(2);
-            expect(reward!.candyPetIndex).toBe(-1);
+            expect(reward?.gold).toBe(2);
+            expect(reward?.candyPetIndex).toBe(-1);
         });
 
         it('returns undefined when disabled', () => {
@@ -74,13 +74,13 @@ describe('CodingRewardsTracker', () => {
 
             for (let i = 0; i < 9; i++) {
                 const reward = tracker.onFileSave(`file:///f${i}.ts`, 4, cfg);
-                expect(reward!.friendship.size).toBe(0);
+                expect(reward?.friendship.size).toBe(0);
             }
         });
 
         it('uses custom saveGold value', () => {
             const reward = tracker.onFileSave('file:///a.ts', 1, defaultConfig({ saveGold: 50 }));
-            expect(reward!.gold).toBe(50);
+            expect(reward?.gold).toBe(50);
         });
     });
 
@@ -90,13 +90,13 @@ describe('CodingRewardsTracker', () => {
         it('returns gold, friendship for all pets, and candy for one', () => {
             const reward = tracker.onGitPush(3, defaultConfig());
             expect(reward).toBeDefined();
-            expect(reward!.gold).toBe(200);
-            expect(reward!.friendship.size).toBe(3);
+            expect(reward?.gold).toBe(200);
+            expect(reward?.friendship.size).toBe(3);
             for (const [, amount] of reward!.friendship) {
                 expect(amount).toBe(5);
             }
-            expect(reward!.candyPetIndex).toBeGreaterThanOrEqual(0);
-            expect(reward!.candyPetIndex).toBeLessThan(3);
+            expect(reward?.candyPetIndex).toBeGreaterThanOrEqual(0);
+            expect(reward?.candyPetIndex).toBeLessThan(3);
         });
 
         it('returns undefined when disabled', () => {
@@ -111,17 +111,17 @@ describe('CodingRewardsTracker', () => {
 
         it('skips candy when pushCandy is 0', () => {
             const reward = tracker.onGitPush(3, defaultConfig({ pushCandy: 0 }));
-            expect(reward!.candyPetIndex).toBe(-1);
+            expect(reward?.candyPetIndex).toBe(-1);
         });
 
         it('skips friendship when pushFriendship is 0', () => {
             const reward = tracker.onGitPush(3, defaultConfig({ pushFriendship: 0 }));
-            expect(reward!.friendship.size).toBe(0);
+            expect(reward?.friendship.size).toBe(0);
         });
 
         it('uses custom pushGold value', () => {
             const reward = tracker.onGitPush(1, defaultConfig({ pushGold: 500 }));
-            expect(reward!.gold).toBe(500);
+            expect(reward?.gold).toBe(500);
         });
     });
 });

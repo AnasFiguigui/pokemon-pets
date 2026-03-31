@@ -7,7 +7,7 @@ import { TelemetryService } from './telemetry';
 import { EvolutionService } from './evolution';
 import { DayNightCycle } from './day-night';
 import { StreakService } from './streak';
-import { CodingRewardsTracker, type CodingRewardsConfig } from './coding-rewards';
+import { CodingRewardsTracker, type CodingRewardsConfig, type RewardEvent } from './coding-rewards';
 
 let config = vscode.workspace.getConfiguration('pokemon-pets');
 let webview: WebViewProvider;
@@ -68,8 +68,6 @@ function addFriendship(petIndex: number, amount: number): void {
 }
 
 // ── Coding Activity Rewards ─────────────────────────────────────────────
-
-import type { RewardEvent } from './coding-rewards';
 
 /** Applies a coding-reward event: distributes gold, friendship, and optional candy. */
 function applyReward(reward: RewardEvent): void {
