@@ -1113,11 +1113,12 @@ function handleBallMouseUp(pos) {
 
 function handleDefaultMouseUp(pos) {
     Game.sortObjects();
+    let consumed = false;
     for (let i = Game.objects.length - 1; i >= 0; i--) {
         const obj = Game.objects[i];
-        if (obj.checkMouseUp(pos)) { break; }
+        if (obj.checkMouseUp(pos)) { consumed = true; break; }
     }
-    Game.setAction(Action.NONE);
+    if (!consumed) { Game.setAction(Action.NONE); }
 }
 
 document.body.onmouseup = event => {

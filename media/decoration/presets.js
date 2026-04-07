@@ -1,5 +1,15 @@
 class DecorationPreset {
 
+    static QUICK_ACCESS = {
+    OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 656), price: 0, quickAction: 'pokedex' },
+    OBJECT_02: { name: 'Object 02', size: new Vec2(16, 16), spriteOffset: new Vec2(16, 672), price: 0, quickAction: 'throw_ball' },
+    OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 656), price: 0, quickAction: 'item_shop' },
+    OBJECT_04: { name: 'Object 04', size: new Vec2(16, 16), spriteOffset: new Vec2(48, 672), price: 0, quickAction: 'item_shop' },
+    OBJECT_05: { name: 'Object 05', size: new Vec2(16, 16), spriteOffset: new Vec2(64, 672), price: 0, quickAction: 'backpack' },
+    OBJECT_06: { name: 'Object 06', size: new Vec2(16, 16), spriteOffset: new Vec2(80, 672), price: 0, quickAction: 'backpack' },
+    OBJECT_07: { name: 'Object 07', size: new Vec2(16, 16), spriteOffset: new Vec2(96, 672), price: 0, quickAction: 'build_mode' },
+    OBJECT_08: { name: 'Object 08', size: new Vec2(16, 16), spriteOffset: new Vec2(112, 672), price: 0, quickAction: 'build_mode' },
+    };
     static DECOR_PLANTS = {
         OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 64), price: 50 },
         OBJECT_02: { name: 'Object 02', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 64), price: 100 },
@@ -11,10 +21,10 @@ class DecorationPreset {
         OBJECT_08: { name: 'Object 08', size: new Vec2(16, 32), spriteOffset: new Vec2(128, 64), price: 200 },
         OBJECT_09: { name: 'Object 09', size: new Vec2(32, 32), spriteOffset: new Vec2(144, 64), price: 300 },
         OBJECT_10: { name: 'Object 10', size: new Vec2(32, 32), spriteOffset: new Vec2(176, 64), price: 300 },
-        OBJECT__11: { name: 'Object 11', size: new Vec2(16, 32), spriteOffset: new Vec2(208, 64), price: 100 },
-        OBJECCT_12: { name: 'Object 12', size: new Vec2(16, 32), spriteOffset: new Vec2(224, 64), price: 100 },
-        OBJECCT_13: { name: 'Object 13', size: new Vec2(16, 32), spriteOffset: new Vec2(240, 64), price: 100 },
-        OBJECCT_14: { name: 'Object 14', size: new Vec2(16, 32), spriteOffset: new Vec2(256, 64), price: 100 },
+        OBJECT__11: { name: 'Object 11', size: new Vec2(16, 16), spriteOffset: new Vec2(208, 80), price: 100 },
+        OBJECCT_12: { name: 'Object 12', size: new Vec2(16, 16), spriteOffset: new Vec2(224, 80), price: 100 },
+        OBJECCT_13: { name: 'Object 13', size: new Vec2(16, 16), spriteOffset: new Vec2(240, 80), price: 100 },
+        OBJECCT_14: { name: 'Object 14', size: new Vec2(16, 16), spriteOffset: new Vec2(256, 80), price: 100 },
         OBJECCT_15: { name: 'Object 15', size: new Vec2(16, 32), spriteOffset: new Vec2(272, 64), price: 100 },
         OBJECCT_16: { name: 'Object 16', size: new Vec2(16, 32), spriteOffset: new Vec2(288, 64), price: 100 },
         OBJECCT_17: { name: 'Object 17', size: new Vec2(16, 32), spriteOffset: new Vec2(304, 64), price: 100 },
@@ -27,11 +37,11 @@ class DecorationPreset {
         OBJECCT_24: { name: 'Object 24', size: new Vec2(16, 32), spriteOffset: new Vec2(416, 64), price: 100 },
         OBJECCT_25: { name: 'Object 25', size: new Vec2(16, 32), spriteOffset: new Vec2(432, 64), price: 100 },
         OBJECT_26: { name: 'Object 26', size: new Vec2(16, 32), spriteOffset: new Vec2(448, 64), price: 100 },
-        OBJECT_27: { name: 'Object 27', size: new Vec2(32, 32), spriteOffset: new Vec2(464, 64), price: 200 },
-        OBJECT_28: { name: 'Object 28', size: new Vec2(32, 32), spriteOffset: new Vec2(496, 64), price: 200 },
-        OBJECT_29: { name: 'Object 29', size: new Vec2(32, 32), spriteOffset: new Vec2(528, 64), price: 200 },
-        OBJECT_30: { name: 'Object 30', size: new Vec2(32, 32), spriteOffset: new Vec2(560, 64), price: 200 },
-        OBJECT_31: { name: 'Object 31', size: new Vec2(32, 32), spriteOffset: new Vec2(592, 64), price: 200 },
+        OBJECT_27: { name: 'Object 27', size: new Vec2(32, 16), spriteOffset: new Vec2(464, 80), price: 200 },
+        OBJECT_28: { name: 'Object 28', size: new Vec2(32, 16), spriteOffset: new Vec2(496, 80), price: 200 },
+        OBJECT_29: { name: 'Object 29', size: new Vec2(32, 16), spriteOffset: new Vec2(528, 80), price: 200 },
+        OBJECT_30: { name: 'Object 30', size: new Vec2(32, 16), spriteOffset: new Vec2(560, 80), price: 200 },
+        OBJECT_31: { name: 'Object 31', size: new Vec2(32, 16), spriteOffset: new Vec2(592, 80), price: 200 },
         OBJECT_32: { name: 'Object 32', size: new Vec2(32, 32), spriteOffset: new Vec2(624, 64), price: 200 },
         OBJECT_33: { name: 'Object 33', size: new Vec2(32, 32), spriteOffset: new Vec2(656, 64), price: 200 },
         OBJECT_34: { name: 'Object 34', size: new Vec2(32, 32), spriteOffset: new Vec2(688, 64), price: 200 },
@@ -160,4 +170,5 @@ class DecorationPreset {
         OBJECT_04: { name: 'C# Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(96, 464), nightSpriteOffsetY: 256, price: 0 },
         OBJECT_05: { name: 'Java Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(128, 464), nightSpriteOffsetY: 256, price: 0 },
     };
+
 }

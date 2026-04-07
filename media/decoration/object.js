@@ -7,12 +7,14 @@ class Decoration extends GameObject {
     #lightRadius = 0;
     #daySpriteY = 0;
     #nightSpriteY = 0;
+    #quickAction = null;
     
     get price() { return this.#price; }
     get isLamp() { return this.#isLamp; }
     get lightRadius() { return this.#lightRadius; }
     get daySpriteY() { return this.#daySpriteY; }
     get nightSpriteY() { return this.#nightSpriteY; }
+    get quickAction() { return this.#quickAction; }
 
     #snap = 16;
     #moving = false;
@@ -36,6 +38,7 @@ class Decoration extends GameObject {
         if (typeof preset.lightRadius === 'number') this.#lightRadius = preset.lightRadius;
         if (typeof preset.spriteOffset === 'object') this.#daySpriteY = preset.spriteOffset.y;
         if (typeof preset.nightSpriteOffsetY === 'number') this.#nightSpriteY = preset.nightSpriteOffsetY;
+        if (typeof preset.quickAction === 'string') this.#quickAction = preset.quickAction;
 
         // Apply night sprite immediately if night overlay is active
         if (this.#isLamp && Game.nightOverlayActive) {
@@ -96,6 +99,9 @@ class Decoration extends GameObject {
     }
 
     mouseDown(pos) {
+        // Quick-access: capture mouse down so mouseUp fires
+        if (!Game.isAction(Action.DECOR) && this.#quickAction) return true;
+
         if (!Game.isAction(Action.DECOR)) return false;
 
         switch (DecorMode.action) {
@@ -110,6 +116,12 @@ class Decoration extends GameObject {
     }
 
     mouseUp(pos) {
+        // Quick-access click outside build mode
+        if (!Game.isAction(Action.DECOR) && this.#quickAction) {
+            this.#triggerQuickAction();
+            return true;
+        }
+
         if (!Game.isAction(Action.DECOR)) return false;
 
         switch (DecorMode.action) {
@@ -157,5 +169,25 @@ class Decoration extends GameObject {
 
     snapPos(pos) {
         return pos.div(this.#snap).toIntRound().mult(this.#snap);
+    }
+
+    #triggerQuickAction() {
+        switch (this.#quickAction) {
+            case 'pokedex':
+                openPokedex();
+                break;
+            case 'throw_ball':
+                toggleActionBall();
+                break;
+            case 'item_shop':
+                openStoreMenu();
+                break;
+            case 'backpack':
+                openBackpack();
+                break;
+            case 'build_mode':
+                toggleActionDecor();
+                break;
+        }
     }
 }
