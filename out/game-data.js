@@ -61,14 +61,14 @@ exports.Pokemons = {
             forms: [
                 { name: 'Pichu', sprite: 'pichu', spriteSize: 32, candyCost: 0 },
                 { name: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyCost: 25, requiredFriendship: 200 },
-                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
+                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 30, requiredItem: 'thunder_stone' },
             ],
         },
         {
             name: 'Pikachu',
             forms: [
                 { name: 'Pikachu', sprite: 'pikachu', spriteSize: 32, candyCost: 0 },
-                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 25, requiredItem: 'thunder_stone' },
+                { name: 'Raichu', sprite: 'raichu', spriteSize: 32, candyCost: 30, requiredItem: 'thunder_stone' },
             ],
         },
         {
