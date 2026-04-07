@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.2.0] — Quick Access, Held Items & More
+
+### New Features
+- **Quick Access decorations** — 8 free shortcut objects that trigger actions when clicked (Pokédex, throw Pokéball, Item Shop, Backpack, Build Mode).
+- **Held item slot** — Pokémon can now hold an item in a dedicated slot.
+- **Coding activity rewards** — Earn gold from file saves and git pushes.
+- **More decoration plants** — Additional decor plant varieties in the shop.
+
+### Improvements
+- **Item Shop layout** — Store categories and items now display in a 2-column grid with larger icons, showing the image above the name and price.
+- **Species lookup optimized** — `findSpecies` changed from O(n) scan to O(1) map lookup.
+
+### Removed
+- **Plant wilting** — Ripe plants no longer wilt; they stay harvestable forever. Stable Mulch has been removed from the shop (no longer needed).
+
+### Bug Fixes
+- **Eevee lateral evolution** — Fixed stone-based evolutions incorrectly triggering on already-evolved Eeveelutions.
+- **Quick Access click** — Fixed menus opened by quick-access decorations being immediately closed by the mouse-up handler.
+- **Decoration sprites** — Fixed incorrect sprite offsets for some decorations.
+- **Held slot sprite** — Fixed the held-item slot sprite rendering.
+
 ## [v1.1.0] — Plants, Mulch & Quality of Life
 
 ### New Features
