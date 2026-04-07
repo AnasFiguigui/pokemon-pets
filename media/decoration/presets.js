@@ -1,14 +1,14 @@
 class DecorationPreset {
 
     static QUICK_ACCESS = {
-    OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 656), price: 0, quickAction: 'pokedex' },
-    OBJECT_02: { name: 'Object 02', size: new Vec2(16, 16), spriteOffset: new Vec2(16, 672), price: 0, quickAction: 'throw_ball' },
-    OBJECT_03: { name: 'Object 03', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 656), price: 0, quickAction: 'item_shop' },
-    OBJECT_04: { name: 'Object 04', size: new Vec2(16, 16), spriteOffset: new Vec2(48, 672), price: 0, quickAction: 'item_shop' },
-    OBJECT_05: { name: 'Object 05', size: new Vec2(16, 16), spriteOffset: new Vec2(64, 672), price: 0, quickAction: 'backpack' },
-    OBJECT_06: { name: 'Object 06', size: new Vec2(16, 16), spriteOffset: new Vec2(80, 672), price: 0, quickAction: 'backpack' },
-    OBJECT_07: { name: 'Object 07', size: new Vec2(16, 16), spriteOffset: new Vec2(96, 672), price: 0, quickAction: 'build_mode' },
-    OBJECT_08: { name: 'Object 08', size: new Vec2(16, 16), spriteOffset: new Vec2(112, 672), price: 0, quickAction: 'build_mode' },
+    OBJECT_01: { name: 'PC', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 656), price: 0, quickAction: 'pokedex' },
+    OBJECT_02: { name: 'Pokeball', size: new Vec2(16, 16), spriteOffset: new Vec2(16, 672), price: 0, quickAction: 'throw_ball' },
+    OBJECT_03: { name: 'Store I', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 656), price: 0, quickAction: 'item_shop' },
+    OBJECT_04: { name: 'Store II', size: new Vec2(16, 16), spriteOffset: new Vec2(48, 672), price: 0, quickAction: 'item_shop' },
+    OBJECT_05: { name: 'Backpack I', size: new Vec2(16, 16), spriteOffset: new Vec2(64, 672), price: 0, quickAction: 'backpack' },
+    OBJECT_06: { name: 'Backpack II', size: new Vec2(16, 16), spriteOffset: new Vec2(80, 672), price: 0, quickAction: 'backpack' },
+    OBJECT_07: { name: 'Build Mode I', size: new Vec2(16, 16), spriteOffset: new Vec2(96, 672), price: 0, quickAction: 'build_mode' },
+    OBJECT_08: { name: 'Build Mode II', size: new Vec2(16, 16), spriteOffset: new Vec2(112, 672), price: 0, quickAction: 'build_mode' },
     };
     static DECOR_PLANTS = {
         OBJECT_01: { name: 'Object 01', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 64), price: 50 },

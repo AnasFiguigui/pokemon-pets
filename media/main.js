@@ -432,6 +432,7 @@ function openStoreMenu() {
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
+    content.classList.add('storeGrid');
 
     //Top left back button goes to actions menu on root store
     const backButton = document.getElementById('storeBackBtn');
@@ -485,6 +486,7 @@ function openStoreCategoryMenu(category) {
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
+    content.classList.add('storeGrid');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');
@@ -547,6 +549,7 @@ function openStoreConsumablesMenu() {
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
+    content.classList.add('storeGrid');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');
@@ -591,6 +594,7 @@ function openStoreSeedsMenu() {
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
+    content.classList.add('storeGrid');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');
