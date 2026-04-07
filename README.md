@@ -2,11 +2,12 @@
 
 <div align="center">
 
-This extension allows you to interact with Pokémon, feed them, track stats, and enjoy a mini in-editor experience inspired by classic Pokémon mechanics.
+A browser-based Pokémon pet game — feed, collect, evolve, and decorate!
 
-![Pokemon Pets](https://i.ibb.co/W4FDnf57/Pokemons.gif)
+![Pokemon Pets](https://i.ibb.co/Z1wDcvzK/pokegif1.gif)
+<br>
+![Pokemon Pets](https://i.ibb.co/fY5VDhDX/pokegif2.gif)
 
-New Pokémon will be added in future releases.
 </div>
 
 ## Community & Feedback
