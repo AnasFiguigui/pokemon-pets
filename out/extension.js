@@ -246,8 +246,8 @@ function getPlantPhase(plant, plantType) {
     }
     return phase;
 }
-/** Default harvest window in hours before a ripe plant wilts. */
-const HARVEST_WINDOW_HOURS = 12;
+// Plants no longer wilt — harvest window disabled
+// const HARVEST_WINDOW_HOURS = 12;
 /** Advances all plants to their correct phase and notifies the webview. */
 function tickPlants() {
     const plants = saveManager.save.plants;
@@ -276,19 +276,17 @@ function tickPlants() {
                 webview.postMessage({ type: 'clear_mulch', index: i });
             }
         }
-        // Check harvest window expiry for ripe plants
-        const maxPhase = plantType.growthHours.length - 1;
-        if (currentPhase >= maxPhase) {
-            const windowMultiplier = plant.mulch === 'stable_mulch' ? 2 : 1;
-            const harvestWindowMs = HARVEST_WINDOW_HOURS * windowMultiplier * 3_600_000;
-            // Time since the plant reached ripe phase
-            const elapsedSincePhaseStart = Date.now() - new Date(plant.phaseStartTime).getTime();
-            if (elapsedSincePhaseStart > harvestWindowMs) {
-                // Plant has wilted — remove it
-                saveManager.removePlant(i);
-                webview.postMessage({ type: 'destroy_plant', index: i });
-            }
-        }
+        // Plants no longer wilt — ripe plants stay forever
+        // const maxPhase = plantType.growthHours.length - 1;
+        // if (currentPhase >= maxPhase) {
+        //     const windowMultiplier = plant.mulch === 'stable_mulch' ? 2 : 1;
+        //     const harvestWindowMs = HARVEST_WINDOW_HOURS * windowMultiplier * 3_600_000;
+        //     const elapsedSincePhaseStart = Date.now() - new Date(plant.phaseStartTime).getTime();
+        //     if (elapsedSincePhaseStart > harvestWindowMs) {
+        //         saveManager.removePlant(i);
+        //         webview.postMessage({ type: 'destroy_plant', index: i });
+        //     }
+        // }
     }
 }
 // ── Day/Night Cycle ─────────────────────────────────────────────────────
@@ -823,8 +821,8 @@ async function handleWebviewMessage(message) {
                     saveManager.updatePlantPhase(harvestIndex, 2);
                     webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
                 }
-                // Consume one-use mulch after harvest (damp, stable)
-                if (plant.mulch === 'damp_mulch' || plant.mulch === 'stable_mulch') {
+                // Consume one-use mulch after harvest (damp)
+                if (plant.mulch === 'damp_mulch') {
                     plant.mulch = undefined;
                     plant.mulchAppliedAt = undefined;
                     saveManager.scheduleSave();

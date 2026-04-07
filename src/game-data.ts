@@ -64,7 +64,7 @@ export const Consumables: Consumable[] = [
     { id: 'ice_stone', name: 'Ice Stone', price: 1000, description: 'A stone that feels cold to the touch.', category: 'stone' },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces growth time by 25% for 1 hour.', category: 'mulch' },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1. Consumed after one harvest.', category: 'mulch' },
-    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },
+    // { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, description: 'Grants 1 extra regrow. Single-harvest only, one use.', category: 'mulch' },
 ];
 

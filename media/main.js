@@ -41,7 +41,7 @@ const ConsumableCatalog = [
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, category: 'potion', stat: '+120 HP', spriteOffset: { x: 64, y: 128 }, cursorOffset: { x: 64, y: 160 } },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, category: 'mulch', stat: '-25% growth (1h)', spriteOffset: { x: 0, y: 192 }, cursorOffset: { x: 0, y: 224 } },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, category: 'mulch', stat: '+1 yield (1 harvest)', spriteOffset: { x: 32, y: 192 }, cursorOffset: { x: 32, y: 224 } },
-    { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 window (1 harvest)', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
+    // { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 window (1 harvest)', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, category: 'mulch', stat: '+1 regrow (1 harvest)', spriteOffset: { x: 96, y: 192 }, cursorOffset: { x: 96, y: 224 } },
     { id: 'fire_stone', name: 'Fire Stone', price: 1000, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
     { id: 'water_stone', name: 'Water Stone', price: 1000, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
