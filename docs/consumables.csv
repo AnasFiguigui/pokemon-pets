@@ -1,19 +1,19 @@
-ID,Name,Category,Price,Description,Restore HP,Restore Stamina,Friendship Gain
-candy,Rare Candy,candy,100,Feed to a Pokémon to help it grow.,,,5
-oran_berry,Oran Berry,food,30,Restores HP and stamina.,10,15,2
-potion,Potion,potion,100,Restores HP to a Pokémon.,20,,1
-super_potion,Super Potion,potion,280,Restores a large amount of HP.,60,,5
-hyper_potion,Hyper Potion,potion,500,Restores a massive amount of HP.,120,,10
-fire_stone,Fire Stone,stone,1000,A stone that radiates warmth.,,,
-water_stone,Water Stone,stone,1000,A stone that shimmers like water.,,,
-thunder_stone,Thunder Stone,stone,1000,A stone that crackles with electricity.,,,
-leaf_stone,Leaf Stone,stone,1000,A stone that smells of fresh leaves.,,,
-moon_stone,Moon Stone,stone,1200,A stone that glows in moonlight.,,,
-sun_stone,Sun Stone,stone,1200,A stone that sparkles in sunlight.,,,
-dusk_stone,Dusk Stone,stone,1200,A stone that absorbs darkness.,,,
-shiny_stone,Shiny Stone,stone,1200,A stone that shines brilliantly.,,,
-ice_stone,Ice Stone,stone,1000,A stone that feels cold to the touch.,,,
-growth_mulch,Growth Mulch,mulch,200,Reduces growth time by 25% for 1 hour.,,,
-damp_mulch,Damp Mulch,mulch,200,Increases harvest yield by 1. Consumed after one harvest.,,,
-stable_mulch,Stable Mulch,mulch,300,Doubles the harvest window before a ripe plant wilts.,,,
-gooey_mulch,Gooey Mulch,mulch,300,Grants 1 extra regrow. Single-harvest only.,,,
+Name,Category,Price,Description,Restore HP,Restore Stamina,Friendship Gain
+Rare Candy,candy,100,Feed to a Pokémon to help it grow.,-,-,5
+Oran Berry,food,30,Restores HP and stamina.,10,15,2
+Potion,potion,100,Restores HP to a Pokémon.,20,-,1
+Super Potion,potion,280,Restores a large amount of HP.,60,-,5
+Hyper Potion,potion,500,Restores a massive amount of HP.,120,-,10
+Fire Stone,stone,1000,A stone that radiates warmth.,-,-,-
+Water Stone,stone,1000,A stone that shimmers like water.,-,-,-
+Thunder Stone,stone,1000,A stone that crackles with electricity.,-,-,-
+Leaf Stone,stone,1000,A stone that smells of fresh leaves.,-,-,-
+Moon Stone,stone,1200,A stone that glows in moonlight.,-,-,-
+Sun Stone,stone,1200,A stone that sparkles in sunlight.,-,-,-
+Dusk Stone,stone,1200,A stone that absorbs darkness.,-,-,-
+Shiny Stone,stone,1200,A stone that shines brilliantly.,-,-,-
+Ice Stone,stone,1000,A stone that feels cold to the touch.,-,-,-
+Growth Mulch,mulch,200,Reduces growth time by 25% for 1 hour.,-,-,-
+Damp Mulch,mulch,200,Increases harvest yield by 1. Consumed after one harvest.,-,-,-
+Stable Mulch,mulch,300,Doubles the harvest window before a ripe plant wilts.,-,-,-
+Gooey Mulch,mulch,300,Grants 1 extra regrow. Single-harvest only.,-,-,-

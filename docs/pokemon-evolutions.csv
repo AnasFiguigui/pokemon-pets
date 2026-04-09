@@ -1,24 +1,22 @@
-Species,Base Form,Evolution,Candy Cost,Required Item,Required Friendship,Required Time of Day,Sprite Size
-Bulbasaur,Bulbasaur,Bulbasaur (Base),0,,,32
-Bulbasaur,,Ivysaur,10,,,32
-Bulbasaur,,Venusaur,25,,,32
-Charmander,Charmander,Charmander (Base),0,,,32
-Charmander,,Charmeleon,10,,,32
-Charmander,,Charizard,25,,200,48
-Squirtle,Squirtle,Squirtle (Base),0,,,32
-Squirtle,,Wartortle,10,,,32
-Squirtle,,Blastoise,25,,,32
-Pichu,Pichu,Pichu (Base),0,,,32
-Pichu,,Pikachu,25,,200,32
-Pichu,,Raichu,25,Thunder Stone,,32
-Pikachu,Pikachu,Pikachu (Base),0,,,32
-Pikachu,,Raichu,25,Thunder Stone,,32
-Eevee,Eevee,Eevee (Base),0,,,32
-Eevee,,Vaporeon,5,Water Stone,,32
-Eevee,,Jolteon,5,Thunder Stone,,32
-Eevee,,Flareon,5,Fire Stone,,32
-Eevee,,Espeon,5,,200,Day,32
-Eevee,,Umbreon,5,,200,Night,32
-Eevee,,Leafeon,5,Leaf Stone,,32
-Eevee,,Glaceon,5,Ice Stone,,32
-Eevee,,Sylveon,5,Shiny Stone,200,32
+Species,Evolution,Candy Cost,Required Item,Required Friendship,Required Time of Day,Sprite Size
+Bulbasaur,Bulbasaur (Base),0,-,-,-,32
+Bulbasaur,Ivysaur,10,-,-,-,32
+Bulbasaur,Venusaur,25,-,-,-,32
+Charmander,Charmander (Base),0,-,-,-,32
+Charmander,Charmeleon,10,-,-,-,32
+Charmander,Charizard,25,-,200,-,48
+Squirtle,Squirtle (Base),0,-,-,-,32
+Squirtle,Wartortle,10,-,-,-,32
+Squirtle,Blastoise,25,-,-,-,32
+Pichu,Pichu (Base),0,-,-,-,32
+Pichu,Pikachu,25,-,200,-,32
+Pichu,Raichu,25,Thunder Stone,-,-,32
+Eevee,Eevee (Base),0,-,-,-,32
+Eevee,Vaporeon,5,Water Stone,-,-,32
+Eevee,Jolteon,5,Thunder Stone,-,-,32
+Eevee,Flareon,5,Fire Stone,-,-,32
+Eevee,Espeon,5,-,200,Day,32
+Eevee,Umbreon,5,-,200,Night,32
+Eevee,Leafeon,5,Leaf Stone,-,-,32
+Eevee,Glaceon,5,Ice Stone,-,-,32
+Eevee,Sylveon,5,Shiny Stone (i'll cgnage later to fairy skill),200,-,32
