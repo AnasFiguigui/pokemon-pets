@@ -582,6 +582,7 @@ Phase 0       Phase 1       Phase 2       Phase 3       Phase 4
 - Updated every 60 seconds via backend timer
 - Night overlay: `background: #102040`, `mix-blend-mode: multiply`
 - Night-only wild Pokémon species only spawn during night hours
+- Wild species: Meowth (any time), Golbat (night only), Gastly (night only), Haunter (night only)
 
 ---
 

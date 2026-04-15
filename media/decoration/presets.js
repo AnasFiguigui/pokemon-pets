@@ -161,6 +161,12 @@ class DecorationPreset {
         OBJECT_01: { name: 'Fence', size: new Vec2(32, 16), spriteOffset: new Vec2(0, 128), price: 50 },
         OBJECT_02: { name: 'Fence (Right)', size: new Vec2(16, 32), spriteOffset: new Vec2(32, 128), price: 50 },
         OBJECT_03: { name: 'Fence (Left)', size: new Vec2(16, 32), spriteOffset: new Vec2(48, 128), price: 50 },
+        OBJECT_04: { name: 'White Fence', size: new Vec2(32, 16), spriteOffset: new Vec2(64, 128), price: 50 },
+        OBJECT_05: { name: 'White Fence (Right)', size: new Vec2(16, 32), spriteOffset: new Vec2(96, 128), price: 50 },
+        OBJECT_06: { name: 'White Fence (Left)', size: new Vec2(16, 32), spriteOffset: new Vec2(112, 128), price: 50 },
+        OBJECT_07: { name: 'Fence', size: new Vec2(32, 16), spriteOffset: new Vec2(128, 128), price: 50 },
+        OBJECT_08: { name: 'Fence (Right)', size: new Vec2(16, 32), spriteOffset: new Vec2(160, 128), price: 50 },
+        OBJECT_09: { name: 'Fence (Left)', size: new Vec2(16, 32), spriteOffset: new Vec2(176, 128), price: 50 },
         };
 
         static SPECIAL = {

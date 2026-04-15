@@ -77,6 +77,8 @@ export const PlantTypes: PlantType[] = [
 export const WildPokemonSpecies: { specie: string; nightOnly: boolean }[] = [
     { specie: 'meowth', nightOnly: false },
     { specie: 'golbat', nightOnly: true },
+    { specie: 'gastly', nightOnly: true },
+    { specie: 'haunter', nightOnly: true },
 ];
 
 export const Pokemons: { [generation: string]: PokemonSpecies[] } = {

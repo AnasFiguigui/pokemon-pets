@@ -9,6 +9,14 @@
 - **Generation 4 starters** — Turtwig → Grotle → Torterra, Chimchar → Monferno → Infernape, Piplup → Prinplup → Empoleon.
 - **Generation 5 starters** — Snivy → Servine → Serperior, Tepig → Pignite → Emboar, Oshawott → Dewott → Samurott.
 - **Zorua line** — Zorua → Zoroark, plus Hisuian variant (Zorua → Zoroark Hisuian).
+- **Configurable max Pokémon** — New `pokemon-pets.maxPokemon` setting lets you choose how many Pokémon you can have at once (1–12, default 6).
+- **Wild Gastly & Haunter** — Gastly and Haunter now appear as night-only wild Pokémon.
+
+### Improvements
+- **Save import hardened** — Friendship, HP, stamina, inventory, telemetry, and decoration data are now fully validated on import.
+- **Money upper bound** — Gold is now capped at 999,999,999 to prevent overflow.
+- **Plant/decoration validation** — `move_plant` and `remove_plant` message handlers now validate input types.
+
 
 ## [v1.2.0] — Quick Access, Held Items & More
 

@@ -57,6 +57,7 @@ Use the server to:
 - `pokemon-pets.background`: farm background theme
 - `pokemon-pets.scale`: pet scale (`Small`, `Medium`, `Big`)
 - `pokemon-pets.wild`: toggles wild Pokémon spawning
+- `pokemon-pets.maxPokemon`: maximum number of Pokémon you can have at once (`6`, max `12`)
 - `pokemon-pets.dayNightCycle`: toggles the day/night visual tinting
 - `pokemon-pets.telemetry`: toggles local stats tracking
 - `pokemon-pets.rewards.enabled`: toggles coding activity rewards (`true`)
