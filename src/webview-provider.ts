@@ -52,12 +52,17 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
     }
 
     private async getHtmlContent(webview: vscode.Webview): Promise<string> {
-        const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.html');
-        const fileData = await vscode.workspace.fs.readFile(htmlPath);
-        const htmlContent = new TextDecoder().decode(fileData);
+        try {
+            const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.html');
+            const fileData = await vscode.workspace.fs.readFile(htmlPath);
+            const htmlContent = new TextDecoder().decode(fileData);
 
-        return htmlContent
-            .replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`)
-            .replaceAll('{cspSource}', webview.cspSource);
+            return htmlContent
+                .replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`)
+                .replaceAll('{cspSource}', webview.cspSource);
+        } catch (error) {
+            console.error('[Pokemon Pets] Failed to load webview HTML:', error);
+            return '<html><body><p>Failed to load extension UI.</p></body></html>';
+        }
     }
 }

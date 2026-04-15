@@ -12,5 +12,13 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 coverage/**
+out/test/**
 .editorconfig
-CONTRIBUTING.mddocs/**
+CONTRIBUTING.md
+docs/**
+node_modules/**
+*.vsix
+build.bat
+DOCUMENTATION.md
+package-lock.json
+pets.png

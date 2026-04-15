@@ -237,7 +237,7 @@ export class SaveManager {
 
     /** Updates the money balance and saves. */
     public updateMoney(amount: number): void {
-        this.save.money = amount;
+        this.save.money = Math.min(999_999_999, Math.max(0, amount));
         this.scheduleSave();
     }
 

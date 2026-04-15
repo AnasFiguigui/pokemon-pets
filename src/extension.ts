@@ -761,10 +761,16 @@ async function handleWebviewMessage(message: any): Promise<void> {
             break;
         }
         case 'move_plant':
-            saveManager.movePlant(message.index, message.x, message.y);
+            if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
+                && typeof message.x === 'number' && Number.isFinite(message.x)
+                && typeof message.y === 'number' && Number.isFinite(message.y)) {
+                saveManager.movePlant(message.index, message.x, message.y);
+            }
             break;
         case 'remove_plant':
-            saveManager.removePlant(message.index);
+            if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0) {
+                saveManager.removePlant(message.index);
+            }
             break;
         case 'harvest_plant': {
             const harvestIndex = message.index as number;
@@ -1045,7 +1051,13 @@ async function importSaveCommand(): Promise<void> {
     );
     if (confirm !== 'Import') { return; }
 
-    const clipText = await vscode.env.clipboard.readText();
+    let clipText: string;
+    try {
+        clipText = await vscode.env.clipboard.readText();
+    } catch {
+        vscode.window.showErrorMessage('Failed to read clipboard.');
+        return;
+    }
     try {
         const imported = JSON.parse(clipText);
         if (typeof imported !== 'object' || imported === null) {
@@ -1069,13 +1081,15 @@ async function importSaveCommand(): Promise<void> {
                     sprite: typeof p.sprite === 'string' ? p.sprite : undefined,
                     spriteSize: p.spriteSize === 48 ? 48 : 32,
                     candyFed: typeof p.candyFed === 'number' ? Math.min(Math.max(0, Math.floor(p.candyFed)), 100) : 0,
-                    hp: typeof p.hp === 'number' ? Math.max(0, Math.floor(p.hp)) : undefined,
-                    stamina: typeof p.stamina === 'number' ? Math.max(0, Math.floor(p.stamina)) : undefined,
+                    friendship: typeof p.friendship === 'number' ? Math.min(255, Math.max(0, Math.floor(p.friendship))) : undefined,
+                    hp: typeof p.hp === 'number' ? Math.min(250, Math.max(0, Math.floor(p.hp))) : undefined,
+                    stamina: typeof p.stamina === 'number' ? Math.min(250, Math.max(0, Math.floor(p.stamina))) : undefined,
                 }));
         }
         if (Array.isArray(imported.decoration)) {
             sanitized.decoration = imported.decoration
-                .filter((d: any) => typeof d === 'object' && d !== null && typeof d.category === 'string' && typeof d.name === 'string');
+                .filter((d: any) => typeof d === 'object' && d !== null && typeof d.category === 'string' && typeof d.name === 'string'
+                    && typeof d.x === 'number' && Number.isFinite(d.x) && typeof d.y === 'number' && Number.isFinite(d.y));
         }
         if (Array.isArray(imported.plants)) {
             sanitized.plants = imported.plants
@@ -1091,7 +1105,7 @@ async function importSaveCommand(): Promise<void> {
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
             for (const [key, val] of Object.entries(imported.inventory)) {
                 if (typeof val === 'number' && val > 0 && Number.isFinite(val)) {
-                    sanitized.inventory[key] = Math.floor(val);
+                    sanitized.inventory[key] = Math.min(999999, Math.floor(val));
                 }
             }
         }
@@ -1104,7 +1118,27 @@ async function importSaveCommand(): Promise<void> {
             };
         }
         if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
-            sanitized.telemetry = imported.telemetry;
+            const t = imported.telemetry;
+            const safeRecord = (v: unknown): { [k: string]: number } => {
+                if (typeof v !== 'object' || v === null || Array.isArray(v)) { return {}; }
+                const out: { [k: string]: number } = {};
+                for (const [k, n] of Object.entries(v)) {
+                    if (typeof k === 'string' && typeof n === 'number' && Number.isFinite(n)) { out[k] = Math.max(0, Math.floor(n)); }
+                }
+                return out;
+            };
+            const safeNum = (v: unknown): number => typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+            sanitized.telemetry = {
+                pokemonAdded: safeRecord(t.pokemonAdded),
+                pokemonEvolved: safeRecord(t.pokemonEvolved),
+                candyFed: safeNum(t.candyFed),
+                wildPokemonCaught: safeNum(t.wildPokemonCaught),
+                decorationsPlaced: safeNum(t.decorationsPlaced),
+                goldEarned: safeNum(t.goldEarned),
+                goldSpent: safeNum(t.goldSpent),
+                sessionsCount: safeNum(t.sessionsCount),
+                lastSessionDate: typeof t.lastSessionDate === 'string' ? t.lastSessionDate.slice(0, 10) : '',
+            };
         }
         if (typeof imported.autoFeed === 'boolean') {
             sanitized.autoFeed = imported.autoFeed;

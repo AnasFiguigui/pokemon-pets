@@ -206,6 +206,6 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
         // { name: 'Grookey', forms: [{ name: 'Grookey', sprite: 'grookey', spriteSize: 32, candyCost: 0 }, { name: 'Thwackey', sprite: 'thwackey', spriteSize: 32, candyCost: 10 }, { name: 'Rillaboom', sprite: 'rillaboom', spriteSize: 48, candyCost: 25 }] },
         // { name: 'Scorbunny', forms: [{ name: 'Scorbunny', sprite: 'scorbunny', spriteSize: 32, candyCost: 0 }, { name: 'Raboot', sprite: 'raboot', spriteSize: 32, candyCost: 10 }, { name: 'Cinderace', sprite: 'cinderace', spriteSize: 48, candyCost: 25 }] },
         // { name: 'Sobble', forms: [{ name: 'Sobble', sprite: 'sobble', spriteSize: 32, candyCost: 0 }, { name: 'Drizzile', sprite: 'drizzile', spriteSize: 32, candyCost: 10 }, { name: 'Inteleon', sprite: 'inteleon', spriteSize: 48, candyCost: 25 }] },
-        { name: 'Zorua hisiuan', forms: [{ name: 'Zorua', sprite: 'zorua-hisui', spriteSize: 32, candyCost: 0 }, { name: 'Zoroark', sprite: 'zoroark-hisui', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Zorua hisiuan', forms: [{ name: 'Zorua', sprite: 'zorua_hisui', spriteSize: 32, candyCost: 0 }, { name: 'Zoroark', sprite: 'zoroark_hisui', spriteSize: 48, candyCost: 25 }] },
     ],
 };
