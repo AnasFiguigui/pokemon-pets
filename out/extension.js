@@ -175,7 +175,7 @@ function initGame() {
     if (config.get('dayNightCycle', true)) {
         sendDayNightTint();
     }
-    for (const pet of saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS)) {
+    for (const pet of saveManager.save.pets.slice(0, saveManager.maxPokemon)) {
         loadPet(pet);
     }
     for (const decor of saveManager.save.decoration) {
@@ -399,7 +399,7 @@ function autoFeedPets() {
 }
 /** Builds an array of { hp, stamina, maxHp, maxStamina } for each pet. */
 function buildPetStats() {
-    return saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+    return saveManager.save.pets.slice(0, saveManager.maxPokemon).map(p => ({
         hp: p.hp ?? (0, models_1.getMaxHp)(p),
         stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
         maxHp: (0, models_1.getMaxHp)(p),
@@ -408,7 +408,7 @@ function buildPetStats() {
 }
 /** Sends fresh pokédex data to the webview. */
 function refreshPokedex() {
-    webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, save_manager_1.MAX_SUMMONED_POKEMONS).map(p => ({
+    webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, saveManager.maxPokemon).map(p => ({
             name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize,
             candyFed: p.candyFed ?? 0, friendship: p.friendship ?? 0,
             hp: p.hp ?? (0, models_1.getMaxHp)(p), stamina: p.stamina ?? (0, models_1.getMaxStamina)(p),
@@ -773,10 +773,16 @@ async function handleWebviewMessage(message) {
                 break;
             }
             case 'move_plant':
-                saveManager.movePlant(message.index, message.x, message.y);
+                if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0
+                    && typeof message.x === 'number' && Number.isFinite(message.x)
+                    && typeof message.y === 'number' && Number.isFinite(message.y)) {
+                    saveManager.movePlant(message.index, message.x, message.y);
+                }
                 break;
             case 'remove_plant':
-                saveManager.removePlant(message.index);
+                if (typeof message.index === 'number' && Number.isInteger(message.index) && message.index >= 0) {
+                    saveManager.removePlant(message.index);
+                }
                 break;
             case 'harvest_plant': {
                 const harvestIndex = message.index;
@@ -927,8 +933,8 @@ async function handleWebviewMessage(message) {
 }
 // ── Commands ────────────────────────────────────────────────────────────
 async function addPetCommand() {
-    if (saveManager.save.pets.length >= save_manager_1.MAX_SUMMONED_POKEMONS) {
-        vscode.window.showWarningMessage(`You can only summon up to ${save_manager_1.MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+    if (saveManager.save.pets.length >= saveManager.maxPokemon) {
+        vscode.window.showWarningMessage(`You can only summon up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`);
         return;
     }
     const generation = await vscode.window.showQuickPick(Object.keys(game_data_1.Pokemons), {
@@ -1002,7 +1008,7 @@ async function addPetCommand() {
     pet.friendship = 50 + Math.floor(Math.random() * 50);
     const added = saveManager.addPet(pet);
     if (!added) {
-        vscode.window.showWarningMessage(`You can only summon up to ${save_manager_1.MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`);
+        vscode.window.showWarningMessage(`You can only summon up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`);
         return;
     }
     loadPet(pet);
@@ -1063,7 +1069,14 @@ async function importSaveCommand() {
     if (confirm !== 'Import') {
         return;
     }
-    const clipText = await vscode.env.clipboard.readText();
+    let clipText;
+    try {
+        clipText = await vscode.env.clipboard.readText();
+    }
+    catch {
+        vscode.window.showErrorMessage('Failed to read clipboard.');
+        return;
+    }
     try {
         const imported = JSON.parse(clipText);
         if (typeof imported !== 'object' || imported === null) {
@@ -1077,7 +1090,7 @@ async function importSaveCommand() {
         if (Array.isArray(imported.pets)) {
             sanitized.pets = imported.pets
                 .filter((p) => typeof p === 'object' && p !== null && typeof p.name === 'string' && typeof p.specie === 'string')
-                .slice(0, save_manager_1.MAX_SUMMONED_POKEMONS)
+                .slice(0, saveManager.maxPokemon)
                 .map((p) => ({
                 name: String(p.name).slice(0, 20),
                 specie: String(p.specie),
@@ -1086,13 +1099,15 @@ async function importSaveCommand() {
                 sprite: typeof p.sprite === 'string' ? p.sprite : undefined,
                 spriteSize: p.spriteSize === 48 ? 48 : 32,
                 candyFed: typeof p.candyFed === 'number' ? Math.min(Math.max(0, Math.floor(p.candyFed)), 100) : 0,
-                hp: typeof p.hp === 'number' ? Math.max(0, Math.floor(p.hp)) : undefined,
-                stamina: typeof p.stamina === 'number' ? Math.max(0, Math.floor(p.stamina)) : undefined,
+                friendship: typeof p.friendship === 'number' ? Math.min(255, Math.max(0, Math.floor(p.friendship))) : undefined,
+                hp: typeof p.hp === 'number' ? Math.min(250, Math.max(0, Math.floor(p.hp))) : undefined,
+                stamina: typeof p.stamina === 'number' ? Math.min(250, Math.max(0, Math.floor(p.stamina))) : undefined,
             }));
         }
         if (Array.isArray(imported.decoration)) {
             sanitized.decoration = imported.decoration
-                .filter((d) => typeof d === 'object' && d !== null && typeof d.category === 'string' && typeof d.name === 'string');
+                .filter((d) => typeof d === 'object' && d !== null && typeof d.category === 'string' && typeof d.name === 'string'
+                && typeof d.x === 'number' && Number.isFinite(d.x) && typeof d.y === 'number' && Number.isFinite(d.y));
         }
         if (Array.isArray(imported.plants)) {
             sanitized.plants = imported.plants
@@ -1108,7 +1123,7 @@ async function importSaveCommand() {
         if (typeof imported.inventory === 'object' && imported.inventory !== null && !Array.isArray(imported.inventory)) {
             for (const [key, val] of Object.entries(imported.inventory)) {
                 if (typeof val === 'number' && val > 0 && Number.isFinite(val)) {
-                    sanitized.inventory[key] = Math.floor(val);
+                    sanitized.inventory[key] = Math.min(999999, Math.floor(val));
                 }
             }
         }
@@ -1121,7 +1136,31 @@ async function importSaveCommand() {
             };
         }
         if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
-            sanitized.telemetry = imported.telemetry;
+            const t = imported.telemetry;
+            const safeRecord = (v) => {
+                if (typeof v !== 'object' || v === null || Array.isArray(v)) {
+                    return {};
+                }
+                const out = {};
+                for (const [k, n] of Object.entries(v)) {
+                    if (typeof k === 'string' && typeof n === 'number' && Number.isFinite(n)) {
+                        out[k] = Math.max(0, Math.floor(n));
+                    }
+                }
+                return out;
+            };
+            const safeNum = (v) => typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+            sanitized.telemetry = {
+                pokemonAdded: safeRecord(t.pokemonAdded),
+                pokemonEvolved: safeRecord(t.pokemonEvolved),
+                candyFed: safeNum(t.candyFed),
+                wildPokemonCaught: safeNum(t.wildPokemonCaught),
+                decorationsPlaced: safeNum(t.decorationsPlaced),
+                goldEarned: safeNum(t.goldEarned),
+                goldSpent: safeNum(t.goldSpent),
+                sessionsCount: safeNum(t.sessionsCount),
+                lastSessionDate: typeof t.lastSessionDate === 'string' ? t.lastSessionDate.slice(0, 10) : '',
+            };
         }
         if (typeof imported.autoFeed === 'boolean') {
             sanitized.autoFeed = imported.autoFeed;
@@ -1153,6 +1192,7 @@ function activate(context) {
     console.log('Pokemon Pets is now active 😽');
     // Initialize save manager
     saveManager = new save_manager_1.SaveManager(context.globalStorageUri.fsPath);
+    saveManager.maxPokemon = Math.min(save_manager_1.HARD_CAP_POKEMONS, Math.max(1, Math.floor(config.get('maxPokemon', save_manager_1.DEFAULT_MAX_POKEMONS))));
     saveManager.loadGame();
     syncAutoFeedState();
     // Initialize services
@@ -1210,6 +1250,9 @@ function activate(context) {
                 stopDayNightTimer();
                 webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
+        }
+        if (event.affectsConfiguration('pokemon-pets.maxPokemon')) {
+            saveManager.maxPokemon = Math.min(save_manager_1.HARD_CAP_POKEMONS, Math.max(1, Math.floor(config.get('maxPokemon', save_manager_1.DEFAULT_MAX_POKEMONS))));
         }
     }), 
     // Register commands

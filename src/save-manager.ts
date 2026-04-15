@@ -3,7 +3,8 @@ import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import { Decoration, Pet, PlantInstance, Save, getMaxHp, getMaxStamina } from './models';
 
-export const MAX_SUMMONED_POKEMONS = 6;
+export const DEFAULT_MAX_POKEMONS = 6;
+export const HARD_CAP_POKEMONS = 12;
 
 /** Default inventory data for new or missing saves. */
 function defaultInventory() {
@@ -28,6 +29,7 @@ export class SaveManager {
     private readonly storageFolder: string;
     private readonly savePath: string;
     public save: Save;
+    public maxPokemon: number = DEFAULT_MAX_POKEMONS;
 
     /** Debounce timer for batching rapid saves into a single disk write. */
     private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -78,8 +80,8 @@ export class SaveManager {
         if (!Array.isArray(this.save.pets)) {
             this.save.pets = [];
             saveUpdated = true;
-        } else if (this.save.pets.length > MAX_SUMMONED_POKEMONS) {
-            this.save.pets = this.save.pets.slice(0, MAX_SUMMONED_POKEMONS);
+        } else if (this.save.pets.length > this.maxPokemon) {
+            this.save.pets = this.save.pets.slice(0, this.maxPokemon);
             saveUpdated = true;
         }
 
@@ -215,7 +217,7 @@ export class SaveManager {
 
     /** Adds a pet if under the limit. Returns true on success. */
     public addPet(pet: Pet): boolean {
-        if (this.save.pets.length >= MAX_SUMMONED_POKEMONS) {
+        if (this.save.pets.length >= this.maxPokemon) {
             return false;
         }
 

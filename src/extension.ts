@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Pokemons, Consumables, PlantTypes, type Consumable, type PlantType } from './game-data';
 import { Decoration, Pet, PetItem, PlantInstance, Save, normalizePet, getMaxHp, getMaxStamina } from './models';
-import { SaveManager, MAX_SUMMONED_POKEMONS } from './save-manager';
+import { SaveManager, DEFAULT_MAX_POKEMONS, HARD_CAP_POKEMONS } from './save-manager';
 import { WebViewProvider } from './webview-provider';
 import { TelemetryService } from './telemetry';
 import { EvolutionService } from './evolution';
@@ -166,7 +166,7 @@ function initGame(): void {
         sendDayNightTint();
     }
 
-    for (const pet of saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS)) {
+    for (const pet of saveManager.save.pets.slice(0, saveManager.maxPokemon)) {
         loadPet(pet);
     }
 
@@ -406,7 +406,7 @@ function autoFeedPets(): void {
 
 /** Builds an array of { hp, stamina, maxHp, maxStamina } for each pet. */
 function buildPetStats(): { hp: number; stamina: number; maxHp: number; maxStamina: number }[] {
-    return saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS).map(p => ({
+    return saveManager.save.pets.slice(0, saveManager.maxPokemon).map(p => ({
         hp: p.hp ?? getMaxHp(p),
         stamina: p.stamina ?? getMaxStamina(p),
         maxHp: getMaxHp(p),
@@ -416,7 +416,7 @@ function buildPetStats(): { hp: number; stamina: number; maxHp: number; maxStami
 
 /** Sends fresh pokédex data to the webview. */
 function refreshPokedex(): void {
-    webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, MAX_SUMMONED_POKEMONS).map(p => ({
+    webview.postMessage({ type: 'pokedex', value: saveManager.save.pets.slice(0, saveManager.maxPokemon).map(p => ({
         name: p.name, specie: p.specie, sprite: p.sprite, spriteSize: p.spriteSize,
         candyFed: p.candyFed ?? 0, friendship: p.friendship ?? 0,
         hp: p.hp ?? getMaxHp(p), stamina: p.stamina ?? getMaxStamina(p),
@@ -900,9 +900,9 @@ async function handleWebviewMessage(message: any): Promise<void> {
 // ── Commands ────────────────────────────────────────────────────────────
 
 async function addPetCommand(): Promise<void> {
-    if (saveManager.save.pets.length >= MAX_SUMMONED_POKEMONS) {
+    if (saveManager.save.pets.length >= saveManager.maxPokemon) {
         vscode.window.showWarningMessage(
-            `You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`,
+            `You can only summon up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`,
         );
         return;
     }
@@ -977,7 +977,7 @@ async function addPetCommand(): Promise<void> {
     const added = saveManager.addPet(pet);
     if (!added) {
         vscode.window.showWarningMessage(
-            `You can only summon up to ${MAX_SUMMONED_POKEMONS} Pokémon at once. Remove one first.`,
+            `You can only summon up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`,
         );
         return;
     }
@@ -1072,7 +1072,7 @@ async function importSaveCommand(): Promise<void> {
         if (Array.isArray(imported.pets)) {
             sanitized.pets = imported.pets
                 .filter((p: any) => typeof p === 'object' && p !== null && typeof p.name === 'string' && typeof p.specie === 'string')
-                .slice(0, MAX_SUMMONED_POKEMONS)
+                .slice(0, saveManager.maxPokemon)
                 .map((p: any) => ({
                     name: String(p.name).slice(0, 20),
                     specie: String(p.specie),
@@ -1177,6 +1177,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Initialize save manager
     saveManager = new SaveManager(context.globalStorageUri.fsPath);
+    saveManager.maxPokemon = Math.min(HARD_CAP_POKEMONS, Math.max(1, Math.floor(config.get<number>('maxPokemon', DEFAULT_MAX_POKEMONS))));
     saveManager.loadGame();
     syncAutoFeedState();
 
@@ -1240,6 +1241,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 stopDayNightTimer();
                 webview.postMessage({ type: 'day_night', timeOfDay: 'day', opacity: 0 });
             }
+        }
+        if (event.affectsConfiguration('pokemon-pets.maxPokemon')) {
+            saveManager.maxPokemon = Math.min(HARD_CAP_POKEMONS, Math.max(1, Math.floor(config.get<number>('maxPokemon', DEFAULT_MAX_POKEMONS))));
         }
         }),
 

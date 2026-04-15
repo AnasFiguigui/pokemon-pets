@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
-import { SaveManager, MAX_SUMMONED_POKEMONS } from '../save-manager';
+import { SaveManager, DEFAULT_MAX_POKEMONS } from '../save-manager';
 import type { Pet, Decoration } from '../models';
 
 vi.mock('node:fs');
@@ -126,7 +126,7 @@ describe('SaveManager', () => {
 
             manager.loadGame();
 
-            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            expect(manager.save.pets).toHaveLength(DEFAULT_MAX_POKEMONS);
             expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
@@ -153,7 +153,7 @@ describe('SaveManager', () => {
         });
 
         it('keeps valid pets at exactly the maximum count', () => {
-            const pets = Array.from({ length: MAX_SUMMONED_POKEMONS }, (_, i) => ({
+            const pets = Array.from({ length: DEFAULT_MAX_POKEMONS }, (_, i) => ({
                 name: `Pet${i}`,
                 specie: 'S',
                 color: 'C',
@@ -168,7 +168,7 @@ describe('SaveManager', () => {
 
             manager.loadGame();
 
-            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            expect(manager.save.pets).toHaveLength(DEFAULT_MAX_POKEMONS);
             // No trimming needed → no write
             expect(fs.writeFileSync).not.toHaveBeenCalled();
         });
@@ -268,7 +268,7 @@ describe('SaveManager', () => {
         });
 
         it('rejects when at max capacity', () => {
-            manager.save.pets = Array.from({ length: MAX_SUMMONED_POKEMONS }, (_, i) => ({
+            manager.save.pets = Array.from({ length: DEFAULT_MAX_POKEMONS }, (_, i) => ({
                 name: `P${i}`,
                 specie: 'S',
                 color: 'C',
@@ -276,7 +276,7 @@ describe('SaveManager', () => {
 
             const pet: Pet = { name: 'Extra', specie: 'S', color: 'C' };
             expect(manager.addPet(pet)).toBe(false);
-            expect(manager.save.pets).toHaveLength(MAX_SUMMONED_POKEMONS);
+            expect(manager.save.pets).toHaveLength(DEFAULT_MAX_POKEMONS);
             expect(fs.writeFileSync).not.toHaveBeenCalled();
         });
     });
@@ -376,10 +376,10 @@ describe('SaveManager', () => {
         });
     });
 
-    // ── MAX_SUMMONED_POKEMONS constant ──────────────────────────────────
+    // ── DEFAULT_MAX_POKEMONS constant ──────────────────────────────────
 
-    it('exports MAX_SUMMONED_POKEMONS as 6', () => {
-        expect(MAX_SUMMONED_POKEMONS).toBe(6);
+    it('exports DEFAULT_MAX_POKEMONS as 6', () => {
+        expect(DEFAULT_MAX_POKEMONS).toBe(6);
     });
 
     // ── updateInventory ─────────────────────────────────────────────────
