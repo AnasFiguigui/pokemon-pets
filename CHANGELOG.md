@@ -11,6 +11,7 @@
 - **Zorua line** — Zorua → Zoroark, plus Hisuian variant (Zorua → Zoroark Hisuian).
 - **Configurable max Pokémon** — New `pokemon-pets.maxPokemon` setting lets you choose how many Pokémon you can have at once (1–12, default 6).
 - **Wild Gastly & Haunter** — Gastly and Haunter now appear as night-only wild Pokémon.
+- **Razz Berry & Maranga Berry** — Two new berries with matching seeds and plantable crops. Razz Berry restores HP + stamina; Maranga Berry is a stamina-focused berry with a single-harvest plant.
 
 ### Improvements
 - **Save import hardened** — Friendship, HP, stamina, inventory, telemetry, and decoration data are now fully validated on import.

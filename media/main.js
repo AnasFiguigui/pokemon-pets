@@ -36,6 +36,8 @@ function showTopBarTemporary() {
 const ConsumableCatalog = [
     { id: 'candy', name: 'Rare Candy', price: 100, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 0, y: 64 }, cursorOffset: { x: 0, y: 96 } },
+    { id: 'razz_berry', name: 'Razz Berry', price: 50, category: 'food', stat: '+10 HP  +20 STA', spriteOffset: { x: 32, y: 64 }, cursorOffset: { x: 32, y: 96 } },
+    { id: 'maranga_berry', name: 'Maranga Berry', price: 100, category: 'food', stat: '+50 STA', spriteOffset: { x: 64, y: 64 }, cursorOffset: { x: 64, y: 96 } },
     { id: 'potion', name: 'Potion', price: 100, category: 'potion', stat: '+20 HP', spriteOffset: { x: 0, y: 128 }, cursorOffset: { x: 0, y: 160 } },
     { id: 'super_potion', name: 'Super Potion', price: 280, category: 'potion', stat: '+60 HP', spriteOffset: { x: 32, y: 128 }, cursorOffset: { x: 32, y: 160 } },
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, category: 'potion', stat: '+120 HP', spriteOffset: { x: 64, y: 128 }, cursorOffset: { x: 64, y: 160 } },
@@ -58,6 +60,8 @@ const ConsumableCatalog = [
 // harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
     { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, produces: 'Oran Berry', harvestType: 'single', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'razz_berry_plant', name: 'Razz Berry Seed', price: 400, produces: 'Razz Berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 32], phaseStep: [16, 0] },
+    { id: 'maranga_berry_plant', name: 'Maranga Berry Seed', price: 500, produces: 'Maranga Berry', harvestType: 'single', growthHours: [0.2, 0.4, 0.4, 0.6, 0.4], size: [16, 32], spriteOffset: [0, 64], phaseStep: [16, 0] },
 ];
 
 /** Pre-built map from consumable id → catalog entry for O(1) lookup. */

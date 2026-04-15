@@ -1,6 +1,8 @@
 Name,Category,Price,Description,Restore HP,Restore Stamina,Friendship Gain
 Rare Candy,candy,100,Feed to a Pokémon to help it grow.,-,-,5
 Oran Berry,food,30,Restores HP and stamina.,10,15,2
+Razz Berry,food,50,A tangy berry that restores HP and stamina.,10,20,1
+Maranga Berry,food,100,A rich berry that greatly restores stamina.,0,50,4
 Potion,potion,100,Restores HP to a Pokémon.,20,-,1
 Super Potion,potion,280,Restores a large amount of HP.,60,-,5
 Hyper Potion,potion,500,Restores a massive amount of HP.,120,-,10

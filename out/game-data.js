@@ -4,6 +4,8 @@ exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Con
 exports.Consumables = [
     { id: 'candy', name: 'Rare Candy', price: 100, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 5 },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
+    { id: 'razz_berry', name: 'Razz Berry', price: 50, description: 'A tangy berry that restores HP and stamina.', category: 'food', restoreHp: 15, restoreStamina: 20, friendshipGain: 3 },
+    { id: 'maranga_berry', name: 'Maranga Berry', price: 80, description: 'A rich berry that greatly restores HP and stamina.', category: 'food', restoreHp: 25, restoreStamina: 30, friendshipGain: 4 },
     { id: 'potion', name: 'Potion', price: 100, description: 'Restores HP to a Pokémon.', category: 'potion', restoreHp: 20, friendshipGain: 1 },
     { id: 'super_potion', name: 'Super Potion', price: 280, description: 'Restores a large amount of HP to a Pokémon.', category: 'potion', restoreHp: 60, friendshipGain: 5 },
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, description: 'Restores a massive amount of HP to a Pokémon.', category: 'potion', restoreHp: 120, friendshipGain: 10 },
@@ -25,10 +27,18 @@ exports.PlantTypes = [
     {
         id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, description: 'Grows Oran Berries. Regrows after each harvest!', producesId: 'oran_berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0],
     },
+    {
+        id: 'razz_berry_plant', name: 'Razz Berry Seed', price: 400, description: 'Grows Razz Berries. Regrows after each harvest!', producesId: 'razz_berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.3, 0.3, 0.2], minFruits: 1, maxFruits: 3, size: [16, 32], spriteOffset: [0, 32], phaseStep: [16, 0],
+    },
+    {
+        id: 'maranga_berry_plant', name: 'Maranga Berry Seed', price: 500, description: 'Grows Maranga Berries. One harvest only!', producesId: 'maranga_berry', harvestType: 'single', growthHours: [0.1, 0.2, 0.3, 0.4, 0.3], minFruits: 2, maxFruits: 5, size: [16, 32], spriteOffset: [0, 64], phaseStep: [16, 0],
+    },
 ];
 exports.WildPokemonSpecies = [
     { specie: 'meowth', nightOnly: false },
     { specie: 'golbat', nightOnly: true },
+    { specie: 'gastly', nightOnly: true },
+    { specie: 'haunter', nightOnly: true },
 ];
 exports.Pokemons = {
     'generation 1': [
