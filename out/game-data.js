@@ -86,47 +86,47 @@ exports.Pokemons = {
             ],
         },
     ],
-    // 'generation 2': [
-    //     {
-    //         name: 'Chikorita',
-    //         forms: [
-    //             { name: 'Chikorita', sprite: 'chikorita', spriteSize: 32, candyCost: 0 },
-    //             { name: 'Bayleef', sprite: 'bayleef', spriteSize: 32, candyCost: 10 },
-    //             { name: 'Meganium', sprite: 'meganium', spriteSize: 48, candyCost: 25 },
-    //         ],
-    //     },
-    //     {
-    //         name: 'Cyndaquil',
-    //         forms: [
-    //             { name: 'Cyndaquil', sprite: 'cyndaquil', spriteSize: 32, candyCost: 0 },
-    //             { name: 'Quilava', sprite: 'quilava', spriteSize: 32, candyCost: 10 },
-    //             { name: 'Typhlosion', sprite: 'typhlosion', spriteSize: 48, candyCost: 25 },
-    //         ],
-    //     },
-    //     {
-    //         name: 'Totodile',
-    //         forms: [
-    //             { name: 'Totodile', sprite: 'totodile', spriteSize: 32, candyCost: 0 },
-    //             { name: 'Croconaw', sprite: 'croconaw', spriteSize: 32, candyCost: 10 },
-    //             { name: 'Feraligatr', sprite: 'feraligatr', spriteSize: 48, candyCost: 25 },
-    //         ],
-    //     },
-    // ],
-    // 'generation 3': [
-    //     { name: 'Treecko', forms: [{ name: 'Treecko', sprite: 'treecko', spriteSize: 32, candyCost: 0 }, { name: 'Grovyle', sprite: 'grovyle', spriteSize: 32, candyCost: 10 }, { name: 'Sceptile', sprite: 'sceptile', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Torchic', forms: [{ name: 'Torchic', sprite: 'torchic', spriteSize: 32, candyCost: 0 }, { name: 'Combusken', sprite: 'combusken', spriteSize: 32, candyCost: 10 }, { name: 'Blaziken', sprite: 'blaziken', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Mudkip', forms: [{ name: 'Mudkip', sprite: 'mudkip', spriteSize: 32, candyCost: 0 }, { name: 'Marshtomp', sprite: 'marshtomp', spriteSize: 32, candyCost: 10 }, { name: 'Swampert', sprite: 'swampert', spriteSize: 48, candyCost: 25 }] },
-    // ],
-    // 'generation 4': [
-    //     { name: 'Turtwig', forms: [{ name: 'Turtwig', sprite: 'turtwig', spriteSize: 32, candyCost: 0 }, { name: 'Grotle', sprite: 'grotle', spriteSize: 32, candyCost: 10 }, { name: 'Torterra', sprite: 'torterra', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Chimchar', forms: [{ name: 'Chimchar', sprite: 'chimchar', spriteSize: 32, candyCost: 0 }, { name: 'Monferno', sprite: 'monferno', spriteSize: 32, candyCost: 10 }, { name: 'Infernape', sprite: 'infernape', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Piplup', forms: [{ name: 'Piplup', sprite: 'piplup', spriteSize: 32, candyCost: 0 }, { name: 'Prinplup', sprite: 'prinplup', spriteSize: 32, candyCost: 10 }, { name: 'Empoleon', sprite: 'empoleon', spriteSize: 48, candyCost: 25 }] },
-    // ],
-    // 'generation 5': [
-    //     { name: 'Snivy', forms: [{ name: 'Snivy', sprite: 'snivy', spriteSize: 32, candyCost: 0 }, { name: 'Servine', sprite: 'servine', spriteSize: 32, candyCost: 10 }, { name: 'Serperior', sprite: 'serperior', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Tepig', forms: [{ name: 'Tepig', sprite: 'tepig', spriteSize: 32, candyCost: 0 }, { name: 'Pignite', sprite: 'pignite', spriteSize: 32, candyCost: 10 }, { name: 'Emboar', sprite: 'emboar', spriteSize: 48, candyCost: 25 }] },
-    //     { name: 'Oshawott', forms: [{ name: 'Oshawott', sprite: 'oshawott', spriteSize: 32, candyCost: 0 }, { name: 'Dewott', sprite: 'dewott', spriteSize: 32, candyCost: 10 }, { name: 'Samurott', sprite: 'samurott', spriteSize: 48, candyCost: 25 }] },
-    // ],
+    'generation 2': [
+        {
+            name: 'Chikorita',
+            forms: [
+                { name: 'Chikorita', sprite: 'chikorita', spriteSize: 32, candyCost: 0 },
+                { name: 'Bayleef', sprite: 'bayleef', spriteSize: 32, candyCost: 10 },
+                { name: 'Meganium', sprite: 'meganium', spriteSize: 48, candyCost: 25 },
+            ],
+        },
+        {
+            name: 'Cyndaquil',
+            forms: [
+                { name: 'Cyndaquil', sprite: 'cyndaquil', spriteSize: 32, candyCost: 0 },
+                { name: 'Quilava', sprite: 'quilava', spriteSize: 32, candyCost: 10 },
+                { name: 'Typhlosion', sprite: 'typhlosion', spriteSize: 48, candyCost: 25 },
+            ],
+        },
+        {
+            name: 'Totodile',
+            forms: [
+                { name: 'Totodile', sprite: 'totodile', spriteSize: 32, candyCost: 0 },
+                { name: 'Croconaw', sprite: 'croconaw', spriteSize: 32, candyCost: 10 },
+                { name: 'Feraligatr', sprite: 'feraligatr', spriteSize: 48, candyCost: 25 },
+            ],
+        },
+    ],
+    'generation 3': [
+        { name: 'Treecko', forms: [{ name: 'Treecko', sprite: 'treecko', spriteSize: 32, candyCost: 0 }, { name: 'Grovyle', sprite: 'grovyle', spriteSize: 32, candyCost: 10 }, { name: 'Sceptile', sprite: 'sceptile', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Torchic', forms: [{ name: 'Torchic', sprite: 'torchic', spriteSize: 32, candyCost: 0 }, { name: 'Combusken', sprite: 'combusken', spriteSize: 32, candyCost: 10 }, { name: 'Blaziken', sprite: 'blaziken', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Mudkip', forms: [{ name: 'Mudkip', sprite: 'mudkip', spriteSize: 32, candyCost: 0 }, { name: 'Marshtomp', sprite: 'marshtomp', spriteSize: 32, candyCost: 10 }, { name: 'Swampert', sprite: 'swampert', spriteSize: 48, candyCost: 25 }] },
+    ],
+    'generation 4': [
+        { name: 'Turtwig', forms: [{ name: 'Turtwig', sprite: 'turtwig', spriteSize: 32, candyCost: 0 }, { name: 'Grotle', sprite: 'grotle', spriteSize: 32, candyCost: 10 }, { name: 'Torterra', sprite: 'torterra', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Chimchar', forms: [{ name: 'Chimchar', sprite: 'chimchar', spriteSize: 32, candyCost: 0 }, { name: 'Monferno', sprite: 'monferno', spriteSize: 32, candyCost: 10 }, { name: 'Infernape', sprite: 'infernape', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Piplup', forms: [{ name: 'Piplup', sprite: 'piplup', spriteSize: 32, candyCost: 0 }, { name: 'Prinplup', sprite: 'prinplup', spriteSize: 32, candyCost: 10 }, { name: 'Empoleon', sprite: 'empoleon', spriteSize: 48, candyCost: 25 }] },
+    ],
+    'generation 5': [
+        { name: 'Snivy', forms: [{ name: 'Snivy', sprite: 'snivy', spriteSize: 32, candyCost: 0 }, { name: 'Servine', sprite: 'servine', spriteSize: 32, candyCost: 10 }, { name: 'Serperior', sprite: 'serperior', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Tepig', forms: [{ name: 'Tepig', sprite: 'tepig', spriteSize: 32, candyCost: 0 }, { name: 'Pignite', sprite: 'pignite', spriteSize: 32, candyCost: 10 }, { name: 'Emboar', sprite: 'emboar', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Oshawott', forms: [{ name: 'Oshawott', sprite: 'oshawott', spriteSize: 32, candyCost: 0 }, { name: 'Dewott', sprite: 'dewott', spriteSize: 32, candyCost: 10 }, { name: 'Samurott', sprite: 'samurott', spriteSize: 48, candyCost: 25 }] },
+    ],
     // 'generation 6': [
     //     { name: 'Chespin', forms: [{ name: 'Chespin', sprite: 'chespin', spriteSize: 32, candyCost: 0 }, { name: 'Quilladin', sprite: 'quilladin', spriteSize: 32, candyCost: 10 }, { name: 'Chesnaught', sprite: 'chesnaught', spriteSize: 48, candyCost: 25 }] },
     //     { name: 'Fennekin', forms: [{ name: 'Fennekin', sprite: 'fennekin', spriteSize: 32, candyCost: 0 }, { name: 'Braixen', sprite: 'braixen', spriteSize: 32, candyCost: 10 }, { name: 'Delphox', sprite: 'delphox', spriteSize: 48, candyCost: 25 }] },
