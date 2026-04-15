@@ -1,5 +1,15 @@
 # Change Log
 
+## [v1.3.0] — New Pokémon Across Generations
+
+### New Features
+- **Gastly line** — Gastly → Haunter → Gengar (Generation 1).
+- **Generation 2 starters** — Chikorita → Bayleef → Meganium, Cyndaquil → Quilava → Typhlosion, Totodile → Croconaw → Feraligatr.
+- **Generation 3 starters** — Treecko → Grovyle → Sceptile, Torchic → Combusken → Blaziken, Mudkip → Marshtomp → Swampert.
+- **Generation 4 starters** — Turtwig → Grotle → Torterra, Chimchar → Monferno → Infernape, Piplup → Prinplup → Empoleon.
+- **Generation 5 starters** — Snivy → Servine → Serperior, Tepig → Pignite → Emboar, Oshawott → Dewott → Samurott.
+- **Zorua line** — Zorua → Zoroark, plus Hisuian variant (Zorua → Zoroark Hisuian).
+
 ## [v1.2.0] — Quick Access, Held Items & More
 
 ### New Features
