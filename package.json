@@ -58,17 +58,19 @@
             "properties": {
                 "pokemon-pets.background": {
                     "type": "string",
-                    "default": "Grass",
+                    "default": "Pokemon_grass",
                     "enum": [
                         "Grass",
                         "Sand",
                         "Snow",
                         "Pokemon_grass",
+                        "Non_pokemon_grass",
+                        "Minecraft_grass",
                         "Beach",
                         "Floor1",
-                        "Bridge",
                         "Floor3",
                         "Floor4",
+                        "Ground2",
                         "Ground3"
                     ],
                     "description": "The background theme for the window."

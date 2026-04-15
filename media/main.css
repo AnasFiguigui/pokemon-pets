@@ -63,16 +63,28 @@ body[cursor="none"] {
     background-image: url(./sprites/backgrounds/sand.png);
 }
 
-#background[background="dirt"] {
-    background-image: url(./sprites/backgrounds/dirt.png);
+#background[background="non_pokemon_grass"] {
+    background-image: url(./sprites/backgrounds/non_pokemon_grass.png);
+}
+
+#background[background="minecraft_grass"] {
+    background-image: url(./sprites/backgrounds/minecraft_grass.png);
 }
 
 #background[background="snow"] {
     background-image: url(./sprites/backgrounds/snow.png);
 }
 
-#background[background="bridge"] {
-    background-image: url(./sprites/backgrounds/bridge.png);
+#background[background="floor4"] {
+    background-image: url(./sprites/backgrounds/floor_4.png);
+}
+
+#background[background="ground2"] {
+    background-image: url(./sprites/backgrounds/ground2.png);
+}
+
+#background[background="ground3"] {
+    background-image: url(./sprites/backgrounds/ground3.png);
 }
 
 #background[background="beach"] {
