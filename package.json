@@ -1,7 +1,7 @@
 {
     "name": "pokemon-pets",
     "displayName": "Pokemon Pets",
-    "description": "Pokemon for VSCode",
+    "description": "A virtual pet extension featuring Pokemons.",
     "version": "1.3.0",
     "publisher": "Anasfiguigui",
     "author": {
@@ -15,30 +15,30 @@
     },
     "pricing": "Free",
     "keywords": [
-    "pokemon",
-    "vscode",
-    "vs-code",
-    "vscode-pets",
-    "pokemon-pets",
-    "pokemon-companion",
-    "pokemon-extension",
-    "coding-pets",
-    "pixel-pets",
-    "pixel-art",
-    "pixel-pokemon",
-    "gamified-coding",
-    "developer-pets",
-    "desktop-pets",
-    "coding-companion",
-    "productivity-fun",
-    "programmer-pets",
-    "retro-pixel",
-    "dev-toys",
-    "editor-companion",
-    "ide-pets",
-    "pokemon-fans",
-    "game-dev-tools",
-    "pixel-gamification"
+        "pokemon",
+        "vscode",
+        "vs-code",
+        "vscode-pets",
+        "pokemon-pets",
+        "pokemon-companion",
+        "pokemon-extension",
+        "coding-pets",
+        "pixel-pets",
+        "pixel-art",
+        "pixel-pokemon",
+        "gamified-coding",
+        "developer-pets",
+        "desktop-pets",
+        "coding-companion",
+        "productivity-fun",
+        "programmer-pets",
+        "retro-pixel",
+        "dev-toys",
+        "editor-companion",
+        "ide-pets",
+        "pokemon-fans",
+        "game-dev-tools",
+        "pixel-gamification"
     ],
     "categories": [
         "Other"
@@ -51,7 +51,7 @@
         "vscode": "^1.92.0"
     },
     "activationEvents": [],
-    "main": "./out/extension.js",
+    "main": "./dist/extension.js",
     "contributes": {
         "configuration": {
             "title": "Pokemon Pets",
@@ -178,7 +178,7 @@
                     "dark": "media/icons/dark/switch-off.svg"
                 }
             },
-                        {
+            {
                 "command": "pokemon-pets.toggleAutoFeedOff",
                 "title": "Auto Feed: ON",
                 "icon": {
@@ -303,8 +303,9 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
+        "vscode:prepublish": "npm run compile && npm run bundle",
         "compile": "tsc -p ./",
+        "bundle": "webpack --mode production",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
@@ -321,7 +322,12 @@
         "@vscode/test-cli": "^0.0.9",
         "@vscode/test-electron": "^2.4.0",
         "eslint": "^8.57.0",
+        "javascript-obfuscator": "^5.4.1",
+        "terser-webpack-plugin": "^5.4.0",
         "typescript": "5.5.4",
-        "vitest": "^4.0.18"
+        "vitest": "^4.0.18",
+        "webpack": "^5.106.2",
+        "webpack-cli": "^7.0.2",
+        "webpack-obfuscator": "^3.6.1"
     }
 }

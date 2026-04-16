@@ -163,4 +163,3 @@ exports.Pokemons = {
         { name: 'Zorua hisiuan', forms: [{ name: 'Zorua', sprite: 'zorua_hisui', spriteSize: 32, candyCost: 0 }, { name: 'Zoroark', sprite: 'zoroark_hisui', spriteSize: 48, candyCost: 25 }] },
     ],
 };
-//# sourceMappingURL=game-data.js.map

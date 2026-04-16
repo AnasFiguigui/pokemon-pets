@@ -7,7 +7,9 @@
 		"lib": [
 			"ES2022"
 		],
-		"sourceMap": true,
+		"sourceMap": false,
+		"declaration": false,
+		"declarationMap": false,
 		"rootDir": "src",
 		"strict": true,
 		"noImplicitReturns": true,

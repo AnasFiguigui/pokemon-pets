@@ -1306,4 +1306,3 @@ function deactivate() {
     stopUnifiedTick();
     console.log('Pokemon Pets is now deactivated 😿');
 }
-//# sourceMappingURL=extension.js.map

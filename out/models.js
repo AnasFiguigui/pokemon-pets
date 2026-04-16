@@ -60,4 +60,3 @@ function normalizePet(pet) {
     const spriteSize = pet.spriteSize === 48 ? 48 : 32;
     return { form, sprite, spriteSize };
 }
-//# sourceMappingURL=models.js.map
