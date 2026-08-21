@@ -35,6 +35,7 @@ Use the server to:
 - **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.
 - **Rename Pokémon** — Give your Pokémon custom nicknames from the actions menu or command palette.
 - **Seeds & Plants** — Buy seeds, plant them with a ghost preview of the grown plant, and harvest berries when they mature.
+  - Use Build Mode's `+` button to finalize the current placement and reopen the last visited shop page.
 - **Mulch System** — Apply mulch to plants for bonuses. A colored dot appears below mulched plants so you always know which type is active:
   - 🟢 **Growth Mulch** — Reduces growth time by 25% for 1 hour. *(green dot)*
   - 🔵 **Damp Mulch** — Increases harvest yield by +1. Consumed after one harvest. *(blue dot)*

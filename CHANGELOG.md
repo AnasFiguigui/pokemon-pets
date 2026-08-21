@@ -7,6 +7,7 @@
 
 ### Improvements
 - **Shared harvest logic** — Manual and automatic harvesting now use the same validated backend flow, including repeatable crops and Damp/Gooey Mulch effects.
+- **Quick shop button** — Build Mode now has a `+` button between Sell and Close. It finalizes the current placement and reopens the last visited shop page for faster repeated placement.
 
 ## [v1.3.0] — New Pokémon Across Generations
 

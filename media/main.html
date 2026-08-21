@@ -30,11 +30,16 @@
             <!-- Controls -->
             <span id="decorHelp">Drag to place</span>
             
-            <!-- Toggle action & exit buttons -->
+            <!-- Toggle action, shop shortcut & exit buttons -->
             <div class="decorButtons" role="toolbar" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
                 <!-- Toggle action -->
                 <button type="button" class="menu" button show onclick="DecorMode.toggleAction();">
                     <span id="decorAction">Mode</span>
+                </button>
+
+                <!-- Finalize placement and reopen the last visited shop page -->
+                <button type="button" class="menu" button show title="Open last shop page" aria-label="Open last shop page" onclick="toggleActionStore();">
+                    <span>+</span>
                 </button>
 
                 <!-- Exit decor mode -->

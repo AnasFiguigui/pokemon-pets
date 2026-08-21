@@ -399,6 +399,33 @@ function toggleActionDecor() {
 }
 
 //Store menu
+let lastStoreView = { type: 'root' };
+
+/** Finalizes Build Mode and reopens the last visited shop page. */
+function toggleActionStore() {
+    // Exiting Build Mode finalizes any item currently attached to the cursor.
+    DecorMode.toggle(false);
+
+    // Game.setAction() closes menus, so reopen after that transition completes.
+    setTimeout(() => {
+        switch (lastStoreView.type) {
+            case 'seeds':
+                openStoreSeedsMenu();
+                break;
+            case 'consumables':
+                openStoreConsumablesMenu();
+                break;
+            case 'category':
+                openStoreCategoryMenu(lastStoreView.category);
+                break;
+            case 'root':
+            default:
+                openStoreMenu();
+                break;
+        }
+    }, 0);
+}
+
 function createStoreItem(name, price, stat) {
     //Item element
     const element = document.createElement('div');
@@ -433,6 +460,7 @@ function createStoreItem(name, price, stat) {
 }
 
 function openStoreMenu() {
+    lastStoreView = { type: 'root' };
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
@@ -487,6 +515,11 @@ function openStoreMenu() {
 }
 
 function openStoreCategoryMenu(category) {
+    if (!DecorationPreset[category]) {
+        openStoreMenu();
+        return;
+    }
+    lastStoreView = { type: 'category', category };
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
@@ -547,9 +580,11 @@ function openStoreCategoryMenu(category) {
     //Scroll to top
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
+    Menus.toggle('store', true);
 }
 
 function openStoreConsumablesMenu() {
+    lastStoreView = { type: 'consumables' };
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
@@ -592,9 +627,11 @@ function openStoreConsumablesMenu() {
     //Scroll to top
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0);
+    Menus.toggle('store', true);
 }
 
 function openStoreSeedsMenu() {
+    lastStoreView = { type: 'seeds' };
     //Empty list
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
@@ -667,6 +704,7 @@ function openStoreSeedsMenu() {
     //Scroll to top
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0);
+    Menus.toggle('store', true);
 }
 
 function refreshStorePrices() {
