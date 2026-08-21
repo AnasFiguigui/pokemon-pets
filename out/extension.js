@@ -168,6 +168,7 @@ function watchGitPushes(context) {
 function initGame() {
     webview.postMessage({ type: 'background', value: config.get('background') });
     webview.postMessage({ type: 'scale', value: config.get('scale') });
+    webview.postMessage({ type: 'menu_scale', value: config.get('menuScale') });
     webview.postMessage({ type: 'filter', value: config.get('filter') });
     webview.postMessage({ type: 'wild_pokemons', value: config.get('wild') });
     webview.postMessage({ type: 'money', value: saveManager.save.money });
@@ -1241,6 +1242,9 @@ function activate(context) {
         }
         if (event.affectsConfiguration('pokemon-pets.scale')) {
             webview.postMessage({ type: 'scale', value: config.get('scale') });
+        }
+        if (event.affectsConfiguration('pokemon-pets.menuScale')) {
+            webview.postMessage({ type: 'menu_scale', value: config.get('menuScale') });
         }
         if (event.affectsConfiguration('pokemon-pets.filter')) {
             webview.postMessage({ type: 'filter', value: config.get('filter') });

@@ -27,6 +27,7 @@ body {
 
     /* Vars */
     --scale: 1;
+    --menu-scale: 1;
     --text: #f0f0f0;
 }
 
@@ -225,6 +226,7 @@ body[cursor="none"] {
     flex-direction: column;
     gap: 5px;
     box-sizing: border-box;
+    zoom: var(--menu-scale);
     
     /* Decoration */
     border: 20px solid transparent;

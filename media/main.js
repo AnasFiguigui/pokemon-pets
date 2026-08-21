@@ -933,6 +933,12 @@ function handleSettingsMessage(message) {
             }
             document.body.style.setProperty('--scale', Game.scale);
             break;
+        case 'menu_scale': {
+            const menuScale = typeof message.value === 'string' ? message.value.toLowerCase() : 'default';
+            const scaleValue = menuScale === 'small' ? 0.75 : menuScale === 'large' ? 1.25 : 1;
+            document.body.style.setProperty('--menu-scale', scaleValue);
+            break;
+        }
         case 'filter':
             Game.background.removeAttribute('filter');
             if (message.value && message.value.toLowerCase() !== 'none') {

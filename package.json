@@ -85,6 +85,16 @@
                     ],
                     "description": "The size of the pets."
                 },
+                "pokemon-pets.menuScale": {
+                    "type": "string",
+                    "default": "Default",
+                    "enum": [
+                        "Small",
+                        "Default",
+                        "Large"
+                    ],
+                    "description": "The size of the in-game menus."
+                },
                 "pokemon-pets.wild": {
                     "type": "boolean",
                     "default": true,
