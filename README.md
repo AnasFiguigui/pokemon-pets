@@ -31,7 +31,7 @@ Use the server to:
 - In-game store and decoration mode (move/sell/place decor).
 - **Decoration Categories** — Decor Plants, Lamps, Mid Misc, Small Misc, Fences, and Special (programming language banners — free!).
 - **HP & Stamina** — Pokémon have health and stamina that drain over time; fainted Pokémon leave.
-- **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions.
+- **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions, and harvests ripe plants after a five-minute grace period.
 - **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.
 - **Rename Pokémon** — Give your Pokémon custom nicknames from the actions menu or command palette.
 - **Seeds & Plants** — Buy seeds, plant them with a ghost preview of the grown plant, and harvest berries when they mature.

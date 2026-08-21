@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.4.0] — Auto Harvest
+
+### New Features
+- **Delayed auto harvest** — When Auto Feed is enabled, ripe plants are now harvested automatically after five minutes, leaving a grace period for manual harvesting.
+
+### Improvements
+- **Shared harvest logic** — Manual and automatic harvesting now use the same validated backend flow, including repeatable crops and Damp/Gooey Mulch effects.
+
 ## [v1.3.0] — New Pokémon Across Generations
 
 ### New Features

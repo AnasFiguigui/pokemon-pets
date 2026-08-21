@@ -8,6 +8,7 @@ import { EvolutionService } from './evolution';
 import { DayNightCycle } from './day-night';
 import { StreakService } from './streak';
 import { CodingRewardsTracker, type CodingRewardsConfig, type RewardEvent } from './coding-rewards';
+import { isReadyForAutoHarvest } from './auto-harvest';
 
 let config = vscode.workspace.getConfiguration('pokemon-pets');
 let webview: WebViewProvider;
@@ -269,6 +270,10 @@ function tickPlants(): void {
                 webview.postMessage({ type: 'clear_mulch', index: i });
             }
         }
+        // Auto Feed also auto-harvests plants after a five-minute manual-harvest window.
+        if (autoFeedEnabled && isReadyForAutoHarvest(plant, plantType.growthHours.length - 1)) {
+            harvestPlant(i);
+        }
         // Plants no longer wilt — ripe plants stay forever
         // const maxPhase = plantType.growthHours.length - 1;
         // if (currentPhase >= maxPhase) {
@@ -281,6 +286,49 @@ function tickPlants(): void {
         //     }
         // }
     }
+}
+
+/** Harvests a ripe plant. Returns false when the index is invalid or the plant is not ready. */
+function harvestPlant(harvestIndex: number): boolean {
+    const plant = saveManager.save.plants[harvestIndex];
+    if (!plant) { return false; }
+    const plantType = PlantTypesMap.get(plant.plantId);
+    if (!plantType) { return false; }
+    const phase = getPlantPhase(plant, plantType);
+    const maxPhase = plantType.growthHours.length - 1;
+    if (phase < maxPhase) { return false; }
+
+    let fruits = plantType.minFruits + Math.floor(Math.random() * (plantType.maxFruits - plantType.minFruits + 1));
+    if (plant.mulch === 'damp_mulch') { fruits += 1; }
+    const prevCount = saveManager.getConsumableCount(plantType.producesId);
+    saveManager.updateInventory(plantType.producesId, prevCount + fruits);
+    const produceName = ConsumablesMap.get(plantType.producesId)?.name ?? plantType.producesId;
+
+    if (plantType.harvestType === 'single') {
+        if (plant.mulch === 'gooey_mulch') {
+            plant.mulch = undefined;
+            plant.mulchAppliedAt = undefined;
+            saveManager.updatePlantPhase(harvestIndex, 2);
+            webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+            webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
+        } else {
+            saveManager.removePlant(harvestIndex);
+            webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
+        }
+    } else {
+        saveManager.updatePlantPhase(harvestIndex, 2);
+        webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+    }
+
+    if (plant.mulch === 'damp_mulch') {
+        plant.mulch = undefined;
+        plant.mulchAppliedAt = undefined;
+        saveManager.scheduleSave();
+        webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
+    }
+    webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+    webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
+    return true;
 }
 
 // ── Day/Night Cycle ─────────────────────────────────────────────────────
@@ -774,46 +822,9 @@ async function handleWebviewMessage(message: any): Promise<void> {
             break;
         case 'harvest_plant': {
             const harvestIndex = message.index as number;
-            const plant = saveManager.save.plants[harvestIndex];
-            if (!plant) { break; }
-            const pType = PlantTypesMap.get(plant.plantId);
-            if (!pType) { break; }
-            const phase = getPlantPhase(plant, pType);
-            const maxPhase = pType.growthHours.length - 1;
-            if (phase < maxPhase) { break; } // Not ripe yet
-            // Random fruit count (damp_mulch: +1 yield)
-            let fruits = pType.minFruits + Math.floor(Math.random() * (pType.maxFruits - pType.minFruits + 1));
-            if (plant.mulch === 'damp_mulch') { fruits += 1; }
-            const prevCount = saveManager.getConsumableCount(pType.producesId);
-            saveManager.updateInventory(pType.producesId, prevCount + fruits);
-            const produceName = ConsumablesMap.get(pType.producesId)?.name ?? pType.producesId;
-            if (pType.harvestType === 'single') {
-                // Single-harvest: gooey_mulch grants 1 extra regrow cycle
-                if (plant.mulch === 'gooey_mulch') {
-                    // Regrow once, then consume the mulch
-                    plant.mulch = undefined;
-                    plant.mulchAppliedAt = undefined;
-                    saveManager.updatePlantPhase(harvestIndex, 2);
-                    webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
-                    webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
-                } else {
-                    saveManager.removePlant(harvestIndex);
-                    webview.postMessage({ type: 'destroy_plant', index: harvestIndex });
-                }
-            } else {
-                // Repeatable-harvest: reset to blossom phase (2) so it regrows fruit
-                saveManager.updatePlantPhase(harvestIndex, 2);
-                webview.postMessage({ type: 'update_plant', index: harvestIndex, phase: 2 });
+            if (typeof harvestIndex === 'number' && Number.isInteger(harvestIndex) && harvestIndex >= 0) {
+                harvestPlant(harvestIndex);
             }
-            // Consume one-use mulch after harvest (damp)
-            if (plant.mulch === 'damp_mulch') {
-                plant.mulch = undefined;
-                plant.mulchAppliedAt = undefined;
-                saveManager.scheduleSave();
-                webview.postMessage({ type: 'clear_mulch', index: harvestIndex });
-            }
-            webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
-            webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
             break;
         }
         case 'apply_mulch': {
