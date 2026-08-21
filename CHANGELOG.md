@@ -14,6 +14,7 @@
 
 ### Bug Fixes
 - **Rapid evolution sprites** — Consecutive evolutions now animate in sequence, preventing the in-game sprite from getting stuck one form behind the Pokédex when candies are fed quickly.
+- **Responsive wallet bar** — The money, Pokédex, Backpack, and candy controls now remain visible and centered when the extension sidebar is very narrow.
 
 ## [v1.3.0] — New Pokémon Across Generations
 
