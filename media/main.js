@@ -54,6 +54,7 @@ const ConsumableCatalog = [
     { id: 'dusk_stone', name: 'Dusk Stone', price: 1200, category: 'stone', spriteOffset: { x: 352, y: 0 }, cursorOffset: { x: 352, y: 32 } },
     { id: 'shiny_stone', name: 'Shiny Stone', price: 1200, category: 'stone', spriteOffset: { x: 384, y: 0 }, cursorOffset: { x: 384, y: 32 } },
     { id: 'ice_stone', name: 'Ice Stone', price: 1000, category: 'stone', spriteOffset: { x: 416, y: 0 }, cursorOffset: { x: 416, y: 32 } },
+    { id: 'everstone', name: 'Everstone', price: 500, category: 'stone', stat: 'Prevents evolution', spriteOffset: { x: 64, y: 288 }, cursorOffset: { x: 64, y: 320 } },
 ];
 
 //Plant catalog (must match extension's PlantTypes array)

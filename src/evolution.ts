@@ -1,7 +1,7 @@
 import type { Pet } from './models';
 import type { SaveManager } from './save-manager';
 import type { PokemonForm, PokemonSpecies } from './game-data';
-import { Pokemons } from './game-data';
+import { EVERSTONE_ID, Pokemons } from './game-data';
 import { DayNightCycle } from './day-night';
 
 export interface EvolutionResult {
@@ -79,6 +79,12 @@ export class EvolutionService {
 
         // Increment candy count
         pet.candyFed = (pet.candyFed ?? 0) + 1;
+
+        // Everstone allows normal leveling but blocks every candy evolution.
+        if (pet.heldItem === EVERSTONE_ID) {
+            this.saveManager.scheduleSave();
+            return { evolved: false, totalCandy: pet.candyFed };
+        }
 
         const species = this.findSpecies(pet);
         if (!species) {
@@ -183,6 +189,19 @@ export class EvolutionService {
             return { evolved: false, totalCandy: 0 };
         }
 
+        const candyFed = pet.candyFed ?? 0;
+
+        // Held items must be removed by the user before another item can be used.
+        if (pet.heldItem) {
+            return { evolved: false, totalCandy: candyFed };
+        }
+        // Equipping Everstone never evolves or permanently consumes it.
+        if (itemId === EVERSTONE_ID) {
+            pet.heldItem = EVERSTONE_ID;
+            this.saveManager.scheduleSave();
+            return { evolved: false, totalCandy: candyFed, equipped: true };
+        }
+
         const species = this.findSpecies(pet);
         if (!species) {
             return { evolved: false, totalCandy: pet.candyFed ?? 0 };
@@ -190,7 +209,6 @@ export class EvolutionService {
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
         const currentCandyCost = species.forms[currentIdx].candyCost;
-        const candyFed = pet.candyFed ?? 0;
 
         // Scan all forms after the current one for a matching requiredItem
         let canEquip = false;
@@ -241,6 +259,9 @@ export class EvolutionService {
         const pet = this.saveManager.save.pets[petIndex];
         if (!pet?.heldItem) {
             return { evolved: false, totalCandy: pet?.candyFed ?? 0 };
+        }
+        if (pet.heldItem === EVERSTONE_ID) {
+            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
         }
 
         const species = this.findSpecies(pet);

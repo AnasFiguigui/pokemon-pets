@@ -41,7 +41,8 @@ Use the server to:
   - 🔵 **Damp Mulch** — Increases harvest yield by +1. Consumed after one harvest. *(blue dot)*
   - 🟠 **Stable Mulch** — Doubles the harvest window before a ripe plant wilts. Consumed after one harvest. *(orange dot)*
   - 🟣 **Gooey Mulch** — Grants 1 extra regrow cycle. Single-harvest plants only. *(purple dot)*
-- **Consumables & Backpack** — Food, potions, candy, mulch, and 9 evolution stones with a backpack UI.
+- **Consumables & Backpack** — Food, potions, candy, mulch, evolution stones, and Everstone with a backpack UI.
+- **Everstone** — Equip it in a Pokémon's held-item slot to prevent evolution until you manually remove it.
 - **Friendship** — Pokémon build friendship over time through feeding and catching; shown in the Pokédex.
 - **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
 - **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.

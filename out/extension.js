@@ -1109,6 +1109,9 @@ async function importSaveCommand() {
                 friendship: typeof p.friendship === 'number' ? Math.min(255, Math.max(0, Math.floor(p.friendship))) : undefined,
                 hp: typeof p.hp === 'number' ? Math.min(250, Math.max(0, Math.floor(p.hp))) : undefined,
                 stamina: typeof p.stamina === 'number' ? Math.min(250, Math.max(0, Math.floor(p.stamina))) : undefined,
+                heldItem: typeof p.heldItem === 'string' && ConsumablesMap.get(p.heldItem)?.category === 'stone'
+                    ? p.heldItem
+                    : undefined,
             }));
         }
         if (Array.isArray(imported.decoration)) {

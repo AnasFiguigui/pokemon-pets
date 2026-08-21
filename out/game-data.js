@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = void 0;
+exports.Pokemons = exports.WildPokemonSpecies = exports.PlantTypes = exports.Consumables = exports.EVERSTONE_ID = void 0;
+exports.EVERSTONE_ID = 'everstone';
 exports.Consumables = [
     { id: 'candy', name: 'Rare Candy', price: 100, description: 'Feed to a Pokémon to help it grow.', category: 'candy', friendshipGain: 5 },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, description: 'Restores HP and stamina.', category: 'food', restoreHp: 10, restoreStamina: 15, friendshipGain: 2 },
@@ -18,6 +19,7 @@ exports.Consumables = [
     { id: 'dusk_stone', name: 'Dusk Stone', price: 1200, description: 'A stone that absorbs darkness.', category: 'stone' },
     { id: 'shiny_stone', name: 'Shiny Stone', price: 1200, description: 'A stone that shines brilliantly.', category: 'stone' },
     { id: 'ice_stone', name: 'Ice Stone', price: 1000, description: 'A stone that feels cold to the touch.', category: 'stone' },
+    { id: exports.EVERSTONE_ID, name: 'Everstone', price: 500, description: 'A held stone that prevents evolution until removed.', category: 'stone' },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces growth time by 25% for 1 hour.', category: 'mulch' },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1. Consumed after one harvest.', category: 'mulch' },
     // { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },

@@ -348,6 +348,66 @@ describe('EvolutionService', () => {
     // ── Held Item Evolution ─────────────────────────────────────────────
 
     describe('heldItem', () => {
+        it('equips Everstone without evolving the pet', () => {
+            const pet = bulbasaurPet();
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'everstone');
+
+            expect(result.evolved).toBe(false);
+            expect(result.equipped).toBe(true);
+            expect(pet.heldItem).toBe('everstone');
+            expect(pet.form).toBe('Bulbasaur');
+        });
+
+        it('Everstone blocks candy evolution while still increasing candy', () => {
+            const pet: Pet = {
+                ...bulbasaurPet(),
+                candyFed: 9,
+                heldItem: 'everstone',
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.feedCandy(0);
+
+            expect(result.evolved).toBe(false);
+            expect(result.totalCandy).toBe(10);
+            expect(pet.candyFed).toBe(10);
+            expect(pet.form).toBe('Bulbasaur');
+            expect(pet.heldItem).toBe('everstone');
+        });
+
+        it('Everstone blocks friendship-triggered evolution', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32,
+                candyFed: 5, friendship: 255, heldItem: 'everstone',
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.checkHeldItemEvolution(0);
+
+            expect(result.evolved).toBe(false);
+            expect(pet.form).toBe('Eevee');
+            expect(pet.heldItem).toBe('everstone');
+        });
+
+        it('Everstone blocks item evolution until manually removed', () => {
+            const pet: Pet = {
+                name: 'Eve', specie: 'Eevee', color: 'Generation 1',
+                form: 'Eevee', sprite: 'eevee', spriteSize: 32,
+                candyFed: 5, friendship: 255, heldItem: 'everstone',
+            };
+            sm.save.pets.push(pet);
+
+            const result = evo.useItem(0, 'water_stone');
+
+            expect(result.evolved).toBe(false);
+            expect(result.equipped).toBeUndefined();
+            expect(pet.form).toBe('Eevee');
+            expect(pet.heldItem).toBe('everstone');
+        });
+
         it('feedCandy evolves via held item when requirements met', () => {
             const pet: Pet = {
                 name: 'Eve', specie: 'Eevee', color: 'Generation 1',

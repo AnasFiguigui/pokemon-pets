@@ -101,6 +101,12 @@ describe('Consumables', () => {
         expect(Consumables.find(c => c.id === 'candy')).toBeDefined();
     });
 
+    it('includes Everstone as a held stone', () => {
+        const everstone = Consumables.find(c => c.id === 'everstone');
+        expect(everstone?.name).toBe('Everstone');
+        expect(everstone?.category).toBe('stone');
+    });
+
     it('all consumables have valid fields', () => {
         for (const item of Consumables) {
             expect(typeof item.id).toBe('string');
