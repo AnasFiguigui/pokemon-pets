@@ -11,6 +11,9 @@
 - **Held-item save imports** — Imported saves now preserve valid held stones, including Everstone.
 - **Quick shop button** — Build Mode now has a `+` button between Sell and Close. It finalizes the current placement and reopens the last visited shop page for faster repeated placement.
 
+### Bug Fixes
+- **Rapid evolution sprites** — Consecutive evolutions now animate in sequence, preventing the in-game sprite from getting stuck one form behind the Pokédex when candies are fed quickly.
+
 ## [v1.3.0] — New Pokémon Across Generations
 
 ### New Features

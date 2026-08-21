@@ -722,6 +722,119 @@ function refreshStorePrices() {
     }
 }
 
+// Evolution messages can arrive faster than the canvas animation completes (for
+// example, when two candies are fed in quick succession). Keep a queue per pet
+// index so each swap starts from the form produced by the previous animation.
+const evolutionMessageQueues = new Map();
+
+function enqueueEvolution(message) {
+    const idx = message.index;
+    if (!Number.isInteger(idx) || idx < 0) { return; }
+
+    let queue = evolutionMessageQueues.get(idx);
+    if (!queue) {
+        queue = [];
+        evolutionMessageQueues.set(idx, queue);
+    }
+
+    queue.push(message);
+    if (queue.length === 1) { playNextEvolution(idx, queue); }
+}
+
+function playNextEvolution(idx, queue) {
+    if (evolutionMessageQueues.get(idx) !== queue || queue.length === 0) { return; }
+
+    const message = queue[0];
+    const oldPet = Game.pets[idx];
+    if (!oldPet) {
+        evolutionMessageQueues.delete(idx);
+        return;
+    }
+
+    let completed = false;
+    function completeEvolution() {
+        if (completed) { return; }
+        completed = true;
+
+        // Reset/removal may have cancelled this queue while the animation ran.
+        if (evolutionMessageQueues.get(idx) !== queue) { return; }
+        queue.shift();
+        if (queue.length === 0) {
+            evolutionMessageQueues.delete(idx);
+        } else {
+            // Give the newly-created form a moment to appear before evolving it.
+            setTimeout(() => playNextEvolution(idx, queue), 300);
+        }
+    }
+
+    // Freeze the pet at idle during evolution and prevent AI movement.
+    oldPet.animate('idle', true);
+    oldPet._frozenForEvolution = true;
+    oldPet.update = function () {
+        // Skip AI updates (no movement), only run base rendering.
+    };
+
+    const blinkPhases = [
+        { count: 3, interval: 300 },
+        { count: 4, interval: 200 },
+        { count: 5, interval: 140 },
+        { count: 6, interval: 100 },
+        { count: 8, interval: 70 },
+        { count: 12, interval: 40 },
+        { count: 16, interval: 25 },
+    ];
+    let phaseIdx = 0;
+    let phaseStep = 0;
+
+    function doBlink() {
+        // Abort if the pet was removed or replaced during animation.
+        if (Game.pets[idx] !== oldPet) {
+            oldPet.setActive(true);
+            completeEvolution();
+            return;
+        }
+        if (phaseIdx >= blinkPhases.length) {
+            oldPet.setActive(true);
+            performEvolutionSwap();
+            return;
+        }
+
+        const phase = blinkPhases[phaseIdx];
+        phaseStep++;
+        oldPet.setActive(phaseStep % 2 === 0);
+        if (phaseStep >= phase.count) {
+            phaseIdx++;
+            phaseStep = 0;
+        }
+
+        const nextInterval = blinkPhases[Math.min(phaseIdx, blinkPhases.length - 1)].interval;
+        setTimeout(doBlink, nextInterval);
+    }
+
+    function performEvolutionSwap() {
+        const preservedPos = oldPet.pos;
+        Game.objects.removeItem(oldPet);
+        Game.pets.splice(idx, 1);
+
+        const specie = message.specie.toLowerCase();
+        const generation = (message.color ?? 'generation 1').toString();
+        const form = (message.form ?? message.specie).toString();
+        const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
+        const spriteSize = message.spriteSize === 48 ? 48 : 32;
+        const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
+
+        if (preservedPos) { newPet.moveTo(preservedPos); }
+        newPet.animate('special', true);
+
+        // Pokemon's constructor appends it; put it back at the original index.
+        Game.pets.removeItem(newPet);
+        Game.pets.splice(idx, 0, newPet);
+        completeEvolution();
+    }
+
+    setTimeout(doBlink, 200);
+}
+
 //Messages from VSCode
 function handleGameMessage(message) {
     switch (message.type.toLowerCase()) {
@@ -730,6 +843,7 @@ function handleGameMessage(message) {
             document.body.style.display = '';
             break;
         case 'reset':
+            evolutionMessageQueues.clear();
             for (const pet of Game.pets) { Game.objects.removeItem(pet); }
             Game.pets = [];
             for (const decor of Game.decoration) { Game.objects.removeItem(decor); }
@@ -761,84 +875,7 @@ function handleGameMessage(message) {
             updateNightOverlay(message.timeOfDay, message.opacity);
             break;
         case 'evolution':
-            // Canvas-based evolution effect: blink the old pet, then swap to evolved form
-            if (typeof message.index === 'number' && Game.pets[message.index]) {
-                const oldPet = Game.pets[message.index];
-                const idx = message.index;
-
-                // Freeze the pet at idle during evolution — prevent AI from moving it
-                oldPet.animate('idle', true);
-                oldPet._frozenForEvolution = true;
-                oldPet.update = function () {
-                    // Skip AI updates (no movement), only run base rendering
-                };
-
-                // Accelerating blink: starts slow, builds tension, rapid climax
-                const blinkPhases = [
-                    { count: 3, interval: 300 },   // Very slow (0.9s)
-                    { count: 4, interval: 200 },   // Slow (0.8s)
-                    { count: 5, interval: 140 },   // Medium-slow (0.7s)
-                    { count: 6, interval: 100 },   // Medium (0.6s)
-                    { count: 8, interval: 70 },    // Fast (0.56s)
-                    { count: 12, interval: 40 },   // Very fast (0.48s)
-                    { count: 16, interval: 25 },   // Rapid (0.4s)
-                ];
-                let phaseIdx = 0;
-                let phaseStep = 0;
-
-                function doBlink() {
-                    // Safety: abort if pet was removed during animation
-                    if (Game.pets[idx] !== oldPet) {
-                        oldPet.setActive(true);
-                        return;
-                    }
-                    if (phaseIdx >= blinkPhases.length) {
-                        // Blinking done — ensure visible, then swap
-                        oldPet.setActive(true);
-                        performEvolutionSwap();
-                        return;
-                    }
-                    const phase = blinkPhases[phaseIdx];
-                    phaseStep++;
-                    oldPet.setActive(phaseStep % 2 === 0);
-
-                    if (phaseStep >= phase.count) {
-                        phaseIdx++;
-                        phaseStep = 0;
-                    }
-
-                    const nextInterval = blinkPhases[Math.min(phaseIdx, blinkPhases.length - 1)].interval;
-                    setTimeout(doBlink, nextInterval);
-                }
-
-                function performEvolutionSwap() {
-                    const preservedPos = oldPet.pos;
-                    // Remove old pet
-                    Game.objects.removeItem(oldPet);
-                    Game.pets.splice(idx, 1);
-
-                    // Create new evolved pet
-                    const specie = message.specie.toLowerCase();
-                    const generation = (message.color ?? 'generation 1').toString();
-                    const form = (message.form ?? message.specie).toString();
-                    const sprite = (message.sprite ?? form).toString().toLowerCase().replaceAll(' ', '_');
-                    const spriteSize = message.spriteSize === 48 ? 48 : 32;
-                    const newPet = new Pokemon(message.name, specie, generation, form, sprite, spriteSize);
-
-                    // Restore position
-                    if (preservedPos) { newPet.moveTo(preservedPos); }
-
-                    // Play special animation on the new form
-                    newPet.animate('special', true);
-
-                    // Fix index
-                    Game.pets.removeItem(newPet);
-                    Game.pets.splice(idx, 0, newPet);
-                }
-
-                // Start blinking after a brief pause
-                setTimeout(doBlink, 200);
-            }
+            enqueueEvolution(message);
             break;
         case 'pokedex':
             pokedexData = Array.isArray(message.value) ? message.value : [];
@@ -989,6 +1026,8 @@ function handleSpawnMessage(message) {
             break;
         case 'remove_pokemon':
         case 'remove_pet':
+            // Pet indices may shift after removal; cancel pending visual swaps.
+            evolutionMessageQueues.clear();
             if (Game.pets[message.index]) { Game.pets[message.index].remove(); }
             break;
         default:
