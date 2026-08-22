@@ -500,7 +500,8 @@ function openStoreMenu() {
         const element = createStoreItem(category);
         element.classList.add('storeCategoryButton');
         const icon = document.createElement('img');
-        icon.src = `${Game.mediaURI}sprites/ui/${category.toLowerCase()}.png`;
+        const iconName = category === 'GROUND_TILES' ? 'tiles' : category.toLowerCase();
+        icon.src = `${Game.mediaURI}sprites/ui/${iconName}.png`;
         icon.alt = category;
         element.prepend(icon);
         element.onclick = () => openStoreCategoryMenu(category);

@@ -6,6 +6,7 @@
 - **Delayed auto harvest** — When Auto Feed is enabled, ripe plants are now harvested automatically after five minutes, leaving a grace period for manual harvesting.
 - **Everstone** — A new held item that prevents a Pokémon from evolving while equipped. It remains in the held slot until manually removed and returned to the backpack.
 - **Menu scale setting** — In-game menus can now be displayed at Small, Default, or Large scale independently of the Pokémon size. The existing menu size remains the default.
+- **Ground Tiles** — Added a free Item Shop category with 13-piece Pond, Sand Path, and Dirt Path sets, including four inner-corner tiles per style. These background pieces always render beneath Pokémon, plants, and ordinary decorations.
 
 ### Improvements
 - **Shared harvest logic** — Manual and automatic harvesting now use the same validated backend flow, including repeatable crops and Damp/Gooey Mulch effects.

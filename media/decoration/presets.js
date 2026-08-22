@@ -1,4 +1,58 @@
+const GROUND_TILE_POSITIONS = [
+    'Top Left', 'Top', 'Top Right',
+    'Left', 'Center', 'Right',
+    'Bottom Left', 'Bottom', 'Bottom Right',
+];
+
+const GROUND_TILE_INNER_CORNERS = [
+    'Inner Corner - Top Left', 'Inner Corner - Top Right',
+    'Inner Corner - Bottom Left', 'Inner Corner - Bottom Right',
+];
+
+function createGroundTileSet(keyPrefix, displayName, originX, originY) {
+    const outerTiles = GROUND_TILE_POSITIONS.map((position, index) => {
+        const column = index % 3;
+        const row = Math.floor(index / 3);
+        return [
+            `${keyPrefix}_${String(index + 1).padStart(2, '0')}`,
+            {
+                name: `${displayName} - ${position}`,
+                size: new Vec2(16),
+                spriteOffset: new Vec2(originX + column * 16, originY + row * 16),
+                price: 0,
+                sortingLayer: DecorationLayer.GROUND,
+            },
+        ];
+    });
+
+    // Four concave/inner corners stored as a 2x2 block below the 3x3 set.
+    const innerCorners = GROUND_TILE_INNER_CORNERS.map((position, index) => {
+        const column = index % 2;
+        const row = Math.floor(index / 2);
+        return [
+            `${keyPrefix}_${String(index + 10).padStart(2, '0')}`,
+            {
+                name: `${displayName} - ${position}`,
+                size: new Vec2(16),
+                spriteOffset: new Vec2(originX + column * 16, originY + 48 + row * 16),
+                price: 0,
+                sortingLayer: DecorationLayer.GROUND,
+            },
+        ];
+    });
+
+    return Object.fromEntries([...outerTiles, ...innerCorners]);
+}
+
 class DecorationPreset {
+
+    // Three autotile-style sets: a 3x3 outer block plus four inner corners below.
+    // Add future sets by spreading another call with the new block's top-left.
+    static GROUND_TILES = {
+        ...createGroundTileSet('POND', 'Pond', 0, 720),
+        ...createGroundTileSet('PATH_STYLE_1', 'Sand Path', 48, 720),
+        ...createGroundTileSet('PATH_STYLE_2', 'Dirt Path', 96, 720),
+    };
 
     static QUICK_ACCESS = {
     OBJECT_01: { name: 'PC', size: new Vec2(16, 32), spriteOffset: new Vec2(0, 656), price: 0, quickAction: 'pokedex' },

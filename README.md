@@ -29,7 +29,8 @@ Use the server to:
 - Pet moods and interactions (including candy and pokéball actions).
 - Wild Pokémon spawn system with catch rewards.
 - In-game store and decoration mode (move/sell/place decor).
-- **Decoration Categories** — Decor Plants, Lamps, Mid Misc, Small Misc, Fences, and Special (programming language banners — free!).
+- **Decoration Categories** — Ground Tiles, Decor Plants, Lamps, Mid Misc, Small Misc, Fences, and Special (programming language banners — free!).
+- **Ground Tiles** — Free 13-piece Pond, Sand Path, and Dirt Path sets for building custom water features and routes. Ground tiles always render beneath Pokémon, plants, and ordinary decorations.
 - **HP & Stamina** — Pokémon have health and stamina that drain over time; fainted Pokémon leave.
 - **Auto Feed** — Automatically feeds low-health pets using your cheapest food and potions, and harvests ripe plants after a five-minute grace period.
 - **Pokédex** — View all your Pokémon with level, HP bar, Stamina bar, and friendship tier.
