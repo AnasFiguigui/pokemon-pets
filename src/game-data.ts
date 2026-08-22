@@ -182,6 +182,14 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
                 { name: 'Feraligatr', sprite: 'feraligatr', spriteSize: 32, candyCost: 25 },
             ],
         },
+                {
+            name: 'Togepi',
+            forms: [
+                { name: 'Togepi', sprite: 'togepi', spriteSize: 32, candyCost: 0 },
+                { name: 'Togetic', sprite: 'togetic', spriteSize: 32, candyCost: 10 },
+                { name: 'Togekiss', sprite: 'togekiss', spriteSize: 32, candyCost: 25, requiredItem: 'shiny_stone', requiredFriendship: 200 },
+            ],
+        },
     ],
 
     'generation 3': [
@@ -194,6 +202,8 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
         { name: 'Turtwig', forms: [{ name: 'Turtwig', sprite: 'turtwig', spriteSize: 32, candyCost: 0 }, { name: 'Grotle', sprite: 'grotle', spriteSize: 32, candyCost: 10 }, { name: 'Torterra', sprite: 'torterra', spriteSize: 48, candyCost: 25 }] },
         { name: 'Chimchar', forms: [{ name: 'Chimchar', sprite: 'chimchar', spriteSize: 32, candyCost: 0 }, { name: 'Monferno', sprite: 'monferno', spriteSize: 32, candyCost: 10 }, { name: 'Infernape', sprite: 'infernape', spriteSize: 32, candyCost: 25 }] },
         { name: 'Piplup', forms: [{ name: 'Piplup', sprite: 'piplup', spriteSize: 32, candyCost: 0 }, { name: 'Prinplup', sprite: 'prinplup', spriteSize: 32, candyCost: 10 }, { name: 'Empoleon', sprite: 'empoleon', spriteSize: 32, candyCost: 25 }] },
+        { name: 'Shinx', forms: [{ name: 'Shinx', sprite: 'shinx', spriteSize: 32, candyCost: 0 }, { name: 'Luxio', sprite: 'luxio', spriteSize: 32, candyCost: 10 }, { name: 'Luxray', sprite: 'luxray', spriteSize: 32, candyCost: 25 }] },
+        { name: 'Riolu', forms: [{ name: 'Riolu', sprite: 'riolu', spriteSize: 32, candyCost: 0 }, { name: 'Lucario', sprite: 'lucario', spriteSize: 32, candyCost: 10, requiredFriendship: 220 }] },
     ],
 
     'generation 5': [
