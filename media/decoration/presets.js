@@ -231,6 +231,8 @@ class DecorationPreset {
         OBJECT_05: { name: 'Java Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(128, 464), nightSpriteOffsetY: 256, price: 0 },
         OBJECT_06: { name: 'Python Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(160, 464), nightSpriteOffsetY: 256, price: 0 },
         OBJECT_07: { name: 'PHP Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(192, 464), nightSpriteOffsetY: 256, price: 0 },
+        OBJECT_08: { name: 'TypeScript Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(224, 464), nightSpriteOffsetY: 256, price: 0 },
+        OBJECT_09: { name: 'SQL Banner', size: new Vec2(32, 48), spriteOffset: new Vec2(256, 464), nightSpriteOffsetY: 256, price: 0 },
     };
 
 }
