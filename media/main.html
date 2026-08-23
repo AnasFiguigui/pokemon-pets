@@ -29,6 +29,13 @@
         <div id="decor">
             <!-- Controls -->
             <span id="decorHelp">Drag to place</span>
+
+            <!-- Three most recently placed shop items -->
+            <div id="buildShortcuts" class="buildShortcuts" role="toolbar" aria-label="Recent build items" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(0);" disabled></button>
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(1);" disabled></button>
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(2);" disabled></button>
+            </div>
             
             <!-- Toggle action, shop shortcut & exit buttons -->
             <div class="decorButtons" role="toolbar" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">

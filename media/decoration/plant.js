@@ -218,6 +218,9 @@ class Plant extends GameObject {
             });
             this.#pendingPurchase = false;
             this.#dirty = false;
+            if (typeof rememberBuildShortcut === 'function') {
+                rememberBuildShortcut({ kind: 'seed', plantId: this.#plantId });
+            }
         } else if (this.#dirty) {
             const idx = Game.plants.indexOf(this);
             vscode.postMessage({

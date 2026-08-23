@@ -652,6 +652,57 @@ body[cursor="none"] {
     pointer-events: auto;
 }
 
+.buildShortcuts {
+    display: flex;
+    gap: 4px;
+    margin: 0 5px;
+    pointer-events: auto;
+}
+
+.buildShortcutSlot {
+    appearance: none;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 2px solid #88744ece;
+    border-radius: 5px;
+    background: #d8c59dcc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.buildShortcutSlot:disabled {
+    cursor: default;
+    opacity: 0.65;
+}
+
+.buildShortcutSlot:disabled::after {
+    content: '';
+    width: 22px;
+    height: 22px;
+    border: 1px dashed #88744eaa;
+    border-radius: 3px;
+}
+
+.buildShortcutSlot:not(:disabled):hover {
+    filter: brightness(1.1);
+}
+
+.buildShortcutSprite {
+    display: block;
+    width: var(--shortcut-width);
+    height: var(--shortcut-height);
+    flex: 0 0 auto;
+    background-image: var(--shortcut-image);
+    background-repeat: no-repeat;
+    background-position: var(--shortcut-offset);
+    image-rendering: pixelated;
+    transform: scale(var(--shortcut-scale));
+}
+
 #cursor {
     --size: 16px;
     --bg-pos-x: 0;

@@ -401,6 +401,159 @@ function toggleActionDecor() {
 
 //Store menu
 let lastStoreView = { type: 'root' };
+const BUILD_SHORTCUT_LIMIT = 3;
+const recentBuildItems = [];
+
+function getBuildShortcutKey(item) {
+    return item.kind === 'decoration'
+        ? `decoration:${item.category}:${item.name}`
+        : `seed:${item.plantId}`;
+}
+
+function resolveBuildShortcut(item) {
+    if (item?.kind === 'decoration') {
+        const preset = DecorationPreset[item.category]?.[item.name];
+        if (!preset) { return null; }
+        return {
+            label: preset.name,
+            image: 'decoration.png',
+            width: preset.size.x,
+            height: preset.size.y,
+            offsetX: preset.spriteOffset.x,
+            offsetY: preset.spriteOffset.y,
+        };
+    }
+
+    if (item?.kind === 'seed') {
+        const seed = PlantCatalog.find(entry => entry.id === item.plantId);
+        if (!seed) { return null; }
+        const ripePhase = seed.growthHours.length;
+        return {
+            label: seed.name,
+            image: 'plants.png',
+            width: seed.size[0],
+            height: seed.size[1],
+            offsetX: seed.spriteOffset[0] + seed.phaseStep[0] * ripePhase,
+            offsetY: seed.spriteOffset[1] + seed.phaseStep[1] * ripePhase,
+        };
+    }
+
+    return null;
+}
+
+function renderBuildShortcuts() {
+    const slots = document.querySelectorAll('.buildShortcutSlot');
+    slots.forEach((slot, index) => {
+        const item = recentBuildItems[index];
+        const details = item ? resolveBuildShortcut(item) : null;
+        slot.replaceChildren();
+
+        if (!details) {
+            slot.disabled = true;
+            slot.title = '';
+            slot.setAttribute('aria-label', 'Empty recent build slot');
+            return;
+        }
+
+        const preview = document.createElement('span');
+        preview.classList.add('buildShortcutSprite');
+        preview.style.setProperty('--shortcut-image', `url('./sprites/${details.image}')`);
+        preview.style.setProperty('--shortcut-width', `${details.width}px`);
+        preview.style.setProperty('--shortcut-height', `${details.height}px`);
+        preview.style.setProperty('--shortcut-offset', `${-details.offsetX}px ${-details.offsetY}px`);
+        preview.style.setProperty('--shortcut-scale', `${28 / Math.max(details.width, details.height)}`);
+        slot.appendChild(preview);
+        slot.disabled = false;
+        slot.title = details.label;
+        slot.setAttribute('aria-label', `Place ${details.label} again`);
+    });
+}
+
+function rememberBuildShortcut(item) {
+    if (!resolveBuildShortcut(item)) { return; }
+    const key = getBuildShortcutKey(item);
+    const previousIndex = recentBuildItems.findIndex(entry => getBuildShortcutKey(entry) === key);
+    if (previousIndex >= 0) { recentBuildItems.splice(previousIndex, 1); }
+    recentBuildItems.unshift(item);
+    recentBuildItems.splice(BUILD_SHORTCUT_LIMIT);
+    renderBuildShortcuts();
+}
+
+function clearBuildShortcuts() {
+    recentBuildItems.length = 0;
+    renderBuildShortcuts();
+}
+
+function hasPendingBuildPurchase() {
+    return Game.decoration.some(item => item.isPendingPurchase);
+}
+
+function beginDecorationPlacement(category, name) {
+    const preset = DecorationPreset[category]?.[name];
+    if (!preset || typeof preset.price !== 'number') { return; }
+    if (hasPendingBuildPurchase()) {
+        Game.showMessage('Place the current item first!', true);
+        return;
+    }
+    if (Game.money < preset.price) {
+        Game.showMessage('Not enough gold!');
+        return;
+    }
+
+    Menus.close();
+    const decor = new Decoration(preset);
+    decor.setPendingPurchase(category, name);
+    DecorMode.toggle(true);
+
+    const decorCenterRelativePos = decor.size.mult(0.5);
+    decor.moveTo(decor.snapPos(Cursor.posScaled.sub(decorCenterRelativePos)));
+    decor.startDragging(decorCenterRelativePos);
+}
+
+function beginSeedPlacement(seedOrId) {
+    const seed = typeof seedOrId === 'string'
+        ? PlantCatalog.find(entry => entry.id === seedOrId)
+        : seedOrId;
+    if (!seed) { return; }
+    if (hasPendingBuildPurchase()) {
+        Game.showMessage('Place the current item first!', true);
+        return;
+    }
+    if (Game.money < seed.price) {
+        Game.showMessage('Not enough gold!');
+        return;
+    }
+
+    Menus.close();
+    const plant = new Plant({
+        plantId: seed.id,
+        index: Game.plants.length,
+        phase: 0,
+        size: seed.size,
+        spriteOffset: seed.spriteOffset,
+        phaseStep: seed.phaseStep,
+        price: seed.price,
+        totalPhases: seed.growthHours.length + 1,
+    });
+    plant.setPendingPurchase();
+    DecorMode.toggle(true);
+
+    const plantCenterRelativePos = plant.size.mult(0.5);
+    plant.moveTo(plant.snapPos(Cursor.posScaled.sub(plantCenterRelativePos)));
+    plant.startDragging(plantCenterRelativePos);
+}
+
+function activateBuildShortcut(index) {
+    const item = recentBuildItems[index];
+    if (!item) { return; }
+    if (item.kind === 'decoration') {
+        beginDecorationPlacement(item.category, item.name);
+    } else if (item.kind === 'seed') {
+        beginSeedPlacement(item.plantId);
+    }
+}
+
+renderBuildShortcuts();
 
 /** Finalizes Build Mode and reopens the last visited shop page. */
 function toggleActionStore() {
@@ -564,28 +717,7 @@ function openStoreCategoryMenu(category) {
         element.prepend(imgBox);
 
         //Add buy function
-        element.onclick = () => {
-            //Check if decoration price is valid
-            if (typeof preset.price !== 'number') { return; }
-
-            //Check if player has enough money
-            if (Game.money < preset.price) { return; }
-
-            //Close actions menu
-            Menus.close();
-
-            //Create decoration (money deducted on placement, not now)
-            const decor = new Decoration(preset);
-            decor.setPendingPurchase(category, name);
-
-            //Enter decor mode (after creating decoration, else it will ask the user to buy one)
-            DecorMode.toggle(true);
-
-            //Center decoration with mouse & start dragging it
-            const decorCenterRelativePos = decor.size.mult(0.5);
-            decor.moveTo(decor.snapPos(Cursor.posScaled.sub(decorCenterRelativePos)));
-            decor.startDragging(decorCenterRelativePos);
-        };
+        element.onclick = () => beginDecorationPlacement(category, name);
     }
 
     //Scroll to top
@@ -681,36 +813,7 @@ function openStoreSeedsMenu() {
         element.prepend(imgBox);
 
         //Add buy function
-        element.onclick = () => {
-            if (Game.money < seed.price) {
-                Game.showMessage('Not enough gold!');
-                return;
-            }
-
-            //Close menu (money deducted on placement, not now)
-            Menus.close();
-
-            //Create plant
-            const plant = new Plant({
-                plantId: seed.id,
-                index: Game.plants.length,
-                phase: 0,
-                size: seed.size,
-                spriteOffset: seed.spriteOffset,
-                phaseStep: seed.phaseStep,
-                price: seed.price,
-                totalPhases: seed.growthHours.length + 1,
-            });
-            plant.setPendingPurchase();
-
-            //Enter decor mode (after creating plant, else it will ask the user to buy one)
-            DecorMode.toggle(true);
-
-            //Center plant with mouse & start dragging it
-            const plantCenterRelativePos = plant.size.mult(0.5);
-            plant.moveTo(plant.snapPos(Cursor.posScaled.sub(plantCenterRelativePos)));
-            plant.startDragging(plantCenterRelativePos);
-        };
+        element.onclick = () => beginSeedPlacement(seed);
         content.appendChild(element);
     }
 
@@ -856,6 +959,7 @@ function handleGameMessage(message) {
             break;
         case 'reset':
             evolutionMessageQueues.clear();
+            clearBuildShortcuts();
             for (const pet of Game.pets) { Game.objects.removeItem(pet); }
             Game.pets = [];
             for (const decor of Game.decoration) { Game.objects.removeItem(decor); }

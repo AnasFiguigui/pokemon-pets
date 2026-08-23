@@ -11,6 +11,7 @@
 - **Menu scale setting** — In-game menus can now be displayed at Small, Default, or Large scale independently of the Pokémon size. The existing menu size remains the default.
 - **Ground Tiles** — Added a free Item Shop category with 15-piece Pond, Sand Path, and Dirt Path sets, including four inner corners and two matching plant details per style. Tiles display three per shop row and always render beneath Pokémon, plants, and ordinary decorations.
 - **Programming-language banners** — Added four new banners Python, PHP, TypeScript, and SQL to the Item Shop's Special category.
+- **Recent build shortcuts** — Build Mode now has three slots that remember the most recently purchased placeable items for quick repeat placement. Slots start empty and update after a decoration, ground tile, or seed is placed.
 
 ### Improvements
 - **Shared harvest logic** — Manual and automatic harvesting now use the same validated backend flow, including repeatable crops and Damp/Gooey Mulch effects.

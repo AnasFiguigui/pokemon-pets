@@ -145,16 +145,24 @@ class Decoration extends GameObject {
     stopDragging() {
         // Finalize pending purchase on first placement
         if (this.#pendingPurchase) {
+            const purchasedItem = this.#pendingPurchase;
             Game.addMoney(-this.price);
             vscode.postMessage({
                 type: 'add_decor',
                 x: this.pos.x,
                 y: this.pos.y,
-                category: this.#pendingPurchase.category,
-                name: this.#pendingPurchase.name,
+                category: purchasedItem.category,
+                name: purchasedItem.name,
             });
             this.#pendingPurchase = null;
             this.#dirty = false;
+            if (typeof rememberBuildShortcut === 'function') {
+                rememberBuildShortcut({
+                    kind: 'decoration',
+                    category: purchasedItem.category,
+                    name: purchasedItem.name,
+                });
+            }
         } else if (this.#dirty) {
             vscode.postMessage({
                 type: 'move_decor',
