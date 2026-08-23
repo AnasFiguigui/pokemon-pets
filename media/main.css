@@ -408,6 +408,10 @@ body[cursor="none"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+#storeContent.storeGrid.groundTilesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 #storeContent.storeGrid > .storeButton {
     width: 100%;
     min-width: 0;
@@ -921,7 +925,7 @@ body[cursor="none"] {
 }
 
 @container game-menu (max-width: 200px) {
-    #storeContent.storeGrid {
+    #storeContent.storeGrid:not(.groundTilesGrid) {
         grid-template-columns: minmax(0, 1fr);
     }
 }

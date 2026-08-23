@@ -9,13 +9,14 @@
 - **Auto harvest** — When Auto Feed is enabled, ripe plants are now harvested automatically after five minutes, leaving a grace period for manual harvesting.
 - **Everstone** — A new held item that prevents a Pokémon from evolving while equipped. It remains in the held slot until manually removed and returned to the backpack.
 - **Menu scale setting** — In-game menus can now be displayed at Small, Default, or Large scale independently of the Pokémon size. The existing menu size remains the default.
-- **Ground Tiles** — Added a free Item Shop category with 13-piece Pond, Sand Path, and Dirt Path sets, including four inner-corner tiles per style. These background pieces always render beneath Pokémon, plants, and ordinary decorations.
+- **Ground Tiles** — Added a free Item Shop category with 15-piece Pond, Sand Path, and Dirt Path sets, including four inner corners and two matching plant details per style. Tiles display three per shop row and always render beneath Pokémon, plants, and ordinary decorations.
 - **Programming-language banners** — Added four new banners Python, PHP, TypeScript, and SQL to the Item Shop's Special category.
 
 ### Improvements
 - **Shared harvest logic** — Manual and automatic harvesting now use the same validated backend flow, including repeatable crops and Damp/Gooey Mulch effects.
 - **Held-item save imports** — Imported saves now preserve valid held stones, including Everstone.
 - **Quick shop button** — Build Mode now has a `+` button between Sell and Close. It finalizes the current placement and reopens the last visited shop page for faster repeated placement.
+- **Sprite-only tile cards** — Ground Tiles now display without long names or price text, keeping the three-column shop compact while retaining identifying tooltips.
 
 ### Bug Fixes
 - **Rapid evolution sprites** — Consecutive evolutions now animate in sequence, preventing the in-game sprite from getting stuck one form behind the Pokédex when candies are fed quickly.

@@ -466,6 +466,7 @@ function openStoreMenu() {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
     content.classList.add('storeGrid');
+    content.classList.remove('groundTilesGrid');
 
     //Top left back button goes to actions menu on root store
     const backButton = document.getElementById('storeBackBtn');
@@ -526,6 +527,7 @@ function openStoreCategoryMenu(category) {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
     content.classList.add('storeGrid');
+    content.classList.toggle('groundTilesGrid', category === 'GROUND_TILES');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');
@@ -538,9 +540,16 @@ function openStoreCategoryMenu(category) {
     for (const name of Object.keys(DecorationPreset[category])) {
         //Get decoration preset
         const preset = DecorationPreset[category][name];
+        const isGroundTile = category === 'GROUND_TILES';
 
         //Create item element
         const element = createStoreItem(preset.name, preset.price);
+        if (isGroundTile) {
+            const text = element.querySelector(':scope > span');
+            if (text) { text.remove(); }
+            element.title = preset.name;
+            element.setAttribute('aria-label', preset.name);
+        }
         content.appendChild(element);
         
         //Add image to element
@@ -591,6 +600,7 @@ function openStoreConsumablesMenu() {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
     content.classList.add('storeGrid');
+    content.classList.remove('groundTilesGrid');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');
@@ -638,6 +648,7 @@ function openStoreSeedsMenu() {
     const content = document.getElementById('storeContent');
     content.innerHTML = '';
     content.classList.add('storeGrid');
+    content.classList.remove('groundTilesGrid');
 
     //Top left back button goes to categories list
     const backButton = document.getElementById('storeBackBtn');

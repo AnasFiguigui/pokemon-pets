@@ -1,12 +1,13 @@
 const GROUND_TILE_POSITIONS = [
-    'Top Left', 'Top', 'Top Right',
-    'Left', 'Center', 'Right',
-    'Bottom Left', 'Bottom', 'Bottom Right',
+    'TL', 'T', 'TR',
+    'L', 'C', 'R',
+    'BL', 'B', 'BR',
 ];
 
-const GROUND_TILE_INNER_CORNERS = [
-    'Inner Corner - Top Left', 'Inner Corner - Top Right',
-    'Inner Corner - Bottom Left', 'Inner Corner - Bottom Right',
+const GROUND_TILE_DETAILS = [
+    'Inner TL', 'Inner TR',
+    'Inner BL', 'Inner BR',
+    'Plant 1', 'Plant 2',
 ];
 
 function createGroundTileSet(keyPrefix, displayName, originX, originY) {
@@ -25,10 +26,11 @@ function createGroundTileSet(keyPrefix, displayName, originX, originY) {
         ];
     });
 
-    // Four concave/inner corners stored as a 2x2 block below the 3x3 set.
-    const innerCorners = GROUND_TILE_INNER_CORNERS.map((position, index) => {
-        const column = index % 2;
-        const row = Math.floor(index / 2);
+    // Six matching details stored as a 3x2 block below the 3x3 set:
+    // four inner corners followed by two related plants.
+    const detailTiles = GROUND_TILE_DETAILS.map((position, index) => {
+        const column = index % 3;
+        const row = Math.floor(index / 3);
         return [
             `${keyPrefix}_${String(index + 10).padStart(2, '0')}`,
             {
@@ -41,13 +43,13 @@ function createGroundTileSet(keyPrefix, displayName, originX, originY) {
         ];
     });
 
-    return Object.fromEntries([...outerTiles, ...innerCorners]);
+    return Object.fromEntries([...outerTiles, ...detailTiles]);
 }
 
 class DecorationPreset {
 
-    // Three autotile-style sets: a 3x3 outer block plus four inner corners below.
-    // Add future sets by spreading another call with the new block's top-left.
+    // Three tile sets: a 3x3 outer block plus a 3x2 detail block below.
+    // Add future sets with the new block's top-left coordinate.
     static GROUND_TILES = {
         ...createGroundTileSet('POND', 'Pond', 0, 720),
         ...createGroundTileSet('PATH_STYLE_1', 'Sand Path', 48, 720),
