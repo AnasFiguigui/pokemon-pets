@@ -154,7 +154,7 @@ function watchGitPushes(context) {
                 const reward = rewardsTracker.onGitPush(saveManager.save.pets.length, cfg);
                 if (reward) {
                     applyReward(reward);
-                    vscode.window.showInformationMessage(`🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`);
+                    vscode.window.showInformationMessage(`🎉 Git commit! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`);
                 }
             }
             lastHeadMap.set(key, newHead);

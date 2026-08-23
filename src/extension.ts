@@ -142,7 +142,7 @@ function watchGitPushes(context: vscode.ExtensionContext): void {
                 if (reward) {
                     applyReward(reward);
                     vscode.window.showInformationMessage(
-                        `🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`,
+                        `🎉 Git commit! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`,
                     );
                 }
             }
