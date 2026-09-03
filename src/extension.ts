@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Pokemons, Consumables, PlantTypes, type Consumable, type PlantType } from './game-data';
-import { Decoration, Pet, PetItem, PlantInstance, Save, MAX_CANDY_FED, SAVE_VERSION, VALID_MULCH_IDS, normalizePet, getMaxHp, getMaxStamina } from './models';
+import { Decoration, Pet, PetItem, PlantInstance, Save, SAVE_VERSION, VALID_MULCH_IDS, normalizePet, getMaxHp, getMaxStamina } from './models';
+import { encodeGiftCode, decodeGiftCode, sanitizeImportedPet } from './gift-code';
 import { SaveManager, DEFAULT_MAX_POKEMONS, HARD_CAP_POKEMONS, MAX_MONEY } from './save-manager';
 import { WebViewProvider } from './webview-provider';
 import { TelemetryService } from './telemetry';
@@ -48,6 +49,14 @@ const GROWTH_MULCH_DURATION_MS = 3_600_000;
 const WILD_CATCH_BASE_GOLD = 60;
 /** Friendship gained by the pet that catches the thrown ball. */
 const BALL_CATCH_FRIENDSHIP = 0.5;
+/** Friendship each pet gains when two pets play together. */
+const PLAY_FRIENDSHIP = 1;
+/** Minimum time between play-session rewards (guards against message spam). */
+const PLAY_REWARD_COOLDOWN_MS = 30_000;
+/** globalState key holding the Settings-Sync save backup. */
+const SAVE_BACKUP_KEY = 'pokemon-pets.saveBackup';
+/** Backups larger than this are skipped to keep Settings Sync payloads small. */
+const SAVE_BACKUP_MAX_BYTES = 512 * 1024;
 /** Newly summoned/loaded pets start with 50–99 friendship. */
 function randomStartingFriendship(): number {
     return 50 + Math.floor(Math.random() * 50);
@@ -562,6 +571,31 @@ function checkAndHandleHeldItemEvolution(petIndex: number): void {
     }
 }
 
+// ── Settings Sync save backup ───────────────────────────────────────────
+
+let extContext: vscode.ExtensionContext | undefined;
+let lastBackupJson: string | undefined;
+
+/**
+ * Mirrors the save into globalState (synced across machines via Settings
+ * Sync) so pets follow the user to new installs. Skips when unchanged,
+ * disabled, or oversized.
+ */
+function syncSaveBackup(): void {
+    if (!extContext) { return; }
+    if (!config.get<boolean>('syncSaveBackup', true)) { return; }
+    const json = JSON.stringify(saveManager.save);
+    if (json === lastBackupJson) { return; }
+    if (json.length > SAVE_BACKUP_MAX_BYTES) {
+        log(`Skipping Settings Sync backup — save too large (${json.length} bytes)`);
+        return;
+    }
+    lastBackupJson = json;
+    extContext.globalState.update(SAVE_BACKUP_KEY, json).then(undefined, (err: unknown) => {
+        log('Failed to write Settings Sync backup:', err);
+    });
+}
+
 // ── Unified Tick (single 60s interval for all periodic tasks) ───────────
 
 /** How many unified ticks between stamina drains (6 × 60s = 360s). */
@@ -584,6 +618,9 @@ function ensureUnifiedTick(): void {
         if (unifiedTickCounter % STAMINA_DRAIN_TICKS === 0) {
             drainStamina();
         }
+
+        // Mirror the save into Settings Sync (no-op when unchanged)
+        syncSaveBackup();
     }, 60_000);
 }
 
@@ -638,6 +675,26 @@ function handleBallCaught(message: any): void {
         // Check if held item evolution triggers from friendship gain
         checkAndHandleHeldItemEvolution(ballPetIndex);
     }
+}
+
+let lastPlayRewardMs = 0;
+
+/** Two pets met up and played — both gain a little friendship (rate-limited). */
+function handlePetsPlayed(message: any): void {
+    const indexA = message.indexA;
+    const indexB = message.indexB;
+    if (!isValidIndex(indexA) || !isValidIndex(indexB) || indexA === indexB) { return; }
+    const petCount = saveManager.save.pets.length;
+    if (indexA >= petCount || indexB >= petCount) { return; }
+
+    const now = Date.now();
+    if (now - lastPlayRewardMs < PLAY_REWARD_COOLDOWN_MS) { return; }
+    lastPlayRewardMs = now;
+
+    addFriendship(indexA, PLAY_FRIENDSHIP);
+    addFriendship(indexB, PLAY_FRIENDSHIP);
+    checkAndHandleHeldItemEvolution(indexA);
+    checkAndHandleHeldItemEvolution(indexB);
 }
 
 function handleUseCandy(petIndex: unknown, currentCount: number): void {
@@ -934,6 +991,7 @@ const messageHandlers: Record<string, (message: any) => void | Promise<void>> = 
     spawn_wild_pokemon: handleSpawnWildPokemon,
     wild_pokemon_caught: handleWildPokemonCaught,
     ball_caught: handleBallCaught,
+    pets_played: handlePetsPlayed,
     use_consumable: handleUseConsumable,
     buy_consumable: handleBuyConsumable,
     sell_consumable: handleSellConsumable,
@@ -1129,29 +1187,10 @@ function sanitizeImportedSave(clipText: string): Save {
         sanitized.money = Math.min(MAX_MONEY, Math.max(0, Math.floor(imported.money)));
     }
     if (Array.isArray(imported.pets)) {
-        sanitized.pets = imported.pets
-            .filter((p: any) => typeof p === 'object' && p !== null && typeof p.name === 'string' && typeof p.specie === 'string')
-            .slice(0, saveManager.maxPokemon)
-            .map((p: any) => ({
-                name: String(p.name).slice(0, 20),
-                specie: String(p.specie),
-                color: typeof p.color === 'string' ? p.color : 'generation 1',
-                form: typeof p.form === 'string' ? p.form : undefined,
-                sprite: typeof p.sprite === 'string' ? p.sprite : undefined,
-                spriteSize: p.spriteSize === 48 ? 48 : 32,
-                candyFed: typeof p.candyFed === 'number' && Number.isFinite(p.candyFed)
-                    ? Math.min(Math.max(0, Math.floor(p.candyFed)), MAX_CANDY_FED)
-                    : 0,
-                // Friendship may hold half-points from ball catches — clamp without flooring
-                friendship: typeof p.friendship === 'number' && Number.isFinite(p.friendship)
-                    ? Math.min(MAX_FRIENDSHIP, Math.max(0, p.friendship))
-                    : undefined,
-                hp: typeof p.hp === 'number' && Number.isFinite(p.hp) ? Math.min(250, Math.max(0, Math.floor(p.hp))) : undefined,
-                stamina: typeof p.stamina === 'number' && Number.isFinite(p.stamina) ? Math.min(250, Math.max(0, Math.floor(p.stamina))) : undefined,
-                heldItem: typeof p.heldItem === 'string' && ConsumablesMap.get(p.heldItem)?.category === 'stone'
-                    ? p.heldItem
-                    : undefined,
-            }));
+        sanitized.pets = (imported.pets as unknown[])
+            .map(sanitizeImportedPet)
+            .filter((p): p is Pet => p !== undefined)
+            .slice(0, saveManager.maxPokemon);
     }
     if (Array.isArray(imported.decoration)) {
         sanitized.decoration = imported.decoration
@@ -1227,6 +1266,76 @@ function sanitizeImportedSave(clipText: string): Save {
         sanitized.autoFeed = imported.autoFeed;
     }
     return sanitized;
+}
+
+async function exportPokemonCommand(): Promise<void> {
+    const pets = saveManager.save.pets;
+    if (pets.length === 0) {
+        vscode.window.showInformationMessage('No Pokémon to export.');
+        return;
+    }
+
+    const items: PetItem[] = pets.map((pet, i) =>
+        new PetItem(i, pet.name, `${pet.color} ${pet.form ?? pet.specie}`),
+    );
+    const selected = await vscode.window.showQuickPick(items, {
+        title: 'Select a Pokémon to share as a gift code',
+        placeHolder: 'Pokémon',
+        matchOnDescription: true,
+    });
+    if (selected === undefined) { return; }
+    const pet = pets[selected.index];
+    if (!pet) { return; }
+
+    try {
+        await vscode.env.clipboard.writeText(encodeGiftCode(pet));
+        vscode.window.showInformationMessage(
+            `🎁 Gift code for ${pet.name} copied to clipboard — send it to a friend! (${pet.name} stays with you.)`,
+        );
+    } catch (err) {
+        log('Failed to export gift code:', err);
+        vscode.window.showErrorMessage('Failed to copy the gift code to the clipboard.');
+    }
+}
+
+async function importPokemonCommand(): Promise<void> {
+    if (saveManager.save.pets.length >= saveManager.maxPokemon) {
+        vscode.window.showWarningMessage(
+            `You can only have up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`,
+        );
+        return;
+    }
+
+    let clipText: string;
+    try {
+        clipText = await vscode.env.clipboard.readText();
+    } catch {
+        vscode.window.showErrorMessage('Failed to read clipboard.');
+        return;
+    }
+
+    const pet = decodeGiftCode(clipText);
+    if (!pet) {
+        vscode.window.showErrorMessage('The clipboard does not contain a valid Pokémon gift code.');
+        return;
+    }
+
+    // Initialize derived fields for the new arrival
+    pet.hp = Math.min(getMaxHp(pet), pet.hp ?? getMaxHp(pet));
+    pet.stamina = Math.min(getMaxStamina(pet), pet.stamina ?? getMaxStamina(pet));
+    pet.friendship = pet.friendship ?? randomStartingFriendship();
+
+    if (!saveManager.addPet(pet)) {
+        vscode.window.showWarningMessage(
+            `You can only have up to ${saveManager.maxPokemon} Pokémon at once. Remove one first.`,
+        );
+        return;
+    }
+
+    loadPet(pet);
+    telemetry.trackPokemonAdded(pet.specie);
+    webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
+    vscode.window.showInformationMessage(`🎁 ${pet.name} joined your team!`);
 }
 
 async function importSaveCommand(): Promise<void> {
@@ -1344,8 +1453,20 @@ export function activate(context: vscode.ExtensionContext): void {
     log('Pokemon Pets is now active 😽');
 
     // Initialize save manager
+    extContext = context;
     saveManager = new SaveManager(context.globalStorageUri.fsPath);
     saveManager.maxPokemon = readMaxPokemon();
+
+    // Settings Sync: sync the backup key across machines, and restore it on
+    // a fresh install (never over an existing local save)
+    context.globalState.setKeysForSync([SAVE_BACKUP_KEY]);
+    if (config.get<boolean>('syncSaveBackup', true) && !saveManager.hasSaveFile()) {
+        const backup = context.globalState.get<string>(SAVE_BACKUP_KEY);
+        if (typeof backup === 'string' && backup.length > 0 && saveManager.restoreBackup(backup)) {
+            log('Restored save from Settings Sync backup');
+        }
+    }
+
     try {
         saveManager.loadGame();
     } catch (err) {
@@ -1354,6 +1475,9 @@ export function activate(context: vscode.ExtensionContext): void {
         saveManager.save = new Save();
     }
     syncAutoFeedState();
+
+    // Seed the backup baseline right away
+    syncSaveBackup();
 
     // Initialize services
     const telemetryEnabled = config.get<boolean>('telemetry', false);
@@ -1423,6 +1547,8 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand),
         vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand),
+        vscode.commands.registerCommand('pokemon-pets.exportPokemon', exportPokemonCommand),
+        vscode.commands.registerCommand('pokemon-pets.importPokemon', importPokemonCommand),
         vscode.commands.registerCommand('pokemon-pets.showStats', showStatsCommand),
         vscode.commands.registerCommand('pokemon-pets.renamePet', renamePetCommand),
 

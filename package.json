@@ -133,6 +133,11 @@
                     ],
                     "description": "Visual filter applied to the game scene. Only affects the pixel art, not the UI."
                 },
+                "pokemon-pets.syncSaveBackup": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Back up your save through VS Code Settings Sync so your Pokémon follow you to other machines. The backup is restored automatically on a fresh install."
+                },
                 "pokemon-pets.telemetry": {
                     "type": "boolean",
                     "default": false,
@@ -266,6 +271,14 @@
             {
                 "command": "pokemon-pets.importSave",
                 "title": "Pokemon Pets: Import save from clipboard"
+            },
+            {
+                "command": "pokemon-pets.exportPokemon",
+                "title": "Pokemon Pets: Export Pokémon gift code"
+            },
+            {
+                "command": "pokemon-pets.importPokemon",
+                "title": "Pokemon Pets: Import Pokémon gift code"
             },
             {
                 "command": "pokemon-pets.showStats",

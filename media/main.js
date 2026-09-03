@@ -1069,6 +1069,7 @@ function handleGameMessage(message) {
             break;
         case 'reset':
             cancelAllEvolutions();
+            stopPetPlay();
             clearBuildShortcuts();
             //Remove via remove() paths so AI timers are disposed — but pets
             //and decorations are already gone host-side, so strip the lists
@@ -1293,8 +1294,9 @@ function handleSpawnMessage(message) {
         case 'remove_pokemon':
         case 'remove_pet':
             // Pet indices may shift after removal; cancel pending visual swaps
-            // (including any in-flight blink timers).
+            // (including any in-flight blink timers) and any play session.
             cancelAllEvolutions();
+            stopPetPlay();
             if (Game.pets[message.index]) { Game.pets[message.index].remove(); }
             break;
         default:
@@ -1415,6 +1417,94 @@ function updateLampMasks() {
     //Warm glow layer (additive warm light where lamps are)
     lampGlowEl.style.background = buildLampGlow(lamps, Game.scale);
 }
+
+//Pet-to-pet play sessions: occasionally two pets walk toward each other,
+//meet in the middle, and celebrate — the extension grants both a little
+//friendship via the 'pets_played' message.
+const PET_PLAY_CHECK_MS = 45 * 1000;   //How often we roll for a playdate
+const PET_PLAY_CHANCE = 0.35;          //Chance per roll
+const PET_PLAY_TIMEOUT_MS = 25 * 1000; //Give up if they can't meet in time
+const PET_PLAY_MEET_DIST = 24;         //Center distance (px) that counts as met
+const PET_PLAY_STEER_MS = 800;         //How often both pets are re-aimed
+
+let petPlaySession = null;
+
+function stopPetPlay() {
+    if (!petPlaySession) { return; }
+    clearInterval(petPlaySession.steerInterval);
+    clearTimeout(petPlaySession.giveUpTimer);
+    petPlaySession = null;
+}
+
+/** True when the pet can join/continue a play session. */
+function isPetPlayable(pet) {
+    return Game.pets.includes(pet)
+        && pet.active
+        && !Object.hasOwn(pet, 'update')            //not frozen mid-evolution
+        && pet.ai.state !== PetAI.MOVE_BALL;        //not chasing the ball
+}
+
+function sendPetTowards(pet, pointX, pointY) {
+    pet.ai.moveTowards(new Vec2(
+        Util.clamp(Math.round(pointX - pet.size.x / 2), 0, pet.maxPosX),
+        Util.clamp(Math.round(pointY - pet.size.y / 2), 0, pet.maxPosY)
+    ));
+}
+
+function steerPetPlay() {
+    const session = petPlaySession;
+    if (!session) { return; }
+    const { petA, petB } = session;
+    if (!isPetPlayable(petA) || !isPetPlayable(petB)) {
+        stopPetPlay();
+        return;
+    }
+
+    const ax = petA.pos.x + petA.size.x / 2;
+    const ay = petA.pos.y + petA.size.y / 2;
+    const bx = petB.pos.x + petB.size.x / 2;
+    const by = petB.pos.y + petB.size.y / 2;
+
+    if (Math.hypot(ax - bx, ay - by) <= PET_PLAY_MEET_DIST) {
+        //They met — celebrate and tell the extension (friendship for both)
+        const indexA = Game.pets.indexOf(petA);
+        const indexB = Game.pets.indexOf(petB);
+        petA.ai.playWithFriend();
+        petB.ai.playWithFriend();
+        if (indexA >= 0 && indexB >= 0 && indexA !== indexB) {
+            vscode.postMessage({ type: 'pets_played', indexA, indexB });
+        }
+        stopPetPlay();
+        return;
+    }
+
+    //Keep both walking toward the midpoint between them
+    const midX = (ax + bx) / 2;
+    const midY = (ay + by) / 2;
+    sendPetTowards(petA, midX, midY);
+    sendPetTowards(petB, midX, midY);
+}
+
+function tryStartPetPlay() {
+    if (petPlaySession) { return; }
+    if (!Game.isAction(Action.NONE) || Menus.current) { return; }
+    if (Math.random() >= PET_PLAY_CHANCE) { return; }
+
+    const candidates = Game.pets.filter(isPetPlayable);
+    if (candidates.length < 2) { return; }
+
+    //Pick two distinct random pets
+    const first = Util.randomExclusive(candidates.length);
+    let second = Util.randomExclusive(candidates.length - 1);
+    if (second >= first) { second++; }
+
+    petPlaySession = { petA: candidates[first], petB: candidates[second] };
+    petPlaySession.steerInterval = setInterval(steerPetPlay, PET_PLAY_STEER_MS);
+    petPlaySession.giveUpTimer = setTimeout(stopPetPlay, PET_PLAY_TIMEOUT_MS);
+    steerPetPlay();
+}
+
+setInterval(tryStartPetPlay, PET_PLAY_CHECK_MS);
 
 //Cursor events
 function handleDecorMouseDown(pos) {

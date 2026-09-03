@@ -451,6 +451,13 @@ class PetAI extends AI {
         this.#moodHideTimeout.wait(2000);
     }
 
+    //Two pets met up for a play session — celebrate with hearts
+    playWithFriend() {
+        this.#setHeartMood();
+        this.showMood();
+        this.setState(AI.SPECIAL);
+    }
+
     drawMood(ctx) {
         //Mood is hidden
         if (!this.#moodShow) { return; }

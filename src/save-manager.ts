@@ -77,6 +77,32 @@ export class SaveManager {
         return this.savePath;
     }
 
+    /** Returns whether a save file already exists on disk. */
+    public hasSaveFile(): boolean {
+        return fs.existsSync(this.savePath);
+    }
+
+    /**
+     * Restores a Settings-Sync backup onto disk — only when no local save
+     * exists (a fresh machine); an existing save is never clobbered.
+     * Call loadGame() afterwards to validate the restored data as usual.
+     */
+    public restoreBackup(json: string): boolean {
+        if (this.hasSaveFile()) { return false; }
+        try {
+            const parsed: unknown = JSON.parse(json);
+            if (!isPlainObject(parsed)) { return false; }
+            if (!fs.existsSync(this.storageFolder)) {
+                fs.mkdirSync(this.storageFolder, { recursive: true });
+            }
+            this.save = parsed as unknown as Save;
+            return this.writeToDisk();
+        } catch (e) {
+            log('Failed to restore synced save backup:', e);
+            return false;
+        }
+    }
+
     /** Loads the game from disk, creating defaults when necessary. */
     public loadGame(): void {
         // Create storage folder if it does not exist

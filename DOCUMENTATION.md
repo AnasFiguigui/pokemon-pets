@@ -681,6 +681,7 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 | `spawn_wild_pokemon` | — | Request wild Pokémon species |
 | `wild_pokemon_caught` | — | Wild Pokémon caught, compute reward |
 | `ball_caught` | `index` | Pet at index caught ball (+0.5 friendship) |
+| `pets_played` | `indexA, indexB` | Two pets played together (+1 friendship each, rate-limited) |
 | `use_consumable` | `consumableId, index` | Use consumable on pet |
 | `buy_consumable` | `consumableId, quantity` | Buy from shop |
 | `add_decor` | `x, y, category, name, price` | Save new decoration (backend deducts price) |

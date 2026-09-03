@@ -50,6 +50,9 @@ Use the server to:
 - **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.
 - **Coding Activity Rewards** — Earn gold and friendship by coding. File saves grant small rewards; Git commits grant gold; Git pushes grant gold, candy, and friendship to your Pokémon. Per-file cooldowns prevent abuse. All multipliers are configurable in settings.
 - **Daily coding streaks** — Earn gold bonuses for consecutive coding days.
+- **Pet playdates** — Pokémon occasionally walk up to each other and play, earning both a little friendship.
+- **Pokémon gift codes** — Share a single Pokémon with a friend: export a gift code to the clipboard, and they import it with one command.
+- **Settings Sync backup** — Your save is backed up through VS Code Settings Sync, so your Pokémon follow you to new machines automatically.
 - **Import / Export saves** — Backup and restore your save via clipboard.
 - **Local stats** — Opt-in local telemetry (nothing sent externally).
 - **8-direction movement** — Pokémon walk in all directions with matching sprites.
@@ -64,6 +67,7 @@ Use the server to:
 - `pokemon-pets.wild`: toggles wild Pokémon spawning
 - `pokemon-pets.maxPokemon`: maximum number of Pokémon you can have at once (`6`, max `12`)
 - `pokemon-pets.dayNightCycle`: toggles the day/night visual tinting
+- `pokemon-pets.syncSaveBackup`: back up the save via VS Code Settings Sync (`true`)
 - `pokemon-pets.telemetry`: toggles local stats tracking
 - `pokemon-pets.rewards.enabled`: toggles coding activity rewards (`true`)
 - `pokemon-pets.rewards.saveGold`: gold earned per file save (`2`)
