@@ -2,6 +2,10 @@
 
 ## [1.5.0] — Stability & Performance
 
+### New Features
+- **Git commit rewards** — Commits now grant gold (default 100, configurable via `pokemon-pets.rewards.commitGold`, set to 0 to disable).
+- **Named candy recipient** — The Git push notification now names the Pokémon that received the candy.
+
 ### Bug Fixes
 - **Save integrity** — Saves are now written atomically (temp file + rename) so a crash mid-write can never truncate the save; corrupt-but-parseable save files (e.g. after hand-editing) no longer break extension activation; incomplete streak data can no longer poison the save with `NaN`.
 - **Git push rewards** — Rewards now trigger on actual pushes (ahead-count drop on the same branch) instead of any HEAD change, so commits, checkouts, and pulls no longer farm push rewards. Repositories opened after startup are now watched too.

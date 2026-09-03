@@ -92,6 +92,7 @@ function getRewardsConfig(): CodingRewardsConfig {
         saveGold: cfg.get<number>('saveGold', 2),
         savesPerFriendship: cfg.get<number>('savesPerFriendship', 10),
         saveCooldownSeconds: cfg.get<number>('saveCooldownSeconds', 120),
+        commitGold: cfg.get<number>('commitGold', 100),
         pushGold: cfg.get<number>('pushGold', 200),
         pushCandy: cfg.get<number>('pushCandy', 1),
         pushFriendship: cfg.get<number>('pushFriendship', 5),
@@ -187,12 +188,39 @@ function applyReward(reward: RewardEvent): void {
     saveManager.scheduleSave();
 }
 
+/** Grants the git-commit reward and shows a toast. */
+function handleGitCommitDetected(): void {
+    const cfg = getRewardsConfig();
+    const reward = rewardsTracker.onGitCommit(saveManager.save.pets.length, cfg);
+    if (!reward) { return; }
+    applyReward(reward);
+    vscode.window.showInformationMessage(`🎉 Git commit! +${cfg.commitGold} gold.`);
+}
+
+/** Grants the git-push reward and shows a toast naming the candy recipient. */
+function handleGitPushDetected(): void {
+    const cfg = getRewardsConfig();
+    const reward = rewardsTracker.onGitPush(saveManager.save.pets.length, cfg);
+    if (!reward) { return; }
+    // Capture the recipient's name before applying (indices are still valid here)
+    const candyPetName = reward.candyPetIndex >= 0
+        ? saveManager.save.pets[reward.candyPetIndex]?.name
+        : undefined;
+    applyReward(reward);
+    const candyPart = candyPetName ? ` — ${candyPetName} got a candy!` : '!';
+    vscode.window.showInformationMessage(
+        `🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${candyPart}`,
+    );
+}
+
 /**
- * Watches the built-in Git extension for pushes. A push is detected when a
- * repository's ahead-count drops while staying on the same branch (commits,
- * checkouts, and pulls don't match that signature).
+ * Watches the built-in Git extension for commits and pushes, tracked via the
+ * ahead-count while staying on the same branch: an increase means a commit,
+ * a decrease means a push (checkouts and pulls don't match either signature).
+ * Repositories without an upstream have no ahead-count, so rewards start
+ * once the branch is published.
  */
-async function watchGitPushes(context: vscode.ExtensionContext): Promise<void> {
+async function watchGitActivity(context: vscode.ExtensionContext): Promise<void> {
     const gitExtension = vscode.extensions.getExtension('vscode.git');
     if (!gitExtension) { return; }
     const exports = gitExtension.isActive ? gitExtension.exports : await gitExtension.activate();
@@ -207,19 +235,14 @@ async function watchGitPushes(context: vscode.ExtensionContext): Promise<void> {
             const head = repo.state?.HEAD;
             const ahead: number = head?.ahead ?? 0;
             const branch: string | undefined = head?.name;
-            const pushed = branch !== undefined && branch === lastBranch && ahead < lastAhead;
+            const sameBranch = branch !== undefined && branch === lastBranch;
+            const pushed = sameBranch && ahead < lastAhead;
+            const committed = sameBranch && ahead > lastAhead;
             lastAhead = ahead;
             lastBranch = branch;
-            if (!pushed) { return; }
 
-            const cfg = getRewardsConfig();
-            const reward = rewardsTracker.onGitPush(saveManager.save.pets.length, cfg);
-            if (reward) {
-                applyReward(reward);
-                vscode.window.showInformationMessage(
-                    `🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${cfg.pushCandy > 0 ? ' + candy' : ''}.`,
-                );
-            }
+            if (pushed) { handleGitPushDetected(); }
+            else if (committed) { handleGitCommitDetected(); }
         });
         if (disposable) { context.subscriptions.push(disposable); }
     };
@@ -1415,8 +1438,8 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     );
 
-    // Watch for git pushes (non-critical — logs and continues if unavailable)
-    watchGitPushes(context).catch(err => log('Git push watcher unavailable:', err));
+    // Watch for git commits & pushes (non-critical — logs and continues if unavailable)
+    watchGitActivity(context).catch(err => log('Git activity watcher unavailable:', err));
 
     // Start day/night cycle if enabled
     if (config.get<boolean>('dayNightCycle', true)) {

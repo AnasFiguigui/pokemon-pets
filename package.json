@@ -164,6 +164,13 @@
                     "maximum": 3600,
                     "description": "Per-file cooldown in seconds — repeated saves of the same file within this window are ignored."
                 },
+                "pokemon-pets.rewards.commitGold": {
+                    "type": "number",
+                    "default": 100,
+                    "minimum": 0,
+                    "maximum": 10000,
+                    "description": "Gold earned per Git commit. Set to 0 to disable commit rewards."
+                },
                 "pokemon-pets.rewards.pushGold": {
                     "type": "number",
                     "default": 200,
@@ -190,7 +197,7 @@
         "commands": [
             {
                 "command": "pokemon-pets.toggleAutoFeed",
-                "title": "Auto Feed: OFF",
+                "title": "Auto Feed/Harvest: OFF",
                 "icon": {
                     "light": "media/icons/light/switch-off.svg",
                     "dark": "media/icons/dark/switch-off.svg"
@@ -198,7 +205,7 @@
             },
             {
                 "command": "pokemon-pets.toggleAutoFeedOff",
-                "title": "Auto Feed: ON",
+                "title": "Auto Feed/Harvest: ON",
                 "icon": {
                     "light": "media/icons/light/switch-on.svg",
                     "dark": "media/icons/dark/switch-on.svg"

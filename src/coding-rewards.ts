@@ -3,6 +3,7 @@ export interface CodingRewardsConfig {
     saveGold: number;
     savesPerFriendship: number;
     saveCooldownSeconds: number;
+    commitGold: number;
     pushGold: number;
     pushCandy: number;
     pushFriendship: number;
@@ -73,6 +74,13 @@ export class CodingRewardsTracker {
             if (removed++ >= excess) { break; }
             this.cooldowns.delete(key);
         }
+    }
+
+    /** Process a git-commit event. Returns a gold-only reward, or undefined if disabled. */
+    public onGitCommit(petCount: number, config: CodingRewardsConfig): RewardEvent | undefined {
+        if (!config.enabled || petCount === 0 || config.commitGold <= 0) { return undefined; }
+
+        return { gold: config.commitGold, friendship: new Map<number, number>(), candyPetIndex: -1 };
     }
 
     /** Process a git-push event. Returns a reward, or undefined if disabled. */

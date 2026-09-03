@@ -7,6 +7,7 @@ function defaultConfig(overrides?: Partial<CodingRewardsConfig>): CodingRewardsC
         saveGold: 2,
         savesPerFriendship: 10,
         saveCooldownSeconds: 120,
+        commitGold: 100,
         pushGold: 200,
         pushCandy: 1,
         pushFriendship: 5,
@@ -81,6 +82,34 @@ describe('CodingRewardsTracker', () => {
         it('uses custom saveGold value', () => {
             const reward = tracker.onFileSave('file:///a.ts', 1, defaultConfig({ saveGold: 50 }));
             expect(reward?.gold).toBe(50);
+        });
+    });
+
+    // ── Git Commit Rewards ──────────────────────────────────────────────
+
+    describe('onGitCommit', () => {
+        it('returns gold only (no friendship, no candy)', () => {
+            const reward = tracker.onGitCommit(3, defaultConfig());
+            expect(reward).toBeDefined();
+            expect(reward?.gold).toBe(100);
+            expect(reward?.friendship.size).toBe(0);
+            expect(reward?.candyPetIndex).toBe(-1);
+        });
+
+        it('returns undefined when disabled', () => {
+            expect(tracker.onGitCommit(3, defaultConfig({ enabled: false }))).toBeUndefined();
+        });
+
+        it('returns undefined when no pets', () => {
+            expect(tracker.onGitCommit(0, defaultConfig())).toBeUndefined();
+        });
+
+        it('returns undefined when commitGold is 0', () => {
+            expect(tracker.onGitCommit(3, defaultConfig({ commitGold: 0 }))).toBeUndefined();
+        });
+
+        it('uses custom commitGold value', () => {
+            expect(tracker.onGitCommit(1, defaultConfig({ commitGold: 250 }))?.gold).toBe(250);
         });
     });
 

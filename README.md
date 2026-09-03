@@ -48,7 +48,7 @@ Use the server to:
 - **Friendship** — Pokémon build friendship over time through feeding and catching; shown in the Pokédex.
 - **Branching evolutions** — Eevee evolves into 8 forms via evolution stones.
 - **Day/Night cycle** — Time-based visual tinting and wild Pokémon variation.
-- **Coding Activity Rewards** — Earn gold and friendship by coding. File saves grant small rewards; Git pushes grant gold, candy, and friendship to your Pokémon. Per-file cooldowns prevent abuse. All multipliers are configurable in settings.
+- **Coding Activity Rewards** — Earn gold and friendship by coding. File saves grant small rewards; Git commits grant gold; Git pushes grant gold, candy, and friendship to your Pokémon. Per-file cooldowns prevent abuse. All multipliers are configurable in settings.
 - **Daily coding streaks** — Earn gold bonuses for consecutive coding days.
 - **Import / Export saves** — Backup and restore your save via clipboard.
 - **Local stats** — Opt-in local telemetry (nothing sent externally).
@@ -69,6 +69,7 @@ Use the server to:
 - `pokemon-pets.rewards.saveGold`: gold earned per file save (`2`)
 - `pokemon-pets.rewards.savesPerFriendship`: file saves needed for +1 friendship to a random pet (`10`)
 - `pokemon-pets.rewards.saveCooldownSeconds`: per-file cooldown to prevent spam (`120`)
+- `pokemon-pets.rewards.commitGold`: gold earned per Git commit (`100`, `0` disables)
 - `pokemon-pets.rewards.pushGold`: gold earned per Git push (`200`)
 - `pokemon-pets.rewards.pushCandy`: candy given to a random pet per Git push (`1`)
 - `pokemon-pets.rewards.pushFriendship`: friendship added to all pets per Git push (`5`)
