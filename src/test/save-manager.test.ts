@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
-import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import { SaveManager, DEFAULT_MAX_POKEMONS } from '../save-manager';
 import type { Pet, Decoration } from '../models';
 
 vi.mock('node:fs');
-vi.mock('node:fs/promises');
 
 const STORAGE = path.join('mock', 'storage');
 
@@ -34,7 +32,6 @@ describe('SaveManager', () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        vi.mocked(fsp.writeFile).mockResolvedValue(undefined);
         manager = new SaveManager(STORAGE);
     });
 
@@ -208,9 +205,9 @@ describe('SaveManager', () => {
             manager.save.money = 42;
             manager.scheduleSave();
 
-            expect(fsp.writeFile).not.toHaveBeenCalled();
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalledTimes(1);
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
         });
 
         it('coalesces multiple rapid calls into a single write', () => {
@@ -219,7 +216,7 @@ describe('SaveManager', () => {
             manager.scheduleSave();
 
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalledTimes(1);
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
         });
 
         it('flushSave writes immediately if a save is pending', () => {
@@ -264,7 +261,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('Spark');
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('rejects when at max capacity', () => {
@@ -303,7 +300,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets).toHaveLength(1);
             expect(manager.save.pets[0].name).toBe('B');
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('returns undefined for a positive out-of-range index', () => {
@@ -326,7 +323,7 @@ describe('SaveManager', () => {
             manager.updateMoney(999);
             expect(manager.save.money).toBe(999);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
             vi.useRealTimers();
         });
     });
@@ -350,7 +347,7 @@ describe('SaveManager', () => {
             expect(manager.save.decoration).toHaveLength(1);
             expect(manager.save.decoration[0]).toEqual(decor);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('moveDecor updates position and schedules a save', () => {
@@ -359,7 +356,7 @@ describe('SaveManager', () => {
             expect(manager.save.decoration[0].x).toBe(50);
             expect(manager.save.decoration[0].y).toBe(60);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('moveDecor does nothing for an invalid index', () => {
@@ -372,7 +369,7 @@ describe('SaveManager', () => {
             manager.removeDecor(0);
             expect(manager.save.decoration).toHaveLength(0);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
     });
 
@@ -398,7 +395,7 @@ describe('SaveManager', () => {
             manager.updateInventory('candy', 5);
             expect(manager.save.inventory.candy).toBe(5);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('clamps negative amount to zero and removes key', () => {
@@ -514,7 +511,7 @@ describe('SaveManager', () => {
             expect(manager.save.pets[0].hp).toBe(30);
             expect(manager.save.pets[0].stamina).toBe(20);
             vi.runAllTimers();
-            expect(fsp.writeFile).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
         });
 
         it('clamps negative values to zero', () => {
@@ -574,6 +571,131 @@ describe('SaveManager', () => {
             expect(manager.save.pets[0].stamina).toBe(40);
         });
 
+    // ── Hardening: corrupt-but-parseable saves ──────────────────────────
+
+    describe('corrupt-but-parseable saves', () => {
+        it.each([['null', 'null'], ['number', '5'], ['string', '"x"'], ['boolean', 'true'], ['array', '[1,2]']])(
+            'resets when the save file contains valid JSON that is not an object (%s)',
+            (_label, content) => {
+                vi.mocked(fs.existsSync).mockReturnValue(true);
+                vi.mocked(fs.readFileSync).mockReturnValue(content);
+                vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+                expect(() => manager.loadGame()).not.toThrow();
+                expect(manager.save.money).toBe(0);
+                expect(manager.save.pets).toEqual([]);
+            },
+        );
+    });
+
+    // ── Hardening: streak sanitization ──────────────────────────────────
+
+    describe('streak validation', () => {
+        it('merges an incomplete streak object with defaults (no NaN poisoning)', () => {
+            const saveData = completeSave({ streak: {} });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.streak.currentStreak).toBe(0);
+            expect(manager.save.streak.longestStreak).toBe(0);
+            expect(manager.save.streak.lastClaimDate).toBe('');
+            expect(manager.save.streak.totalRewardsClaimed).toBe(0);
+        });
+
+        it('replaces non-numeric streak fields with defaults', () => {
+            const saveData = completeSave({ streak: { currentStreak: 'NaN!', lastClaimDate: 5, longestStreak: -3, totalRewardsClaimed: null } });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.streak).toEqual({ currentStreak: 0, lastClaimDate: '', longestStreak: 0, totalRewardsClaimed: 0 });
+        });
+    });
+
+    // ── Hardening: plant & decoration validation ────────────────────────
+
+    describe('plant and decoration validation', () => {
+        it('drops malformed plant entries so indices stay aligned', () => {
+            const good = { x: 10, y: 20, plantId: 'oran_berry_plant', phase: 2, phaseStartTime: new Date().toISOString() };
+            const unknownId = { x: 0, y: 0, plantId: 'retired_plant', phase: 0, phaseStartTime: new Date().toISOString() };
+            const saveData = completeSave({ plants: [null, { x: 'bad' }, good, unknownId, 42] });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.plants).toHaveLength(1);
+            expect(manager.save.plants[0].plantId).toBe('oran_berry_plant');
+        });
+
+        it('repairs invalid plant phase and timestamps', () => {
+            const saveData = completeSave({ plants: [{ x: 0, y: 0, plantId: 'razz_berry_plant', phase: -2, phaseStartTime: 'garbage', mulch: 'unknown_mulch' }] });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.plants[0].phase).toBe(0);
+            expect(Number.isNaN(new Date(manager.save.plants[0].phaseStartTime).getTime())).toBe(false);
+            expect(manager.save.plants[0].mulch).toBeUndefined();
+        });
+
+        it('drops malformed decoration entries', () => {
+            const good = { x: 1, y: 2, category: 'FENCES', name: 'OBJECT_01' };
+            const saveData = completeSave({ decoration: [good, { category: 'X' }, 'junk'] });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.decoration).toEqual([good]);
+        });
+
+        it('migrates typo\'d DECOR_PLANTS preset names', () => {
+            const saveData = completeSave({ decoration: [{ x: 0, y: 0, category: 'DECOR_PLANTS', name: 'OBJECCT_12' }] });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.decoration[0].name).toBe('OBJECT_12');
+        });
+    });
+
+    // ── Atomic writes ───────────────────────────────────────────────────
+
+    describe('atomic writes', () => {
+        it('writes to a temp file and renames it over the save', () => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+            vi.mocked(fs.renameSync).mockImplementation(() => {});
+
+            expect(manager.saveGame()).toBe(true);
+
+            const writtenPath = String(vi.mocked(fs.writeFileSync).mock.calls[0][0]);
+            expect(writtenPath.endsWith('.tmp')).toBe(true);
+            expect(fs.renameSync).toHaveBeenCalledWith(writtenPath, manager.getSavePath());
+        });
+
+        it('returns false instead of throwing when the disk write fails', () => {
+            vi.mocked(fs.writeFileSync).mockImplementation(() => { throw new Error('ENOSPC'); });
+
+            expect(() => manager.saveGame()).not.toThrow();
+            expect(manager.saveGame()).toBe(false);
+        });
+    });
+
+    // ── HP/Stamina validation in loadGame (continued) ───────────────────
+
+    describe('HP/Stamina validation (edge)', () => {
         it('resets hp and stamina of 0 to max (pets with 0 HP should have been removed)', () => {
             const saveData = completeSave({
                 pets: [{ name: 'A', specie: 'SA', color: 'C', candyFed: 5, hp: 0, stamina: 0 }],
@@ -587,5 +709,6 @@ describe('SaveManager', () => {
             expect(manager.save.pets[0].hp).toBe(60);  // 50 + 5*2
             expect(manager.save.pets[0].stamina).toBe(60);
         });
+    });
     });
 });

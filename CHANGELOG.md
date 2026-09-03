@@ -1,5 +1,29 @@
 # Change Log
 
+## [1.5.0] — Stability & Performance
+
+### Bug Fixes
+- **Save integrity** — Saves are now written atomically (temp file + rename) so a crash mid-write can never truncate the save; corrupt-but-parseable save files (e.g. after hand-editing) no longer break extension activation; incomplete streak data can no longer poison the save with `NaN`.
+- **Git push rewards** — Rewards now trigger on actual pushes (ahead-count drop on the same branch) instead of any HEAD change, so commits, checkouts, and pulls no longer farm push rewards. Repositories opened after startup are now watched too.
+- **Shop purchases can be cancelled** — Pressing Close (or exiting Build Mode) with an unplaced item on the cursor now cancels the purchase instead of charging and placing it. The `+` button still finalizes the placement.
+- **Auto Feed saves fainting pets** — Auto Feed now runs before the faint check, so a pet hitting 0 HP is healed from the backpack instead of leaving.
+- **Money is extension-authoritative** — All gold changes now flow through the extension as deltas, so coding rewards can no longer be silently overwritten by a stale balance from the game view. Item prices are also broadcast from the extension so the shop can never disagree with the backend.
+- **Evolution glitches** — An interrupted evolution no longer leaves the Pokémon frozen forever; in-flight evolution animations are properly cancelled on removal/reset; damp mulch is no longer cleared from the wrong plant after harvesting a single-harvest plant.
+- **Wild Pokémon toggle** — Disabling wild Pokémon now removes all of them (previously every second one survived).
+- **Night overlay layering** — The custom cursor and reward toasts are no longer tinted by the night overlay, and simultaneous toasts stack in a column instead of overlapping.
+- **Lamp lighting** — Lamp light masks now update after panel resizes and pet-scale changes; lamp shop thumbnails no longer show the lit night sprite.
+- **Plant growth accuracy** — Leftover growth time between ticks is no longer discarded when a phase advances (previously up to a minute per phase, or hours after a long shutdown).
+- **Ball fixes** — Throwing the ball with no Pokémon no longer strands it on the field; the ball now lands centered on the click.
+- **Lowering `maxPokemon` at runtime** now reconciles the save and view instead of desyncing pet indices.
+
+### Improvements
+- **Performance** — The game canvas now uses a right-sized backing store (up to 9× less per-frame fill at large scales), draws only when the simulation steps (instead of at display refresh rate), shares sprite-sheet images between objects, skips inert decorations during click hit-testing, and avoids per-frame allocations in the pet AI.
+- **Security hardening** — The webview CSP no longer allows inline script (all UI events are wired in JS), and the webview can only load resources from the extension's media folder.
+- **Activation** — The extension now activates on startup, so coding rewards, streaks, and stamina ticks work even while the panel is collapsed.
+- **Cleaner distribution** — Removed code obfuscation from the build (the source is public; obfuscation only made the bundle slower and larger).
+- **Robustness** — All webview messages are validated; save data (pets, plants, decorations, streaks) is validated per-entry on load; save import preserves mulch, keeps fractional friendship, and reports disk errors separately from format errors.
+- **Housekeeping** — Removed dead code and unused assets, fixed misspelled decoration preset keys (with automatic save migration), renamed the misspelled "Zorua hisiuan" species to "Zorua Hisuian" (with save migration), and errors now go to a "Pokemon Pets" output channel.
+
 ## [v1.4.0] — Auto Harvest
 
 ### New Features

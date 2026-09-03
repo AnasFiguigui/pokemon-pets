@@ -5,7 +5,7 @@
         <title>Pokemon Pets </title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {cspSource}; style-src {cspSource} 'unsafe-inline'; font-src {cspSource}; script-src 'unsafe-inline' {cspSource};">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {cspSource}; style-src {cspSource} 'unsafe-inline'; font-src {cspSource}; script-src {cspSource};">
 
         <!-- Preload font & menus image -->
         <link rel="preload" href="{media}fonts/Pokemon.otf" as="font" type="font/otf">
@@ -13,11 +13,9 @@
 
         <!-- Styling -->
         <link rel="stylesheet" href="{media}main.css">
-
-        <!-- Scripts -->
     </head>
 
-    <!-- Content -->
+    <!-- Content (all event handlers are wired in main.js — no inline script) -->
     <body media="{media}" hide style="display:none">
         <!-- Game -->
         <div id="background">
@@ -31,26 +29,26 @@
             <span id="decorHelp">Drag to place</span>
 
             <!-- Three most recently placed shop items -->
-            <div id="buildShortcuts" class="buildShortcuts" role="toolbar" aria-label="Recent build items" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
-                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(0);" disabled></button>
-                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(1);" disabled></button>
-                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" onclick="activateBuildShortcut(2);" disabled></button>
+            <div id="buildShortcuts" class="buildShortcuts" role="toolbar" aria-label="Recent build items">
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" disabled></button>
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" disabled></button>
+                <button type="button" class="buildShortcutSlot" aria-label="Empty recent build slot" disabled></button>
             </div>
-            
+
             <!-- Toggle action, shop shortcut & exit buttons -->
-            <div class="decorButtons" role="toolbar" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+            <div id="decorButtons" class="decorButtons" role="toolbar">
                 <!-- Toggle action -->
-                <button type="button" class="menu" button show onclick="DecorMode.toggleAction();">
+                <button type="button" id="decorActionBtn" class="menu" button show>
                     <span id="decorAction">Mode</span>
                 </button>
 
                 <!-- Finalize placement and reopen the last visited shop page -->
-                <button type="button" class="menu" button show title="Open last shop page" aria-label="Open last shop page" onclick="toggleActionStore();">
+                <button type="button" id="decorShopBtn" class="menu" button show title="Open last shop page" aria-label="Open last shop page">
                     <span>+</span>
                 </button>
 
                 <!-- Exit decor mode -->
-                <button type="button" class="menu" button show onclick="DecorMode.toggle(false);">
+                <button type="button" id="decorCloseBtn" class="menu" button show>
                     <span>Close</span>
                 </button>
             </div>
@@ -64,32 +62,32 @@
         <div id="night-overlay"></div>
 
         <!-- Menus -->
-        <div id="menus" role="dialog" onclick="Menus.close();" onkeydown="if(event.key==='Escape')Menus.close();" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <div id="menus" role="dialog">
             <!-- Actions menu -->
-            <div id="actions" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="actions" class="menu" role="menu">
                 <div class="menuTopBar">
                     <span></span>
-                    <button id="actionsCloseBtn" class="menuTopButton" onclick="Menus.close();">X</button>
+                    <button id="actionsCloseBtn" class="menuTopButton">X</button>
                 </div>
                 <div id="actionsContent" class="menuContent" scrollable>
                     <!-- Buttons -->
-                    <button type="button" class="menuButton" onclick="toggleActionBall();">
+                    <button type="button" id="actionsBallBtn" class="menuButton">
                         <img src="{media}sprites/ui/ball.png" alt="Poké Ball">
                         <span>Throw Poké Ball</span>
                     </button>
-                    <button type="button" class="menuButton" onclick="openPokedex();">
+                    <button type="button" id="actionsPokedexBtn" class="menuButton">
                         <img src="{media}sprites/ui/pokedex.png" alt="Pokédex">
                         <span>Pokédex</span>
                     </button>
-                    <button type="button" class="menuButton" onclick="openBackpack();">
+                    <button type="button" id="actionsBackpackBtn" class="menuButton">
                         <img src="{media}sprites/ui/backpack.png" alt="Backpack">
                         <span>Backpack</span>
                     </button>
-                    <button type="button" class="menuButton" onclick="openStoreMenu();">
+                    <button type="button" id="actionsStoreBtn" class="menuButton">
                         <img src="{media}sprites/ui/house.png" alt="Item Shop">
                         <span>Item Shop</span>
                     </button>
-                    <button type="button" class="menuButton" onclick="toggleActionDecor();">
+                    <button type="button" id="actionsDecorBtn" class="menuButton">
                         <img src="{media}sprites/ui/build.png" alt="Build Mode">
                         <span id="actionsDecor">Enter Build Mode</span>
                     </button>
@@ -98,10 +96,10 @@
             </div>
 
             <!-- Store menu -->
-            <div id="store" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="store" class="menu" role="menu">
                 <div class="menuTopBar">
-                    <button id="storeBackBtn" class="menuTopButton" onclick="openStoreMenu();">Back</button>
-                    <button id="storeCloseBtn" class="menuTopButton" onclick="Menus.close();">X</button>
+                    <button id="storeBackBtn" class="menuTopButton">Back</button>
+                    <button id="storeCloseBtn" class="menuTopButton">X</button>
                 </div>
                 <div id="storeContent" class="menuContent" scrollable>
                     <!-- Items -->
@@ -109,10 +107,10 @@
             </div>
 
             <!-- Backpack menu -->
-            <div id="backpack" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="backpack" class="menu" role="menu">
                 <div class="menuTopBar">
-                    <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
-                    <button class="menuTopButton" onclick="Menus.close();">X</button>
+                    <button id="backpackBackBtn" class="menuTopButton">Back</button>
+                    <button id="backpackCloseBtn" class="menuTopButton">X</button>
                 </div>
                 <div id="backpackContent" class="menuContent" scrollable>
                     <!-- Items populated by JS -->
@@ -120,10 +118,10 @@
             </div>
 
             <!-- Pokédex menu -->
-            <div id="pokedex" class="menu" role="menu" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+            <div id="pokedex" class="menu" role="menu">
                 <div class="menuTopBar">
-                    <button class="menuTopButton" onclick="Menus.toggle('actions', true);">Back</button>
-                    <button class="menuTopButton" onclick="Menus.close();">X</button>
+                    <button id="pokedexBackBtn" class="menuTopButton">Back</button>
+                    <button id="pokedexCloseBtn" class="menuTopButton">X</button>
                 </div>
                 <div id="pokedexContent" class="menuContent" scrollable>
                     <!-- Pokédex entries populated by JS -->
@@ -138,13 +136,13 @@
                 <img src="{media}sprites/ui/gold.png" alt="Gold" class="topBarIcon">
                 <span id="moneyText">0</span>
             </span>
-            <button type="button" id="pokedexBtn" class="topBarItem" onclick="openPokedex();">
+            <button type="button" id="pokedexBtn" class="topBarItem">
                 <img src="{media}sprites/ui/pokedex.png" alt="Pokédex" class="topBarIcon">
             </button>
-            <button type="button" id="backpackBtn" class="topBarItem" onclick="openBackpack();">
+            <button type="button" id="backpackBtn" class="topBarItem">
                 <img src="{media}sprites/ui/backpack.png" alt="Backpack" class="topBarIcon">
             </button>
-            <button type="button" id="candyBtn" class="topBarItem" onclick="selectConsumable('candy');">
+            <button type="button" id="candyBtn" class="topBarItem">
                 <img src="{media}sprites/ui/candy.png" alt="Candy" class="topBarIcon">
                 <span id="candyText">0</span>
             </button>

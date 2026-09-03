@@ -2,7 +2,7 @@
     "name": "pokemon-pets",
     "displayName": "Pokemon Pets",
     "description": "A virtual pet extension featuring Pokemons.",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "publisher": "Anasfiguigui",
     "author": {
         "name": "Anasfiguigui"
@@ -50,8 +50,16 @@
     "engines": {
         "vscode": "^1.92.0"
     },
-    "activationEvents": [],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
     "main": "./dist/extension.js",
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": true
+        },
+        "virtualWorkspaces": true
+    },
     "contributes": {
         "configuration": {
             "title": "Pokemon Pets",
@@ -332,12 +340,10 @@
         "@vscode/test-cli": "^0.0.9",
         "@vscode/test-electron": "^2.4.0",
         "eslint": "^8.57.0",
-        "javascript-obfuscator": "^5.4.1",
         "terser-webpack-plugin": "^5.4.0",
         "typescript": "5.5.4",
         "vitest": "^4.0.18",
         "webpack": "^5.106.2",
-        "webpack-cli": "^7.0.2",
-        "webpack-obfuscator": "^3.6.1"
+        "webpack-cli": "^7.0.2"
     }
 }

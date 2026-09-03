@@ -74,6 +74,24 @@ class Animation {
 
 }
 
+//Shared sprite-sheet image cache — many objects reuse the same sheet
+//(e.g. dozens of ground tiles all point at decoration.png), so keep one
+//Image per file instead of one per object.
+const SpriteImageCache = new Map();
+
+function getSpriteImage(src) {
+    let image = SpriteImageCache.get(src);
+    if (!image) {
+        image = new Image();
+        image.src = src;
+        SpriteImageCache.set(src, image);
+    }
+    return image;
+}
+
+//Reusable draw options for pixel-perfect hit tests (avoids per-test allocation)
+const ALPHA_TEST_DRAW_OPTIONS = { pos: new Vec2() };
+
 //Game objects
 class GameObject {
 
@@ -138,9 +156,10 @@ class GameObject {
         if (typeof config.active === 'boolean') { this.#active = config.active; }
         if (typeof config.name === 'string') { this.#name = config.name; }
 
-        //Position & size
-        if (typeof config.pos === 'object') { this.#pos = config.pos; }
-        if (typeof config.size === 'object') { this.#size = config.size; }
+        //Position & size (cloned — presets share Vec2 instances, and mutating
+        //an aliased vector would write through to every object using the preset)
+        if (typeof config.pos === 'object') { this.#pos = new Vec2(config.pos); }
+        if (typeof config.size === 'object') { this.#size = new Vec2(config.size); }
 
         //Clicks
         if (typeof config.clickable === 'boolean') { this.#clickable = config.clickable; }
@@ -149,9 +168,9 @@ class GameObject {
         if (typeof config.sortingLayer === 'number') { this.#sortingLayer = config.sortingLayer; }
 
         //Rendering (sprite sheet)
-        if (typeof config.image === 'string') { this.#image.src = `${Game.mediaURI}sprites/${config.image}`; }
-        if (typeof config.spriteOffset === 'object') { this.#spriteOffset = config.spriteOffset; }
-        if (typeof config.spriteSheetOffset === 'object') { this.#spriteSheetOffset = config.spriteSheetOffset; }
+        if (typeof config.image === 'string') { this.#image = getSpriteImage(`${Game.mediaURI}sprites/${config.image}`); }
+        if (typeof config.spriteOffset === 'object') { this.#spriteOffset = new Vec2(config.spriteOffset); }
+        if (typeof config.spriteSheetOffset === 'object') { this.#spriteSheetOffset = new Vec2(config.spriteSheetOffset); }
 
         //Animation
         if (typeof config.animations === 'object') { this.#animations = config.animations; }
@@ -218,7 +237,7 @@ class GameObject {
         
         //Clear canvas & draw object at origin
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.draw(ctx, { pos: new Vec2() });
+        this.draw(ctx, ALPHA_TEST_DRAW_OPTIONS);
 
         //Get pixel at pos & check alpha
         const pixelData = ctx.getImageData(relPos.x, relPos.y, 1, 1).data;
@@ -307,6 +326,12 @@ class GameObject {
     get randomPoint() { return new Vec2(Util.randomInclusive(this.maxPosX), Util.randomInclusive(this.maxPosY)); }
 
     moveTo(pos, options = {}) {
+        //Capture the current position BEFORE clamping: `pos` may alias
+        //this.#pos (e.g. moveTo(obj.pos) after a resize), and clamping in
+        //place would otherwise make the comparison always report "no move".
+        const oldX = this.#pos.x;
+        const oldY = this.#pos.y;
+
         //Clamp new position
         if (!options.ignoreWalls) {
             pos.x = Util.clamp(pos.x, 0, this.maxPosX);
@@ -314,16 +339,26 @@ class GameObject {
         }
 
         //Check if position changed
-        const samePos = this.#pos.equals(pos);
+        const moved = pos.x !== oldX || pos.y !== oldY;
 
         //Update position
         this.#pos = pos;
 
         //Mark sort order dirty if we moved
-        if (!samePos) { Game.markSortDirty(); }
+        if (moved) { Game.markSortDirty(); }
 
         //Return whether we actually moved
-        return !samePos;
+        return moved;
+    }
+
+    //Moves by a delta without allocating a new Vec2 (hot path for AI steps)
+    moveBy(dx, dy) {
+        const x = Util.clamp(this.#pos.x + dx, 0, this.maxPosX);
+        const y = Util.clamp(this.#pos.y + dy, 0, this.maxPosY);
+        const moved = x !== this.#pos.x || y !== this.#pos.y;
+        this.#pos.setXY(x, y);
+        if (moved) { Game.markSortDirty(); }
+        return moved;
     }
 
     respawn() {
@@ -360,8 +395,8 @@ class Ball extends GameObject {
     setActive(active) {
         super.setActive(active);
 
-        //Bounce
-        this.animate('bounce', true);
+        //Bounce when the ball lands (not when it is hidden)
+        if (active) { this.animate('bounce', true); }
     }
 
     //Pokemons
@@ -409,15 +444,21 @@ class Game {
         this.#windowSize = new Vec2(window.innerWidth, window.innerHeight);
         this.#windowSizeScaled = this.windowSize.div(this.scale);
 
-        //Update canvas sizes
-        this.canvas.width = this.windowSize.x;
-        this.canvas.height = this.windowSize.y;
-        this.canvasBuffer.width = this.windowSize.x;
-        this.canvasBuffer.height = this.windowSize.y;
+        //Size the canvases to the SCALED size — all drawing happens in scaled
+        //coordinates and CSS scales the result up, so a full-size backing
+        //store would waste scale² memory and fill-rate per frame.
+        this.canvas.width = Math.ceil(this.windowSizeScaled.x);
+        this.canvas.height = Math.ceil(this.windowSizeScaled.y);
+        this.canvasBuffer.width = this.canvas.width;
+        this.canvasBuffer.height = this.canvas.height;
 
         //Fit all pokemons & wild pokemons on screen
         this.pets.forEach(pokemon => pokemon.moveTo(pokemon.pos));
         this.wildPokemons.forEach(wildPokemon => wildPokemon.moveTo(wildPokemon.pos));
+
+        //Lamp light masks are positioned in window coordinates — rebuild them
+        this.lampMaskDirty = true;
+        this.#drawDirty = true;
     };
 
     //Update
@@ -425,6 +466,13 @@ class Game {
     static #frames = 0;  //Frames since game start
 
     static #resizeDirty = true; //Flag set by resize event listener
+    static #drawDirty = true;   //Forces a draw outside the fixed timestep (resize, first frame)
+
+    //Night / lamp state shared with main.js (declared here so the cross-file
+    //contract is explicit rather than ad-hoc expando properties)
+    static nightOverlayActive = false;
+    static lampMaskDirty = false;
+    static onAfterDraw = null;
 
     static get fps() { return this.#fps; }
     static get frames() { return this.#frames; }
@@ -436,12 +484,14 @@ class Game {
         //Next frame
         this.#frames++;
 
-        //Update objects
-        for (const obj of this.objects) {
+        //Update objects (iterate a copy — updates can remove objects, e.g. a
+        //wild Pokémon despawning at the end of its catch animation, and
+        //splicing mid-iteration would skip the next object)
+        for (const obj of [...this.objects]) {
             //Not active
             if (!obj.active) { continue; }
 
-            //Draw object
+            //Update object
             obj.update();
         }
     };
@@ -535,19 +585,21 @@ class Game {
     };
 
     static addMoney = (amount) => {
+        //Optimistic local update for instant feedback; the extension applies
+        //the DELTA (not this absolute value) and echoes the authoritative
+        //total back, so concurrent rewards are never clobbered.
         this.setMoney(this.money + amount);
         const formatted = Util.formatNumber(Math.abs(amount));
         this.showMessage(`${amount >= 0 ? '+' : '-'}${formatted}$`);
-        vscode.postMessage({ 
-            type: 'money', 
-            value: this.money 
+        vscode.postMessage({
+            type: 'money_delta',
+            value: amount
         });
     };
 
     //Inventory
     static #inventory = {};
     static #candyText = document.getElementById('candyText');
-    static #candyBtn = document.getElementById('candyBtn');
 
     static get inventory() { return this.#inventory; }
 
@@ -565,7 +617,6 @@ class Game {
             if (this.isAction(Action.CANDY)) {
                 this.setAction(Action.NONE);
             }
-            this.#candyBtn.removeAttribute('active');
         }
     };
 
@@ -631,8 +682,13 @@ class Game {
         //Perform updates
         for (let update = 0; update < updates; update++) { this.update(); }
 
-        //Draw once per loop
-        this.draw();
+        //Draw only when the simulation stepped — the world cannot have
+        //changed between steps, so redrawing at display refresh rate (e.g.
+        //120 Hz) would just repaint identical frames
+        if (updates > 0 || this.#drawDirty) {
+            this.#drawDirty = false;
+            this.draw();
+        }
 
         //Update delta accumulation
         this.#deltaAccumulation = this.#deltaAccumulation - (updates * interval);

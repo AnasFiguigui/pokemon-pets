@@ -677,18 +677,16 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 | Message Type | Key Payload Fields | Purpose |
 |---|---|---|
 | `init` | — | Webview loaded, trigger game init |
-| `error` | `text` | Show VS Code error notification |
-| `info` | `text` | Show VS Code info notification |
-| `money` | `value` | Report gold change |
+| `money_delta` | `value` | Apply a relative gold change (clamped; authoritative total echoed back) |
 | `spawn_wild_pokemon` | — | Request wild Pokémon species |
 | `wild_pokemon_caught` | — | Wild Pokémon caught, compute reward |
 | `ball_caught` | `index` | Pet at index caught ball (+0.5 friendship) |
 | `use_consumable` | `consumableId, index` | Use consumable on pet |
 | `buy_consumable` | `consumableId, quantity` | Buy from shop |
-| `add_decor` | `x, y, category, name` | Save new decoration |
+| `add_decor` | `x, y, category, name, price` | Save new decoration (backend deducts price) |
 | `move_decor` | `index, x, y` | Update decoration position |
 | `remove_decor` | `index` | Remove decoration |
-| `add_plant` | `plantId, x, y` | Save new plant |
+| `add_plant` | `plantId, x, y` | Save new plant (backend deducts seed price) |
 | `move_plant` | `index, x, y` | Update plant position |
 | `remove_plant` | `index` | Remove plant |
 | `harvest_plant` | `index` | Harvest ripe plant |
@@ -700,6 +698,7 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 |---|---|---|
 | `init` | — | Signal to unhide body |
 | `reset` | — | Clear all game objects |
+| `catalog` | `consumables[], plants[]` | Authoritative item prices/names (merged into webview catalogs) |
 | `background` | `value` | Set background theme |
 | `scale` | `value` | Set zoom level |
 | `wild_pokemons` | `value` | Toggle wild spawning |
@@ -713,7 +712,8 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 | `remove_pet` | `index` | Remove pet |
 | `update_pet` | `index, name, specie, color, form, sprite, spriteSize` | Replace pet sprite (general) |
 | `update_plant` | `index, phase` | Update plant growth |
-| `destroy_plant` | `index` | Remove harvested plant |
+| `destroy_plant` | `index` | Remove harvested plant (or a rejected placement) |
+| `destroy_decor` | `index` | Remove a rejected decoration placement (decoration-only index) |
 | `evolution` | `index, name, specie, color, form, sprite, spriteSize, newForm` | Evolution animation + swap |
 | `pokedex` | `value[]` | Pokédex entries with stats |
 | `pet_stats` | `value[]` | Updated HP/STA for all pets |

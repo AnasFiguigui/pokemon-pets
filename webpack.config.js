@@ -3,7 +3,6 @@
 
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const WebpackObfuscator = require('webpack-obfuscator');
 
 /** @type {import('webpack').Configuration} */
 const config = {
@@ -51,27 +50,9 @@ const config = {
         ],
     },
 
-    plugins: [
-        new WebpackObfuscator({
-            compact: true,
-            controlFlowFlattening: true,
-            controlFlowFlatteningThreshold: 0.5,
-            deadCodeInjection: true,
-            deadCodeInjectionThreshold: 0.2,
-            identifierNamesGenerator: 'hexadecimal',
-            renameGlobals: false,
-            rotateStringArray: true,
-            selfDefending: false,
-            stringArray: true,
-            stringArrayEncoding: ['base64'],
-            stringArrayThreshold: 0.75,
-            transformObjectKeys: true,
-            unicodeEscapeSequence: false,
-
-            // Keep reserved names for VS Code API
-            reservedNames: ['^activate$', '^deactivate$'],
-        }),
-    ],
+    // Note: no obfuscation — the source is public (MIT) and obfuscated
+    // bundles are slower, larger, and a known trigger for marketplace
+    // malware scanning. Terser minification is sufficient.
 };
 
 module.exports = config;

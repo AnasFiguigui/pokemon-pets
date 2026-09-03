@@ -21,6 +21,9 @@ export interface RewardEvent {
  * Manages per-file cooldowns to prevent abuse.
  */
 export class CodingRewardsTracker {
+    /** Hard upper bound on tracked per-file cooldowns. */
+    private static readonly MAX_COOLDOWN_ENTRIES = 500;
+
     /** file path → last rewarded timestamp (ms). */
     private readonly cooldowns = new Map<string, number>();
     /** Running count of rewarded saves (for friendship threshold). */
@@ -37,13 +40,7 @@ export class CodingRewardsTracker {
             return undefined; // still on cooldown for this file
         }
         this.cooldowns.set(filePath, now);
-
-        // Prune old cooldown entries every 50 saves to avoid unbounded growth
-        if (this.cooldowns.size > 200) {
-            for (const [path, ts] of this.cooldowns) {
-                if ((now - ts) >= cooldownMs) { this.cooldowns.delete(path); }
-            }
-        }
+        this.pruneCooldowns(now, cooldownMs);
 
         this.saveCount++;
 
@@ -57,6 +54,25 @@ export class CodingRewardsTracker {
         }
 
         return { gold, friendship, candyPetIndex: -1 };
+    }
+
+    /**
+     * Prunes expired cooldown entries once the map grows past 200 files, and
+     * hard-caps the map by evicting the oldest entries (Map preserves
+     * insertion order) — long cooldowns can otherwise keep every entry alive.
+     */
+    private pruneCooldowns(now: number, cooldownMs: number): void {
+        if (this.cooldowns.size <= 200) { return; }
+        for (const [path, ts] of this.cooldowns) {
+            if ((now - ts) >= cooldownMs) { this.cooldowns.delete(path); }
+        }
+        const excess = this.cooldowns.size - CodingRewardsTracker.MAX_COOLDOWN_ENTRIES;
+        if (excess <= 0) { return; }
+        let removed = 0;
+        for (const key of this.cooldowns.keys()) {
+            if (removed++ >= excess) { break; }
+            this.cooldowns.delete(key);
+        }
     }
 
     /** Process a git-push event. Returns a reward, or undefined if disabled. */

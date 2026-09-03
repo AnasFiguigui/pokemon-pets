@@ -55,12 +55,17 @@ class AI {
     }
 
     assign(character) {
-        //Assign character 
+        //Assign character
         this.#character = character;
     }
 
     //Click
     click() {
+        // Base implementation - overridden in subclasses
+    }
+
+    //Cleanup — stop any timers so removed characters can be garbage collected
+    dispose() {
         // Base implementation - overridden in subclasses
     }
 
@@ -101,44 +106,45 @@ class AI {
         this.moveTowards(this.character.randomPoint);
     }
 
+    //Single-step movement (moveBy mutates in place — no Vec2 per AI tick)
     moveLeft() {
         this.character.animate('moveLeft');
-        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y));
+        return this.character.moveBy(-1, 0);
     }
 
     moveRight() {
         this.character.animate('moveRight');
-        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y));
+        return this.character.moveBy(1, 0);
     }
 
     moveUp() {
         this.character.animate('moveUp');
-        return this.character.moveTo(new Vec2(this.character.pos.x, this.character.pos.y - 1));
+        return this.character.moveBy(0, -1);
     }
 
     moveDown() {
         this.character.animate('moveDown');
-        return this.character.moveTo(new Vec2(this.character.pos.x, this.character.pos.y + 1));
+        return this.character.moveBy(0, 1);
     }
 
     moveDownRight() {
         this.character.animate('moveDownRight');
-        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y + 1));
+        return this.character.moveBy(1, 1);
     }
 
     moveUpRight() {
         this.character.animate('moveUpRight');
-        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y - 1));
+        return this.character.moveBy(1, -1);
     }
 
     moveUpLeft() {
         this.character.animate('moveUpLeft');
-        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y - 1));
+        return this.character.moveBy(-1, -1);
     }
 
     moveDownLeft() {
         this.character.animate('moveDownLeft');
-        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y + 1));
+        return this.character.moveBy(-1, 1);
     }
 
     //State
@@ -263,6 +269,12 @@ class Character extends GameObject {
         super.update();
     }
 
+    remove() {
+        //Stop AI timers so this character doesn't leak until they fire
+        this.ai?.dispose();
+        super.remove();
+    }
+
     //Click
     onclick() {
         //Notify AI a click happened
@@ -273,67 +285,41 @@ class Character extends GameObject {
 
 class PokemonAnimations {
 
-    static get DEFAULT() {
+    /** The standard 4-frame row of the shared sprite-sheet layout. */
+    static frames(row) {
+        return [[0, row], [1, row], [2, row], [3, row]];
+    }
+
+    /**
+     * Builds the standard animation set for the shared sprite-sheet layout
+     * (8 directional rows, idle, special, and two sleep variants).
+     */
+    static build(moveSpeed, idleConfig) {
+        const frames = PokemonAnimations.frames;
         return {
-            'idle': new Animation(
-                [[0, 8], [1, 8], [2, 8], [3, 8], [0, 8], [1, 8], [2, 8], [3, 8], [0, 8], [1, 8], [2, 8], [3, 8]],
-                4,
-                { loop: false }
-            ),
-            'moveDown': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                3
-            ),
-            'moveDownRight': new Animation(
-                [[0, 1], [1, 1], [2, 1], [3, 1]],
-                3
-            ),
-            'moveRight': new Animation(
-                [[0, 2], [1, 2], [2, 2], [3, 2]],
-                3
-            ),
-            'moveUpRight': new Animation(
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                3
-            ),
-            'moveUp': new Animation(
-                [[0, 4], [1, 4], [2, 4], [3, 4]],
-                3
-            ),
-            'moveUpLeft': new Animation(
-                [[0, 5], [1, 5], [2, 5], [3, 5]],
-                3
-            ),
-            'moveLeft': new Animation(
-                [[0, 6], [1, 6], [2, 6], [3, 6]],
-                3
-            ),
-            'moveDownLeft': new Animation(
-                [[0, 7], [1, 7], [2, 7], [3, 7]],
-                3
-            ),
-            'special': new Animation(
-                [[0, 9], [1, 9], [2, 9], [3, 9], ],
-                4,
-                { loop: false }
-            ),
+            'idle': new Animation(...idleConfig),
+            'moveDown': new Animation(frames(0), moveSpeed),
+            'moveDownRight': new Animation(frames(1), moveSpeed),
+            'moveRight': new Animation(frames(2), moveSpeed),
+            'moveUpRight': new Animation(frames(3), moveSpeed),
+            'moveUp': new Animation(frames(4), moveSpeed),
+            'moveUpLeft': new Animation(frames(5), moveSpeed),
+            'moveLeft': new Animation(frames(6), moveSpeed),
+            'moveDownLeft': new Animation(frames(7), moveSpeed),
+            'special': new Animation(frames(9), 4, { loop: false }),
             'sleep': [
-                new Animation(
-                    [[0, 11], [1, 11]],
-                    30
-                ),
-                new Animation(
-                    [[0, 10], [1, 10], [2, 10], [3, 10]],
-                    3,
-                    { loop: false }
-                )
+                new Animation([[0, 11], [1, 11]], 30),
+                new Animation(frames(10), 3, { loop: false })
             ],
-            'evolve': new Animation(
-                [[0, 12], [1, 12], [2, 12], [3, 12]],
-                0.5,
-                { loop: false }
-            ),
         };
+    }
+
+    static get DEFAULT() {
+        return PokemonAnimations.build(3, [
+            [...PokemonAnimations.frames(8), ...PokemonAnimations.frames(8), ...PokemonAnimations.frames(8)],
+            4,
+            { loop: false },
+        ]);
     }
 
 }
@@ -395,6 +381,13 @@ class PetAI extends AI {
 
         //Random mood
         this.#setRandomMood();
+    }
+
+    //Cleanup — the heart mood timeout runs for 10 minutes and would keep a
+    //removed pet (and its whole object graph) alive until it fired
+    dispose() {
+        this.#moodHideTimeout.stop();
+        this.#moodHeartTimeout.stop();
     }
 
     //Click

@@ -1,65 +1,8 @@
 class WildPokemonAnimations {
 
-    static frames(row) {
-        return [[0, row], [1, row], [2, row], [3, row]];
-    }
-
-    static get DEFAULT() { 
-        return {
-            'idle': new Animation(
-                WildPokemonAnimations.frames(8),
-                4,
-                { loop: true },
-            ),
-            'moveDown': new Animation(
-                WildPokemonAnimations.frames(0),
-                4,
-            ),
-            'moveDownRight': new Animation(
-                WildPokemonAnimations.frames(1),
-                4,
-            ),
-            'moveRight': new Animation(
-                WildPokemonAnimations.frames(2),
-                4,
-            ),
-            'moveUpRight': new Animation(
-                WildPokemonAnimations.frames(3),
-                4,
-            ),
-            'moveUp': new Animation(
-                WildPokemonAnimations.frames(4),
-                4,
-            ),
-            'moveUpLeft': new Animation(
-                WildPokemonAnimations.frames(5),
-                4,
-            ),
-            'moveLeft': new Animation(
-                WildPokemonAnimations.frames(6),
-                4,
-            ),
-            'moveDownLeft': new Animation(
-                WildPokemonAnimations.frames(7),
-                4,
-            ),
-            'special': new Animation(
-                WildPokemonAnimations.frames(9),
-                4,
-                { loop: false },
-            ),
-            'sleep': [
-                new Animation(
-                    [[0, 11], [1, 11]],
-                    30,
-                ),
-                new Animation(
-                    [[0, 10], [1, 10], [2, 10], [3, 10]],
-                    3,
-                    { loop: false },
-                ),
-            ],
-        }; 
+    //Same sprite-sheet layout as pets, just a slower walk and a looping idle
+    static get DEFAULT() {
+        return PokemonAnimations.build(4, [PokemonAnimations.frames(8), 4, { loop: true }]);
     }
 }
 //AI
@@ -83,7 +26,7 @@ class WildPokemonAI extends AI {
         vscode.postMessage({ type: 'wild_pokemon_caught' });
 
         //Wait to spawn a new wild pokemon
-        Game.wildPokemonSpawner.wait(30 * 1000);
+        Game.wildPokemonSpawner.wait(WILD_SPAWN_RESPAWN_MS);
 
         //Play special animation
         this.setState(AI.SPECIAL);

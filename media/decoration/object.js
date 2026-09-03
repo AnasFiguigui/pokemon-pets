@@ -60,17 +60,13 @@ class Decoration extends GameObject {
     }
 
     remove() {
-        super.remove();
-        if (this.#isLamp) { Game.lampMaskDirty = true; }
-
         // Compute decoration-only index BEFORE removing from the array
         const decorIndex = this.getDecorIndex();
-        Game.decoration.removeItem(this);
+        const wasPending = this.#pendingPurchase !== null;
+        this.removeLocal();
 
-        // If this was a pending purchase that was never placed, just remove from frontend
-        if (this.#pendingPurchase) {
-            this.#pendingPurchase = null;
-        } else if (decorIndex >= 0) {
+        // A pending purchase that was never placed only exists on the frontend
+        if (!wasPending && decorIndex >= 0) {
             vscode.postMessage({
                 type: 'remove_decor',
                 index: decorIndex,
@@ -78,6 +74,22 @@ class Decoration extends GameObject {
         }
 
         if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) DecorMode.toggle(false);
+    }
+
+    // Removes this decoration from the frontend WITHOUT telling the extension
+    // (used for cancelled purchases and host-initiated rejections)
+    removeLocal() {
+        GameObject.prototype.remove.call(this);
+        if (this.#isLamp) { Game.lampMaskDirty = true; }
+        Game.decoration.removeItem(this);
+        this.#pendingPurchase = null;
+        this.#moving = false;
+    }
+
+    // Cancels an unplaced purchase: nothing was charged yet, so simply vanish
+    cancelPendingPurchase() {
+        if (!this.#pendingPurchase) { return; }
+        this.removeLocal();
     }
 
     update() {
@@ -99,9 +111,6 @@ class Decoration extends GameObject {
     }
 
     mouseDown(pos) {
-        // Quick-access: capture mouse down so mouseUp fires
-        if (!Game.isAction(Action.DECOR) && this.#quickAction) return true;
-
         if (!Game.isAction(Action.DECOR)) return false;
 
         switch (DecorMode.action) {
@@ -146,13 +155,19 @@ class Decoration extends GameObject {
         // Finalize pending purchase on first placement
         if (this.#pendingPurchase) {
             const purchasedItem = this.#pendingPurchase;
-            Game.addMoney(-this.price);
+            // The extension deducts the price when it accepts add_decor and
+            // echoes the authoritative balance — update the display optimistically
+            if (this.price > 0) {
+                Game.setMoney(Game.money - this.price);
+                Game.showMessage(`-${Util.formatNumber(this.price)}$`);
+            }
             vscode.postMessage({
                 type: 'add_decor',
                 x: this.pos.x,
                 y: this.pos.y,
                 category: purchasedItem.category,
                 name: purchasedItem.name,
+                price: this.price,
             });
             this.#pendingPurchase = null;
             this.#dirty = false;

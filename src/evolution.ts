@@ -1,4 +1,5 @@
 import type { Pet } from './models';
+import { MAX_CANDY_FED } from './models';
 import type { SaveManager } from './save-manager';
 import type { PokemonForm, PokemonSpecies } from './game-data';
 import { EVERSTONE_ID, Pokemons } from './game-data';
@@ -12,14 +13,14 @@ export interface EvolutionResult {
     equipped?: boolean;         // true if item was equipped as held item instead of evolving
 }
 
-/**
- * Handles candy feeding and Pokémon evolution through the form chain.
- */
 /** Pre-built map from lowercase species name → PokemonSpecies for O(1) lookup. */
 const SpeciesMap: ReadonlyMap<string, PokemonSpecies> = new Map(
     Object.values(Pokemons).flat().map(s => [s.name.toLowerCase(), s]),
 );
 
+/**
+ * Handles candy feeding and Pokémon evolution through the form chain.
+ */
 export class EvolutionService {
     private readonly saveManager: SaveManager;
 
@@ -39,6 +40,53 @@ export class EvolutionService {
         return Math.max(idx, 0);
     }
 
+    /**
+     * Yields the forms after the current one that represent a forward evolution
+     * (skipping sibling forms at the same or lower candy level, which would be
+     * lateral evolutions like Vaporeon → Jolteon).
+     */
+    private *forwardForms(species: PokemonSpecies, currentIdx: number): Generator<{ form: PokemonForm; index: number }> {
+        const currentCandyCost = species.forms[currentIdx].candyCost;
+        for (let i = currentIdx + 1; i < species.forms.length; i++) {
+            const form = species.forms[i];
+            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
+            yield { form, index: i };
+        }
+    }
+
+    /** Checks friendship, candy, and (optionally) time-of-day requirements for a form. */
+    private meetsRequirements(pet: Pet, form: PokemonForm, checkTimeOfDay: boolean): boolean {
+        const friendshipMet = typeof form.requiredFriendship !== 'number'
+            || (pet.friendship ?? 0) >= form.requiredFriendship;
+        if (!friendshipMet) { return false; }
+        if (checkTimeOfDay && form.requiredTimeOfDay
+            && DayNightCycle.getTimeOfDay() !== form.requiredTimeOfDay) { return false; }
+        return (pet.candyFed ?? 0) >= form.candyCost;
+    }
+
+    /** Applies a form change to the pet and schedules a save. */
+    private evolveInto(pet: Pet, form: PokemonForm, consumeHeldItem: boolean): void {
+        pet.form = form.name;
+        pet.sprite = form.sprite;
+        pet.spriteSize = form.spriteSize;
+        if (consumeHeldItem) { pet.heldItem = undefined; }
+        this.saveManager.scheduleSave();
+    }
+
+    /**
+     * Scans forward forms for one unlocked by the pet's held item.
+     * Returns the matching form or undefined.
+     */
+    private findHeldItemEvolution(pet: Pet, species: PokemonSpecies, currentIdx: number): PokemonForm | undefined {
+        if (!pet.heldItem || pet.heldItem === EVERSTONE_ID) { return undefined; }
+        for (const { form } of this.forwardForms(species, currentIdx)) {
+            if (form.requiredItem !== pet.heldItem) { continue; }
+            if (!this.meetsRequirements(pet, form, false)) { continue; }
+            return form;
+        }
+        return undefined;
+    }
+
     /** Returns info about the next evolution, or undefined if already max. */
     public getNextEvolution(pet: Pet): { nextForm: PokemonForm; candyNeeded: number } | undefined {
         const species = this.findSpecies(pet);
@@ -47,21 +95,16 @@ export class EvolutionService {
         const currentIdx = this.getCurrentFormIndex(pet, species);
         if (currentIdx >= species.forms.length - 1) { return undefined; }
 
-        const currentCandyCost = species.forms[currentIdx].candyCost;
         const candyFed = pet.candyFed ?? 0;
 
         // Scan forms in the same order as feedCandy — skip requiredItem forms
-        for (let i = currentIdx + 1; i < species.forms.length; i++) {
-            const form = species.forms[i];
-            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
+        for (const { form } of this.forwardForms(species, currentIdx)) {
             if (form.requiredItem) { continue; }
             return { nextForm: form, candyNeeded: Math.max(0, form.candyCost - candyFed) };
         }
 
         // All remaining forms require items — show the first valid one
-        for (let i = currentIdx + 1; i < species.forms.length; i++) {
-            const form = species.forms[i];
-            if (form.candyCost <= currentCandyCost) { continue; }
+        for (const { form } of this.forwardForms(species, currentIdx)) {
             return { nextForm: form, candyNeeded: Math.max(0, form.candyCost - candyFed) };
         }
         return undefined; // no forward evolution possible (all siblings)
@@ -77,8 +120,8 @@ export class EvolutionService {
             return { evolved: false, totalCandy: 0 };
         }
 
-        // Increment candy count
-        pet.candyFed = (pet.candyFed ?? 0) + 1;
+        // Increment candy count (capped so exported saves round-trip losslessly)
+        pet.candyFed = Math.min((pet.candyFed ?? 0) + 1, MAX_CANDY_FED);
 
         // Everstone allows normal leveling but blocks every candy evolution.
         if (pet.heldItem === EVERSTONE_ID) {
@@ -93,72 +136,35 @@ export class EvolutionService {
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
-        const currentCandyCost = species.forms[currentIdx].candyCost;
 
         // ── Priority 1: Check held-item evolution ──────────────────────
         // If the pet holds an item, check forms matching that item FIRST.
         // This gives held-item evolutions priority over time-of-day forms
         // (e.g. Eevee holding shiny_stone → Sylveon before Espeon/Umbreon).
-        if (pet.heldItem) {
-            for (let i = currentIdx + 1; i < species.forms.length; i++) {
-                const form = species.forms[i];
-                if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
-                if (form.requiredItem !== pet.heldItem) { continue; }
-                const friendshipMet = typeof form.requiredFriendship !== 'number'
-                    || (pet.friendship ?? 0) >= form.requiredFriendship;
-                if (!friendshipMet) { continue; }
-                if (pet.candyFed < form.candyCost) { continue; }
-
-                // Evolve via held item!
-                pet.form = form.name;
-                pet.sprite = form.sprite;
-                pet.spriteSize = form.spriteSize;
-                pet.heldItem = undefined; // consumed
-                this.saveManager.scheduleSave();
-
-                return {
-                    evolved: true,
-                    newForm: form,
-                    totalCandy: pet.candyFed,
-                };
-            }
+        const heldForm = this.findHeldItemEvolution(pet, species, currentIdx);
+        if (heldForm) {
+            this.evolveInto(pet, heldForm, true);
+            return { evolved: true, newForm: heldForm, totalCandy: pet.candyFed };
         }
 
         // ── Priority 2: Normal candy evolution ─────────────────────────
         // Scan all forms after the current one for a valid candy evolution
         // (supports branching evolutions like Eevee)
-        for (let i = currentIdx + 1; i < species.forms.length; i++) {
-            const nextForm = species.forms[i];
-            // Skip sibling forms at the same candy level (prevents lateral evolution)
-            if (nextForm.candyCost <= currentCandyCost) { continue; }
-            // Skip forms that require a special item (those use useItem())
-            if (nextForm.requiredItem) { continue; }
-            // Check friendship requirement
-            const friendshipMet = typeof nextForm.requiredFriendship !== 'number'
-                || (pet.friendship ?? 0) >= nextForm.requiredFriendship;
-            if (!friendshipMet) { continue; }
-            // Check time-of-day requirement (e.g. Espeon = day, Umbreon = night)
-            if (nextForm.requiredTimeOfDay) {
-                const timeOfDay = DayNightCycle.getTimeOfDay();
-                if (timeOfDay !== nextForm.requiredTimeOfDay) { continue; }
-            }
-            // Check candy requirement
-            if (pet.candyFed < nextForm.candyCost) { continue; }
+        for (const { form, index } of this.forwardForms(species, currentIdx)) {
+            // Forms that require a special item use useItem() instead
+            if (form.requiredItem) { continue; }
+            if (!this.meetsRequirements(pet, form, true)) { continue; }
 
-            // Evolve!
-            pet.form = nextForm.name;
-            pet.sprite = nextForm.sprite;
-            pet.spriteSize = nextForm.spriteSize;
-            this.saveManager.scheduleSave();
+            this.evolveInto(pet, form, false);
 
-            const furtherIdx = i + 1;
+            const furtherIdx = index + 1;
             const nextEvolutionAt = furtherIdx < species.forms.length
                 ? species.forms[furtherIdx].candyCost
                 : undefined;
 
             return {
                 evolved: true,
-                newForm: nextForm,
+                newForm: form,
                 totalCandy: pet.candyFed,
                 nextEvolutionAt,
             };
@@ -204,36 +210,22 @@ export class EvolutionService {
 
         const species = this.findSpecies(pet);
         if (!species) {
-            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
+            return { evolved: false, totalCandy: candyFed };
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
-        const currentCandyCost = species.forms[currentIdx].candyCost;
 
         // Scan all forms after the current one for a matching requiredItem
         let canEquip = false;
-        for (let i = currentIdx + 1; i < species.forms.length; i++) {
-            const form = species.forms[i];
-            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
+        for (const { form } of this.forwardForms(species, currentIdx)) {
             if (form.requiredItem !== itemId) { continue; }
 
             // This item is relevant to at least one future form
             canEquip = true;
 
-            const friendshipMet = typeof form.requiredFriendship !== 'number'
-                || (pet.friendship ?? 0) >= form.requiredFriendship;
-            if (friendshipMet && candyFed >= form.candyCost) {
-                // Evolve!
-                pet.form = form.name;
-                pet.sprite = form.sprite;
-                pet.spriteSize = form.spriteSize;
-                this.saveManager.scheduleSave();
-
-                return {
-                    evolved: true,
-                    newForm: form,
-                    totalCandy: candyFed,
-                };
+            if (this.meetsRequirements(pet, form, false)) {
+                this.evolveInto(pet, form, false);
+                return { evolved: true, newForm: form, totalCandy: candyFed };
             }
         }
 
@@ -257,43 +249,21 @@ export class EvolutionService {
      */
     public checkHeldItemEvolution(petIndex: number): EvolutionResult {
         const pet = this.saveManager.save.pets[petIndex];
-        if (!pet?.heldItem) {
-            return { evolved: false, totalCandy: pet?.candyFed ?? 0 };
-        }
-        if (pet.heldItem === EVERSTONE_ID) {
-            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
+        const candyFed = pet?.candyFed ?? 0;
+        if (!pet?.heldItem || pet.heldItem === EVERSTONE_ID) {
+            return { evolved: false, totalCandy: candyFed };
         }
 
         const species = this.findSpecies(pet);
         if (!species) {
-            return { evolved: false, totalCandy: pet.candyFed ?? 0 };
+            return { evolved: false, totalCandy: candyFed };
         }
 
         const currentIdx = this.getCurrentFormIndex(pet, species);
-        const currentCandyCost = species.forms[currentIdx].candyCost;
-        const candyFed = pet.candyFed ?? 0;
-
-        for (let i = currentIdx + 1; i < species.forms.length; i++) {
-            const form = species.forms[i];
-            if (form.candyCost <= currentCandyCost) { continue; } // skip sibling forms
-            if (form.requiredItem !== pet.heldItem) { continue; }
-            const friendshipMet = typeof form.requiredFriendship !== 'number'
-                || (pet.friendship ?? 0) >= form.requiredFriendship;
-            if (!friendshipMet) { continue; }
-            if (candyFed < form.candyCost) { continue; }
-
-            // Evolve via held item!
-            pet.form = form.name;
-            pet.sprite = form.sprite;
-            pet.spriteSize = form.spriteSize;
-            pet.heldItem = undefined;
-            this.saveManager.scheduleSave();
-
-            return {
-                evolved: true,
-                newForm: form,
-                totalCandy: candyFed,
-            };
+        const form = this.findHeldItemEvolution(pet, species, currentIdx);
+        if (form) {
+            this.evolveInto(pet, form, true);
+            return { evolved: true, newForm: form, totalCandy: candyFed };
         }
 
         return { evolved: false, totalCandy: candyFed };

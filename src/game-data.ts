@@ -69,7 +69,6 @@ export const Consumables: Consumable[] = [
     { id: EVERSTONE_ID, name: 'Everstone', price: 500, description: 'A held stone that prevents evolution until removed.', category: 'stone' },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, description: 'Reduces growth time by 25% for 1 hour.', category: 'mulch' },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, description: 'Increases harvest yield by 1. Consumed after one harvest.', category: 'mulch' },
-    // { id: 'stable_mulch', name: 'Stable Mulch', price: 300, description: 'Doubles the harvest window before a ripe plant wilts. One use per harvest.', category: 'mulch' },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, description: 'Grants 1 extra regrow. Single-harvest only, one use.', category: 'mulch' },
 ];
 
@@ -229,6 +228,6 @@ export const Pokemons: { [generation: string]: PokemonSpecies[] } = {
         // { name: 'Grookey', forms: [{ name: 'Grookey', sprite: 'grookey', spriteSize: 32, candyCost: 0 }, { name: 'Thwackey', sprite: 'thwackey', spriteSize: 32, candyCost: 10 }, { name: 'Rillaboom', sprite: 'rillaboom', spriteSize: 48, candyCost: 25 }] },
         // { name: 'Scorbunny', forms: [{ name: 'Scorbunny', sprite: 'scorbunny', spriteSize: 32, candyCost: 0 }, { name: 'Raboot', sprite: 'raboot', spriteSize: 32, candyCost: 10 }, { name: 'Cinderace', sprite: 'cinderace', spriteSize: 48, candyCost: 25 }] },
         // { name: 'Sobble', forms: [{ name: 'Sobble', sprite: 'sobble', spriteSize: 32, candyCost: 0 }, { name: 'Drizzile', sprite: 'drizzile', spriteSize: 32, candyCost: 10 }, { name: 'Inteleon', sprite: 'inteleon', spriteSize: 48, candyCost: 25 }] },
-        { name: 'Zorua hisiuan', forms: [{ name: 'Zorua', sprite: 'zorua_hisui', spriteSize: 32, candyCost: 0 }, { name: 'Zoroark', sprite: 'zoroark_hisui', spriteSize: 48, candyCost: 25 }] },
+        { name: 'Zorua Hisuian', forms: [{ name: 'Zorua', sprite: 'zorua_hisui', spriteSize: 32, candyCost: 0 }, { name: 'Zoroark', sprite: 'zoroark_hisui', spriteSize: 48, candyCost: 25 }] },
     ],
 };

@@ -59,24 +59,12 @@ class Vec2 {
         }
     }
 
-    mod(n) {
-        if (typeof n === 'object') {
-            return new Vec2(this.x % n.x, this.y % n.y);
-        } else {
-            return new Vec2(this.x % n, this.y % n);
-        }
-    }
-
     toInt() {
         return new Vec2(Math.floor(this.x), Math.floor(this.y));
     }
 
     toIntRound() {
         return new Vec2(Math.round(this.x), Math.round(this.y));
-    }
-
-    toIntCeil() {
-        return new Vec2(Math.ceil(this.x), Math.ceil(this.y));
     }
 
     setXY(x, y) {
@@ -97,7 +85,6 @@ class Timer {
     #active = false;
     #end = 0;
 
-    get justFinished() { return this.#active && Game.frames === this.#end; }
     get finished() { return this.#active && Game.frames >= this.#end; }
 
     //Functions
@@ -236,15 +223,6 @@ class Cursor {
     static get pos() { return this.#pos; }
     static get posScaled() { return this.#posScaled; }
 
-    static moveTo(pos) {
-        this.#pos.x = pos.x;
-        this.#pos.y = pos.y;
-        //Update cached scaled position inline (avoids 2 Vec2 allocations per access)
-        this.#posScaled.setXY(Math.floor(pos.x / Game.scale), Math.floor(pos.y / Game.scale));
-        this.#element.style.left = `${pos.x}px`;
-        this.#element.style.top =  `${pos.y}px`;
-    }
-
     static moveToXY(x, y) {
         this.#pos.x = x;
         this.#pos.y = y;
@@ -355,6 +333,11 @@ class DecorMode {
                 this.#helpText.innerText = 'Click to sell';
                 break;
         }
+        //Finalize any in-progress drag — otherwise an item dragged during a
+        //mode switch stays glued to the cursor when switching back to Move
+        for (const decoration of Game.decoration) {
+            if (decoration.moving) { decoration.stopDragging(); }
+        }
         this.#action = action;
     }
 
@@ -405,8 +388,15 @@ class DecorMode {
             //Enter decor mode
             Game.setAction(Action.DECOR);
         } else {
-            //Stop dragging all
-            for (const decoration of Game.decoration) { decoration.stopDragging(); }
+            //Cancel unplaced purchases (closing must never charge the player)
+            //and finalize regular drags. Iterate a copy — cancelling splices.
+            for (const decoration of [...Game.decoration]) {
+                if (decoration.isPendingPurchase) {
+                    decoration.cancelPendingPurchase();
+                } else {
+                    decoration.stopDragging();
+                }
+            }
 
             //Exit decor mode
             Game.setAction(Action.NONE);

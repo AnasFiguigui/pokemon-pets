@@ -1,6 +1,11 @@
 //VSCode API
 const vscode = acquireVsCodeApi();
 
+//Timing constants
+const WILD_SPAWN_INITIAL_MS = 10 * 1000;   //Delay before the first wild spawn
+const WILD_SPAWN_RESPAWN_MS = 30 * 1000;   //Delay between catches / retries
+const TOP_BAR_AUTO_HIDE_MS = 3000;
+
 //Top bar toggle
 let topBarVisible = false;
 let topBarTimer = null;
@@ -29,10 +34,12 @@ function showTopBarTemporary() {
             topBar.removeAttribute('visible');
         }
         topBarTimer = null;
-    }, 3000);
+    }, TOP_BAR_AUTO_HIDE_MS);
 }
 
-//Consumable catalog (must match extension's Consumables array)
+//Consumable catalog. Sprite data lives here; prices, names, and categories
+//are overwritten by the extension's authoritative 'catalog' message on init
+//so the two sides can never disagree about what an item costs.
 const ConsumableCatalog = [
     { id: 'candy', name: 'Rare Candy', price: 100, category: 'candy', spriteOffset: { x: 0, y: 0 }, cursorOffset: { x: 0, y: 32 } },
     { id: 'oran_berry', name: 'Oran Berry', price: 30, category: 'food', stat: '+10 HP  +15 STA', spriteOffset: { x: 0, y: 64 }, cursorOffset: { x: 0, y: 96 } },
@@ -43,7 +50,6 @@ const ConsumableCatalog = [
     { id: 'hyper_potion', name: 'Hyper Potion', price: 500, category: 'potion', stat: '+120 HP', spriteOffset: { x: 64, y: 128 }, cursorOffset: { x: 64, y: 160 } },
     { id: 'growth_mulch', name: 'Growth Mulch', price: 200, category: 'mulch', stat: '-25% growth (1h)', spriteOffset: { x: 0, y: 192 }, cursorOffset: { x: 0, y: 224 } },
     { id: 'damp_mulch', name: 'Damp Mulch', price: 200, category: 'mulch', stat: '+1 yield (1 harvest)', spriteOffset: { x: 32, y: 192 }, cursorOffset: { x: 32, y: 224 } },
-    // { id: 'stable_mulch', name: 'Stable Mulch', price: 300, category: 'mulch', stat: 'x2 window (1 harvest)', spriteOffset: { x: 64, y: 192 }, cursorOffset: { x: 64, y: 224 } },
     { id: 'gooey_mulch', name: 'Gooey Mulch', price: 300, category: 'mulch', stat: '+1 regrow (1 harvest)', spriteOffset: { x: 96, y: 192 }, cursorOffset: { x: 96, y: 224 } },
     { id: 'fire_stone', name: 'Fire Stone', price: 1000, category: 'stone', spriteOffset: { x: 160, y: 0 }, cursorOffset: { x: 160, y: 32 } },
     { id: 'water_stone', name: 'Water Stone', price: 1000, category: 'stone', spriteOffset: { x: 192, y: 0 }, cursorOffset: { x: 192, y: 32 } },
@@ -57,16 +63,40 @@ const ConsumableCatalog = [
     { id: 'everstone', name: 'Everstone', price: 500, category: 'stone', stat: 'Prevents evolution', spriteOffset: { x: 64, y: 288 }, cursorOffset: { x: 64, y: 320 } },
 ];
 
-//Plant catalog (must match extension's PlantTypes array)
+//Plant catalog. Sprite data lives here; prices, names, growth data, and
+//harvest types are overwritten by the extension's 'catalog' message on init.
 // harvestType: 'single' = destroyed after harvest, 'repeatable' = regrows from blossom
 const PlantCatalog = [
-    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, produces: 'Oran Berry', harvestType: 'single', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
+    { id: 'oran_berry_plant', name: 'Oran Berry Seed', price: 350, produces: 'Oran Berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 0], phaseStep: [16, 0] },
     { id: 'razz_berry_plant', name: 'Razz Berry Seed', price: 400, produces: 'Razz Berry', harvestType: 'repeatable', growthHours: [0.1, 0.2, 0.2, 0.3, 0.2], size: [16, 32], spriteOffset: [0, 32], phaseStep: [16, 0] },
     { id: 'maranga_berry_plant', name: 'Maranga Berry Seed', price: 500, produces: 'Maranga Berry', harvestType: 'single', growthHours: [0.2, 0.4, 0.4, 0.6, 0.4], size: [16, 32], spriteOffset: [0, 64], phaseStep: [16, 0] },
 ];
 
 /** Pre-built map from consumable id → catalog entry for O(1) lookup. */
 const ConsumableCatalogMap = new Map(ConsumableCatalog.map(c => [c.id, c]));
+
+/** Merges the extension's authoritative catalog data into the local catalogs. */
+function applyCatalog(message) {
+    if (Array.isArray(message.consumables)) {
+        for (const item of message.consumables) {
+            const local = ConsumableCatalogMap.get(item.id);
+            if (!local) { continue; }
+            if (typeof item.price === 'number') { local.price = item.price; }
+            if (typeof item.name === 'string') { local.name = item.name; }
+            if (typeof item.category === 'string') { local.category = item.category; }
+        }
+    }
+    if (Array.isArray(message.plants)) {
+        for (const item of message.plants) {
+            const local = PlantCatalog.find(entry => entry.id === item.id);
+            if (!local) { continue; }
+            if (typeof item.price === 'number') { local.price = item.price; }
+            if (typeof item.name === 'string') { local.name = item.name; }
+            if (typeof item.harvestType === 'string') { local.harvestType = item.harvestType; }
+            if (Array.isArray(item.growthHours)) { local.growthHours = item.growthHours; }
+        }
+    }
+}
 
 //Actions menu
 function toggleActionBall() {
@@ -210,6 +240,52 @@ function openPokedex() {
     vscode.postMessage({ type: 'request_pokedex' });
 }
 
+/** Dynamic HP bar color: green >50%, orange ≤50%, red ≤25%. */
+function applyHpBarColor(fill, hpPercent) {
+    if (hpPercent <= 25) {
+        fill.style.background = '#e44';
+    } else if (hpPercent <= 50) {
+        fill.style.background = '#e98a2a';
+    } else {
+        fill.style.background = '';
+    }
+}
+
+/**
+ * Updates the open pokédex's HP/stamina bars in place from pokedexData —
+ * avoids a full rebuild (and the sprite reload flicker) on every stat tick.
+ */
+function updatePokedexStats() {
+    const entries = document.querySelectorAll('#pokedexContent .pokedexEntry');
+    if (entries.length !== pokedexData.length) {
+        renderPokedex(true);
+        return;
+    }
+    entries.forEach((entry, i) => {
+        const pet = pokedexData[i];
+        const bars = entry.querySelectorAll('.pokedexBar');
+        if (bars.length < 2) { return; }
+
+        const hp = pet.hp ?? 0;
+        const maxHp = pet.maxHp ?? 50;
+        const hpPercent = maxHp > 0 ? (hp / maxHp) * 100 : 0;
+        const hpFill = bars[0].querySelector('.pokedexBarFill');
+        const hpLabel = bars[0].querySelector('.pokedexBarLabel');
+        if (hpFill) {
+            hpFill.style.width = `${hpPercent}%`;
+            applyHpBarColor(hpFill, hpPercent);
+        }
+        if (hpLabel) { hpLabel.innerText = `HP ${hp}/${maxHp}`; }
+
+        const stamina = pet.stamina ?? 0;
+        const maxStamina = pet.maxStamina ?? 50;
+        const staFill = bars[1].querySelector('.pokedexBarFill');
+        const staLabel = bars[1].querySelector('.pokedexBarLabel');
+        if (staFill) { staFill.style.width = `${maxStamina > 0 ? (stamina / maxStamina) * 100 : 0}%`; }
+        if (staLabel) { staLabel.innerText = `STA ${stamina}/${maxStamina}`; }
+    });
+}
+
 function renderPokedex(preserveScroll) {
     const content = document.getElementById('pokedexContent');
     const prevScroll = preserveScroll ? content.scrollTop : 0;
@@ -314,12 +390,7 @@ function renderPokedex(preserveScroll) {
             const hpFill = document.createElement('div');
             hpFill.classList.add('pokedexBarFill', 'hp');
             hpFill.style.width = `${hpPercent}%`;
-            // Dynamic color: green >50%, orange ≤50%, red ≤25%
-            if (hpPercent <= 25) {
-                hpFill.style.background = '#e44';
-            } else if (hpPercent <= 50) {
-                hpFill.style.background = '#e98a2a';
-            }
+            applyHpBarColor(hpFill, hpPercent);
             hpBar.appendChild(hpFill);
             const hpLabel = document.createElement('span');
             hpLabel.classList.add('pokedexBarLabel');
@@ -557,7 +628,11 @@ renderBuildShortcuts();
 
 /** Finalizes Build Mode and reopens the last visited shop page. */
 function toggleActionStore() {
-    // Exiting Build Mode finalizes any item currently attached to the cursor.
+    // The + button explicitly FINALIZES any pending purchase (unlike Close,
+    // which cancels it) before leaving Build Mode.
+    for (const decoration of Game.decoration) {
+        if (decoration.isPendingPurchase) { decoration.stopDragging(); }
+    }
     DecorMode.toggle(false);
 
     // Game.setAction() closes menus, so reopen after that transition completes.
@@ -580,9 +655,16 @@ function toggleActionStore() {
     }, 0);
 }
 
+/** Resets a menu's scroll now and after layout (elements render on a timer). */
+function resetMenuScroll(content) {
+    content.scrollTop = 0;
+    setTimeout(() => { content.scrollTop = 0; }, 0);
+}
+
 function createStoreItem(name, price, stat) {
-    //Item element
-    const element = document.createElement('div');
+    //Item element (a real button so store items are keyboard-accessible)
+    const element = document.createElement('button');
+    element.type = 'button';
     element.classList.add('menuButton', 'storeButton');
 
     //Name text element
@@ -628,6 +710,9 @@ function openStoreMenu() {
         backButton.onclick = () => Menus.toggle('actions', true);
     }
 
+    //Build all categories into a fragment (single DOM insertion)
+    const fragment = document.createDocumentFragment();
+
     //Create consumables category
     const consumablesElement = createStoreItem('Consumables');
     consumablesElement.classList.add('storeCategoryButton');
@@ -636,7 +721,7 @@ function openStoreMenu() {
     consumablesIcon.alt = 'Consumables';
     consumablesElement.prepend(consumablesIcon);
     consumablesElement.onclick = () => openStoreConsumablesMenu();
-    content.appendChild(consumablesElement);
+    fragment.appendChild(consumablesElement);
 
     //Create seeds category
     const seedsElement = createStoreItem('Seeds');
@@ -646,7 +731,7 @@ function openStoreMenu() {
     seedsIcon.alt = 'Seeds';
     seedsElement.prepend(seedsIcon);
     seedsElement.onclick = () => openStoreSeedsMenu();
-    content.appendChild(seedsElement);
+    fragment.appendChild(seedsElement);
 
     //Create decoration categories
     for (const category of Object.keys(DecorationPreset)) {
@@ -659,13 +744,12 @@ function openStoreMenu() {
         icon.alt = category;
         element.prepend(icon);
         element.onclick = () => openStoreCategoryMenu(category);
-        content.appendChild(element);
+        fragment.appendChild(element);
     }
+    content.appendChild(fragment);
 
-    //Scroll to top
-    content.scrollTop = 0;
-    setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
-    
+    resetMenuScroll(content);
+
     //Show store menu
     Menus.toggle('store', true);
 }
@@ -689,7 +773,8 @@ function openStoreCategoryMenu(category) {
         backButton.onclick = openStoreMenu;
     }
 
-    //Create category items
+    //Create category items (built into a fragment — some categories have 50+ items)
+    const fragment = document.createDocumentFragment();
     for (const name of Object.keys(DecorationPreset[category])) {
         //Get decoration preset
         const preset = DecorationPreset[category][name];
@@ -703,8 +788,8 @@ function openStoreCategoryMenu(category) {
             element.title = preset.name;
             element.setAttribute('aria-label', preset.name);
         }
-        content.appendChild(element);
-        
+        fragment.appendChild(element);
+
         //Add image to element
         const imgBox = document.createElement('div');
         const img = document.createElement('div');
@@ -719,10 +804,9 @@ function openStoreCategoryMenu(category) {
         //Add buy function
         element.onclick = () => beginDecorationPlacement(category, name);
     }
+    content.appendChild(fragment);
 
-    //Scroll to top
-    content.scrollTop = 0;
-    setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
+    resetMenuScroll(content);
     Menus.toggle('store', true);
 }
 
@@ -742,6 +826,7 @@ function openStoreConsumablesMenu() {
     }
 
     //Create consumable items from catalog (styled like decoration presets)
+    const fragment = document.createDocumentFragment();
     for (const item of ConsumableCatalog) {
         const element = createStoreItem(item.name, item.price, item.stat);
 
@@ -765,12 +850,11 @@ function openStoreConsumablesMenu() {
             vscode.postMessage({ type: 'buy_consumable', consumableId: item.id, quantity: 1 });
             Game.showMessage(`Bought ${item.name}!`);
         };
-        content.appendChild(element);
+        fragment.appendChild(element);
     }
+    content.appendChild(fragment);
 
-    //Scroll to top
-    content.scrollTop = 0;
-    setTimeout(() => { content.scrollTop = 0; }, 0);
+    resetMenuScroll(content);
     Menus.toggle('store', true);
 }
 
@@ -805,8 +889,6 @@ function openStoreSeedsMenu() {
         img.style.setProperty('--image', `url('./sprites/plants.png')`);
         img.style.setProperty('--width', `16px`);
         img.style.setProperty('--height', `16px`);
-        // img.style.setProperty('--width', `${seed.size[0]}px`)
-        // img.style.setProperty('--height', `${seed.size[1]}px`)
         img.style.setProperty('--scale', `${50 / Math.max(seed.size[0], seed.size[1])}`);
         img.style.setProperty('--spriteOffset', `${-ripeX}px ${-ripeY}px`);
         imgBox.prepend(img);
@@ -817,9 +899,7 @@ function openStoreSeedsMenu() {
         content.appendChild(element);
     }
 
-    //Scroll to top
-    content.scrollTop = 0;
-    setTimeout(() => { content.scrollTop = 0; }, 0);
+    resetMenuScroll(content);
     Menus.toggle('store', true);
 }
 
@@ -841,6 +921,26 @@ function refreshStorePrices() {
 // example, when two candies are fed in quick succession). Keep a queue per pet
 // index so each swap starts from the form produced by the previous animation.
 const evolutionMessageQueues = new Map();
+// Pet index → active blink/continue timeout, so in-flight animations can be
+// cancelled when pets are removed or the game resets.
+const evolutionTimers = new Map();
+// Pet index → pet currently frozen (update shadowed / possibly hidden) by an
+// in-flight blink animation, so cancellation can restore it.
+const evolutionFrozenPets = new Map();
+
+/** Cancels every queued and in-flight evolution animation. */
+function cancelAllEvolutions() {
+    for (const timer of evolutionTimers.values()) { clearTimeout(timer); }
+    evolutionTimers.clear();
+    // Restore pets caught mid-blink — otherwise they stay frozen (no-op
+    // update) and possibly invisible (setActive(false) from a blink step)
+    for (const pet of evolutionFrozenPets.values()) {
+        delete pet.update;
+        pet.setActive(true);
+    }
+    evolutionFrozenPets.clear();
+    evolutionMessageQueues.clear();
+}
 
 function enqueueEvolution(message) {
     const idx = message.index;
@@ -870,6 +970,7 @@ function playNextEvolution(idx, queue) {
     function completeEvolution() {
         if (completed) { return; }
         completed = true;
+        evolutionTimers.delete(idx);
 
         // Reset/removal may have cancelled this queue while the animation ran.
         if (evolutionMessageQueues.get(idx) !== queue) { return; }
@@ -878,16 +979,22 @@ function playNextEvolution(idx, queue) {
             evolutionMessageQueues.delete(idx);
         } else {
             // Give the newly-created form a moment to appear before evolving it.
-            setTimeout(() => playNextEvolution(idx, queue), 300);
+            evolutionTimers.set(idx, setTimeout(() => playNextEvolution(idx, queue), 300));
         }
     }
 
-    // Freeze the pet at idle during evolution and prevent AI movement.
+    // Freeze the pet at idle during evolution and prevent AI movement by
+    // shadowing update() on the instance; deleting the own property restores
+    // the prototype's update, so the pet can never stay frozen.
     oldPet.animate('idle', true);
-    oldPet._frozenForEvolution = true;
     oldPet.update = function () {
         // Skip AI updates (no movement), only run base rendering.
     };
+    evolutionFrozenPets.set(idx, oldPet);
+    function unfreeze() {
+        delete oldPet.update;
+        if (evolutionFrozenPets.get(idx) === oldPet) { evolutionFrozenPets.delete(idx); }
+    }
 
     const blinkPhases = [
         { count: 3, interval: 300 },
@@ -904,11 +1011,13 @@ function playNextEvolution(idx, queue) {
     function doBlink() {
         // Abort if the pet was removed or replaced during animation.
         if (Game.pets[idx] !== oldPet) {
+            unfreeze();
             oldPet.setActive(true);
             completeEvolution();
             return;
         }
         if (phaseIdx >= blinkPhases.length) {
+            unfreeze();
             oldPet.setActive(true);
             performEvolutionSwap();
             return;
@@ -923,11 +1032,12 @@ function playNextEvolution(idx, queue) {
         }
 
         const nextInterval = blinkPhases[Math.min(phaseIdx, blinkPhases.length - 1)].interval;
-        setTimeout(doBlink, nextInterval);
+        evolutionTimers.set(idx, setTimeout(doBlink, nextInterval));
     }
 
     function performEvolutionSwap() {
         const preservedPos = oldPet.pos;
+        oldPet.ai?.dispose();
         Game.objects.removeItem(oldPet);
         Game.pets.splice(idx, 1);
 
@@ -947,7 +1057,7 @@ function playNextEvolution(idx, queue) {
         completeEvolution();
     }
 
-    setTimeout(doBlink, 200);
+    evolutionTimers.set(idx, setTimeout(doBlink, 200));
 }
 
 //Messages from VSCode
@@ -958,15 +1068,24 @@ function handleGameMessage(message) {
             document.body.style.display = '';
             break;
         case 'reset':
-            evolutionMessageQueues.clear();
+            cancelAllEvolutions();
             clearBuildShortcuts();
-            for (const pet of Game.pets) { Game.objects.removeItem(pet); }
+            //Remove via remove() paths so AI timers are disposed — but pets
+            //and decorations are already gone host-side, so strip the lists
+            //first and only detach the objects locally
+            for (const pet of [...Game.pets]) {
+                pet.ai?.dispose();
+                Game.objects.removeItem(pet);
+            }
             Game.pets = [];
             for (const decor of Game.decoration) { Game.objects.removeItem(decor); }
             Game.decoration = [];
             Game.plants.length = 0;
             Menus.close();
             DecorMode.toggle(false);
+            break;
+        case 'catalog':
+            applyCatalog(message);
             break;
         case 'money':
             Game.setMoney(message.value);
@@ -1000,14 +1119,21 @@ function handleGameMessage(message) {
         case 'pet_stats':
             // Update cached pokedex data with fresh stats
             if (Array.isArray(message.value) && pokedexData.length > 0) {
-                for (let i = 0; i < Math.min(message.value.length, pokedexData.length); i++) {
+                // A length mismatch means a pet was added/removed since the
+                // last pokédex fetch — zipping by index would attribute stats
+                // to the wrong Pokémon, so fetch a fresh snapshot instead
+                if (message.value.length !== pokedexData.length) {
+                    if (Menus.current === 'pokedex') { vscode.postMessage({ type: 'request_pokedex' }); }
+                    break;
+                }
+                for (let i = 0; i < message.value.length; i++) {
                     pokedexData[i].hp = message.value[i].hp;
                     pokedexData[i].stamina = message.value[i].stamina;
                     pokedexData[i].maxHp = message.value[i].maxHp;
                     pokedexData[i].maxStamina = message.value[i].maxStamina;
                 }
-                // Re-render if pokedex is open
-                if (Menus.current === 'pokedex') { renderPokedex(true); }
+                // Update the open pokédex's bars in place (no full rebuild)
+                if (Menus.current === 'pokedex') { updatePokedexStats(); }
             }
             break;
         case 'consumable_failed':
@@ -1032,9 +1158,11 @@ function handleGameMessage(message) {
 function handleSettingsMessage(message) {
     switch (message.type.toLowerCase()) {
         case 'background':
+            if (typeof message.value !== 'string') { break; }
             Game.background.setAttribute('background', message.value.toLowerCase());
             break;
         case 'scale':
+            if (typeof message.value !== 'string') { break; }
             switch (message.value.toLowerCase()) {
                 case 'small':
                     Game.setScale(1);
@@ -1057,14 +1185,16 @@ function handleSettingsMessage(message) {
         }
         case 'filter':
             Game.background.removeAttribute('filter');
-            if (message.value && message.value.toLowerCase() !== 'none') {
+            if (typeof message.value === 'string' && message.value.toLowerCase() !== 'none') {
                 Game.background.setAttribute('filter', message.value.toLowerCase().replaceAll(' ', '-'));
             }
             break;
         case 'wild_pokemons':
-            for (const wildPokemon of Game.wildPokemons) { wildPokemon.remove(); }
+            //Iterate a copy — remove() splices Game.wildPokemons, and
+            //iterating the live array would skip every second Pokémon
+            for (const wildPokemon of [...Game.wildPokemons]) { wildPokemon.remove(); }
             if (message.value) {
-                Game.wildPokemonSpawner.wait(10 * 1000);
+                Game.wildPokemonSpawner.wait(WILD_SPAWN_INITIAL_MS);
             } else {
                 Game.wildPokemonSpawner.stop();
             }
@@ -1132,24 +1262,39 @@ function handleSpawnMessage(message) {
             break;
         }
         case 'destroy_plant': {
-            // Server-initiated removal (e.g. single-harvest plant after harvesting)
+            // Server-initiated removal (e.g. single-harvest plant after
+            // harvesting, or a rejected placement)
             const plantToRemove = Game.plants[message.index];
             if (plantToRemove) {
-                Game.objects.removeItem(plantToRemove);
-                Game.plants.removeItem(plantToRemove);
-                Game.decoration.removeItem(plantToRemove);
+                plantToRemove.removeLocal();
                 if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) {DecorMode.toggle(false);}
             }
             break;
         }
+        case 'destroy_decor': {
+            // Server-initiated removal of a rejected decoration placement.
+            // The index counts decorations only (plants excluded).
+            let decorOnlyIdx = -1;
+            for (const item of Game.decoration) {
+                if (item.isPlant) { continue; }
+                decorOnlyIdx++;
+                if (decorOnlyIdx === message.index) {
+                    item.removeLocal();
+                    break;
+                }
+            }
+            if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) {DecorMode.toggle(false);}
+            break;
+        }
 
         case 'retry_wild_spawn':
-            Game.wildPokemonSpawner.wait(30 * 1000);
+            Game.wildPokemonSpawner.wait(WILD_SPAWN_RESPAWN_MS);
             break;
         case 'remove_pokemon':
         case 'remove_pet':
-            // Pet indices may shift after removal; cancel pending visual swaps.
-            evolutionMessageQueues.clear();
+            // Pet indices may shift after removal; cancel pending visual swaps
+            // (including any in-flight blink timers).
+            cancelAllEvolutions();
             if (Game.pets[message.index]) { Game.pets[message.index].remove(); }
             break;
         default:
@@ -1175,18 +1320,25 @@ function handleMenuMessage(message) {
     }
 }
 
+const gameMessageHandlers = [handleGameMessage, handleSettingsMessage, handleSpawnMessage, handleMenuMessage];
+
 window.addEventListener('message', event => { // NOSONAR - VS Code webview; extension host origin differs from webview origin
     const message = event.data;
     if (typeof message?.type !== 'string') { return; }
-    handleGameMessage(message);
-    handleSettingsMessage(message);
-    handleSpawnMessage(message);
-    handleMenuMessage(message);
+    //Isolate handlers from each other — one handler throwing must not stop
+    //the rest of this message (or leave init half-applied)
+    for (const handler of gameMessageHandlers) {
+        try {
+            handler(message);
+        } catch (err) {
+            console.error(`[Pokemon Pets] Error handling '${message.type}':`, err);
+        }
+    }
 });
 
 //Night overlay & lamp lighting (cached DOM elements)
-// eslint-disable-next-line no-unused-vars -- read by decoration/object.js
-Game.nightOverlayActive = false;
+//Vertical fine-tune applied to lamp light centers (matches the sprite art)
+const LAMP_LIGHT_Y_OFFSET = 8;
 const nightOverlayEl = document.getElementById('night-overlay');
 const lampGlowEl = document.getElementById('lamp-glow');
 
@@ -1215,7 +1367,7 @@ function buildLampMask(lamps, scale) {
     if (lamps.length === 0) { return ''; }
     return lamps.map(l => {
         const cx = (l.x + l.halfW) * scale;
-        const cy = (l.y + l.halfH + 8) * scale;
+        const cy = (l.y + l.halfH + LAMP_LIGHT_Y_OFFSET) * scale;
         const r = l.radius * scale;
         return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,1) 100%)`;
     }).join(', ');
@@ -1225,7 +1377,7 @@ function buildLampGlow(lamps, scale) {
     if (lamps.length === 0) { return 'transparent'; }
     const gradients = lamps.map(l => {
         const cx = (l.x + l.halfW) * scale;
-        const cy = (l.y + l.halfH + 8) * scale;
+        const cy = (l.y + l.halfH + LAMP_LIGHT_Y_OFFSET) * scale;
         const r = l.radius * scale;
         return `radial-gradient(circle ${r}px at ${cx}px ${cy}px, rgba(255,200,80,0.18) 0%, rgba(255,180,60,0.08) 40%, transparent 100%)`;
     }).join(', ');
@@ -1307,7 +1459,14 @@ function handleDecorMouseUp(pos) {
 }
 
 function handleBallMouseUp(pos) {
-    Game.ball.moveTo(pos.sub(Game.ball.size.mult(0.5, 1).toInt()));
+    //No pets to fetch — the ball would just sit on the field forever
+    if (Game.pets.length === 0) {
+        Game.showMessage('No Pokémon to play fetch!');
+        Game.setAction(Action.NONE);
+        return;
+    }
+    //Center the ball horizontally on the click point (x only)
+    Game.ball.moveTo(pos.sub(new Vec2(Math.floor(Game.ball.size.x / 2), 0)));
     Game.ball.setActive(true);
     for (const pokemon of Game.pets) {
         if (typeof pokemon.moveTowardsBall === 'function') {
@@ -1324,6 +1483,10 @@ function handleDefaultMouseUp(pos) {
     let consumed = false;
     for (let i = Game.objects.length - 1; i >= 0; i--) {
         const obj = Game.objects[i];
+        //Outside Build Mode, plain decorations never react to clicks — skip
+        //them before the expensive pixel-perfect test (a getImageData GPU
+        //readback per object; dozens of ground tiles would make clicks crawl)
+        if (obj.isDecoration && !obj.isPlant && !obj.quickAction) { continue; }
         if (obj.checkMouseUp(pos)) { consumed = true; break; }
     }
     if (!consumed) { Game.setAction(Action.NONE); }
@@ -1364,6 +1527,64 @@ document.onmouseleave = event => {
     //Mouse left screen -> Hide cursor
     Cursor.setIcon(Action.NONE);
 };
+
+//Static UI events — wired here instead of inline on* attributes so the
+//Content-Security-Policy can disallow inline script entirely
+function wireStaticUiEvents() {
+    const on = (id, fn) => {
+        const el = document.getElementById(id);
+        if (el) { el.addEventListener('click', fn); }
+    };
+    const stopMouse = (el) => {
+        if (!el) { return; }
+        el.addEventListener('mousedown', e => e.stopPropagation());
+        el.addEventListener('mouseup', e => e.stopPropagation());
+    };
+
+    //Build mode controls
+    stopMouse(document.getElementById('buildShortcuts'));
+    document.querySelectorAll('.buildShortcutSlot').forEach((slot, index) => {
+        slot.addEventListener('click', () => activateBuildShortcut(index));
+    });
+    stopMouse(document.getElementById('decorButtons'));
+    on('decorActionBtn', () => DecorMode.toggleAction());
+    on('decorShopBtn', () => toggleActionStore());
+    on('decorCloseBtn', () => DecorMode.toggle(false));
+
+    //Menus backdrop (click outside closes; Escape closes)
+    const menus = document.getElementById('menus');
+    stopMouse(menus);
+    menus.addEventListener('click', () => Menus.close());
+    menus.addEventListener('keydown', e => { if (e.key === 'Escape') { Menus.close(); } });
+    for (const id of ['actions', 'store', 'backpack', 'pokedex']) {
+        const menu = document.getElementById(id);
+        if (!menu) { continue; }
+        menu.addEventListener('click', e => e.stopPropagation());
+        menu.addEventListener('keydown', e => e.stopPropagation());
+    }
+
+    //Actions menu
+    on('actionsCloseBtn', () => Menus.close());
+    on('actionsBallBtn', () => toggleActionBall());
+    on('actionsPokedexBtn', () => openPokedex());
+    on('actionsBackpackBtn', () => openBackpack());
+    on('actionsStoreBtn', () => openStoreMenu());
+    on('actionsDecorBtn', () => toggleActionDecor());
+
+    //Store / backpack / pokédex top bars. (The store back button's handler is
+    //reassigned per page whenever a store page opens.)
+    on('storeCloseBtn', () => Menus.close());
+    on('backpackBackBtn', () => Menus.toggle('actions', true));
+    on('backpackCloseBtn', () => Menus.close());
+    on('pokedexBackBtn', () => Menus.toggle('actions', true));
+    on('pokedexCloseBtn', () => Menus.close());
+
+    //Top bar
+    on('pokedexBtn', () => openPokedex());
+    on('backpackBtn', () => openBackpack());
+    on('candyBtn', () => selectConsumable('candy'));
+}
+wireStaticUiEvents();
 
 //Start game loop
 Game.start();

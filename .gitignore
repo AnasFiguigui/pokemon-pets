@@ -3,6 +3,7 @@ node_modules/
 
 # Compiled output
 out/
+dist/
 
 # Build artifacts
 *.vsix

@@ -14,6 +14,9 @@ class Plant extends GameObject {
     #totalPhases = 5; // total growth phases (growthHours.length)
     #mulch = null; // applied mulch id (e.g. 'growth_mulch') or null
 
+    /** Growth phase at which a plant is ripe/harvestable. */
+    static #RIPE_PHASE = 4;
+
     /** Mulch type → indicator dot color. */
     static #MULCH_COLORS = {
         growth_mulch:  '#44ff44', // green
@@ -94,16 +97,12 @@ class Plant extends GameObject {
     }
 
     remove() {
-        super.remove();
-
         const idx = Game.plants.indexOf(this);
-        Game.plants.removeItem(this);
-        Game.decoration.removeItem(this);
+        const wasPending = this.#pendingPurchase;
+        this.removeLocal();
 
-        // If this was a pending purchase that was never placed, just remove from frontend
-        if (this.#pendingPurchase) {
-            this.#pendingPurchase = false;
-        } else {
+        // A pending purchase that was never placed only exists on the frontend
+        if (!wasPending) {
             vscode.postMessage({
                 type: 'remove_plant',
                 index: idx >= 0 ? idx : this.#plantIndex,
@@ -113,6 +112,22 @@ class Plant extends GameObject {
         if (Game.decoration.isEmpty() && Game.isAction(Action.DECOR)) {
             DecorMode.toggle(false);
         }
+    }
+
+    // Removes this plant from the frontend WITHOUT telling the extension
+    // (used for cancelled purchases and host-initiated rejections)
+    removeLocal() {
+        GameObject.prototype.remove.call(this);
+        Game.plants.removeItem(this);
+        Game.decoration.removeItem(this);
+        this.#pendingPurchase = false;
+        this.#moving = false;
+    }
+
+    // Cancels an unplaced purchase: nothing was charged yet, so simply vanish
+    cancelPendingPurchase() {
+        if (!this.#pendingPurchase) { return; }
+        this.removeLocal();
     }
 
     update() {
@@ -178,7 +193,7 @@ class Plant extends GameObject {
 
         // If in normal mode (no action / no decor), attempt harvest
         if (!Game.isAction(Action.DECOR)) {
-            if (this.#phase >= 4) {
+            if (this.#phase >= Plant.#RIPE_PHASE) {
                 vscode.postMessage({ type: 'harvest_plant', index: Game.plants.indexOf(this) });
             } else {
                 Game.showMessage('Not ripe yet...');
@@ -209,7 +224,12 @@ class Plant extends GameObject {
     stopDragging() {
         // Finalize pending purchase on first placement
         if (this.#pendingPurchase) {
-            Game.addMoney(-this.price);
+            // The extension deducts the seed price when it accepts add_plant
+            // and echoes the authoritative balance — update the display optimistically
+            if (this.price > 0) {
+                Game.setMoney(Game.money - this.price);
+                Game.showMessage(`-${Util.formatNumber(this.price)}$`);
+            }
             vscode.postMessage({
                 type: 'add_plant',
                 plantId: this.#plantId,
@@ -260,8 +280,8 @@ class Plant extends GameObject {
 
         super.draw(ctx, options);
 
-        // Add a subtle glow when ripe (phase 4)
-        if (this.#phase >= 4 && Game.frames % 40 < 20) {
+        // Add a subtle glow when ripe
+        if (this.#phase >= Plant.#RIPE_PHASE && Game.frames % 40 < 20) {
             const drawPos = options.pos ?? this.pos;
             ctx.save();
             ctx.globalAlpha = 0.3;

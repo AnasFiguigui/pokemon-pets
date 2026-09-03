@@ -1,5 +1,11 @@
 import type { QuickPickItem } from 'vscode';
 
+/** Current save-file schema version (bump when the format changes incompatibly). */
+export const SAVE_VERSION = 1;
+
+/** Hard cap on candy fed to a single pet (level display caps at 100). */
+export const MAX_CANDY_FED = 1000;
+
 export type Pet = {
     name: string;
     specie: string;
@@ -41,13 +47,14 @@ export type PlantInstance = {
     phase: number;
     /** ISO timestamp when the current phase started. */
     phaseStartTime: string;
-    /** Applied mulch modifier (undefined = none). */
+    /** Applied mulch modifier (undefined = none). 'stable_mulch' is legacy — removed from the shop but kept so old saves stay valid. */
     mulch?: 'growth_mulch' | 'damp_mulch' | 'stable_mulch' | 'gooey_mulch';
     /** ISO timestamp when mulch was applied (used for growth_mulch 1h expiry). */
     mulchAppliedAt?: string;
-    /** Number of regrow cycles completed (for gooey_mulch tracking). */
-    regrowCount?: number;
 };
+
+/** All mulch ids accepted in save data (includes the legacy stable_mulch). */
+export const VALID_MULCH_IDS: ReadonlySet<string> = new Set(['growth_mulch', 'damp_mulch', 'stable_mulch', 'gooey_mulch']);
 
 export type StreakData = {
     currentStreak: number;
@@ -73,6 +80,7 @@ export type Inventory = {
 };
 
 export class Save {
+    public version: number = SAVE_VERSION;
     public money: number = 0;
     public pets: Pet[] = [];
     public decoration: Decoration[] = [];
