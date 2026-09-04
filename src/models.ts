@@ -79,6 +79,34 @@ export type Inventory = {
     [consumableId: string]: number;
 };
 
+/** Always-on progress tracking that powers achievements/badges. */
+export type ProgressData = {
+    /** Named lifetime counters (candy fed, berries harvested, …). */
+    counters: Record<string, number>;
+    /** Lowercased form names ever owned (value is always 1). */
+    formsOwned: Record<string, number>;
+    /** Achievement id → ISO date it was unlocked. */
+    unlocked: Record<string, string>;
+};
+
+/** Monthly daily-reward calendar state. */
+export type CalendarData = {
+    /** 'YYYY-MM' of the month being tracked; resets on rollover. */
+    month: string;
+    /** Days of the month (1-based) already claimed. */
+    claimedDays: number[];
+};
+
+/** Fresh progress data (single source of truth for the shape). */
+export function defaultProgress(): ProgressData {
+    return { counters: {}, formsOwned: {}, unlocked: {} };
+}
+
+/** Fresh calendar data. */
+export function defaultCalendar(): CalendarData {
+    return { month: '', claimedDays: [] };
+}
+
 export class Save {
     public version: number = SAVE_VERSION;
     public money: number = 0;
@@ -87,6 +115,8 @@ export class Save {
     public plants: PlantInstance[] = [];
     public inventory: Inventory = {};
     public autoFeed: boolean = false;
+    public progress: ProgressData = defaultProgress();
+    public calendar: CalendarData = defaultCalendar();
     public streak: StreakData = {
         currentStreak: 0,
         lastClaimDate: '',

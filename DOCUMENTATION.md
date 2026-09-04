@@ -692,6 +692,8 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 | `remove_plant` | `index` | Remove plant |
 | `harvest_plant` | `index` | Harvest ripe plant |
 | `request_pokedex` | — | Request Pokédex data |
+| `request_badges` | — | Request achievements + calendar data |
+| `claim_calendar_day` | `day` | Claim today's daily calendar reward |
 
 ### Backend → Frontend
 
@@ -717,6 +719,7 @@ Formula: `min(500, 50 + (streakDays - 1) × 25)`
 | `destroy_decor` | `index` | Remove a rejected decoration placement (decoration-only index) |
 | `evolution` | `index, name, specie, color, form, sprite, spriteSize, newForm` | Evolution animation + swap |
 | `pokedex` | `value[]` | Pokédex entries with stats |
+| `badges_data` | `value{achievements[], calendar}` | Achievements/badges + daily calendar state |
 | `pet_stats` | `value[]` | Updated HP/STA for all pets |
 | `consumable_failed` | — | Item had no effect |
 | `harvest_result` | `name, count` | Harvest notification |

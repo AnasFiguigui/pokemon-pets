@@ -3,6 +3,8 @@
 ## [1.5.0] — Stability & Performance
 
 ### New Features
+- **Achievements & Badges** — 54 gym badges (Kanto through Kalos), each tied to an achievement ranging from first steps ("feed a candy") to long-term goals ("own all 8 Eevee evolutions", "100-push deploy legend", earn all other 53). Locked badges show live progress bars; unlocking grants gold rewards with a toast. Progress counts everything you do — candy, catches, harvests, playdates, commits, streaks — independently of the telemetry opt-in, and long-time players get their existing telemetry counted retroactively.
+- **Daily Reward Calendar** — A monthly login calendar in the new **Badges** menu (Actions → Badges): each day of the month has a reward (gold, potions, candy, milestone stones) claimable only on that day. The month resets with the same reward pattern; claiming every day of a month earns the Wave Badge. A gentle reminder appears when today's reward is unclaimed.
 - **Pokemon playdates** — Every so often, two Pokémon walk up to each other, meet in the middle, and play — both react with the same emote and gain a little friendship.
 - **Pokémon gift codes** — `Pokemon Pets: Export Pokémon gift code` copies a shareable code for one Pokémon to the clipboard (yours stays with you); a friend runs `Pokemon Pets: Import Pokémon gift code` to add it to their team. No full save swap needed.
 - **Settings Sync save backup** — The save is mirrored into VS Code Settings Sync (toggle with `pokemon-pets.syncSaveBackup`) and restored automatically on a fresh install, so your Pokémon follow you across machines. An existing local save is never overwritten.

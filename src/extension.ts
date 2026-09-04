@@ -11,6 +11,11 @@ import { StreakService } from './streak';
 import { CodingRewardsTracker, type CodingRewardsConfig, type RewardEvent } from './coding-rewards';
 import { isReadyForAutoHarvest } from './auto-harvest';
 import { computePlantPhase } from './plant-growth';
+import {
+    Achievements, CALENDAR_REWARDS, type AchievementDef, type BadgeReward,
+    calendarRewardForDay, computeMetrics, daysInMonth, evaluateUnlocks,
+    monthKey, updateHighWaterMarks,
+} from './achievements';
 import { log, setLogSink } from './log';
 
 let config = vscode.workspace.getConfiguration('pokemon-pets');
@@ -23,6 +28,7 @@ let rewardsTracker: CodingRewardsTracker;
 let unifiedTickInterval: ReturnType<typeof setInterval> | undefined;
 let unifiedTickCounter = 0;
 let streakToastTimer: ReturnType<typeof setTimeout> | undefined;
+let dailyReminderTimer: ReturnType<typeof setTimeout> | undefined;
 let dayNightEnabled = false;
 let autoFeedEnabled = false;
 
@@ -124,6 +130,7 @@ function grantGold(amount: number): void {
     if (amount <= 0) { return; }
     saveManager.updateMoney(saveManager.save.money + amount);
     telemetry.trackGoldEarned(amount);
+    addProgress('goldEarnedTotal', amount);
     webview.postMessage({ type: 'money', value: saveManager.save.money });
 }
 
@@ -145,6 +152,8 @@ function announceEvolution(petIndex: number, newFormName: string, showToast: boo
         newForm: newFormName,
     });
     telemetry.trackPokemonEvolved(pet.specie);
+    noteFormOwned(newFormName);
+    bumpProgress('evolutions');
     refreshPokedex();
     if (showToast) {
         vscode.window.showInformationMessage(`🎉 ${pet.name} evolved into ${newFormName}!`);
@@ -191,10 +200,14 @@ function applyReward(reward: RewardEvent): void {
     }
 
     if (reward.candyPetIndex >= 0 && reward.candyPetIndex < saveManager.save.pets.length) {
+        // A push candy is a real candy — count it like a fed one
+        telemetry.trackCandyFed();
+        addProgress('candyFed');
         applyCandyToPet(reward.candyPetIndex, false);
     }
 
     saveManager.scheduleSave();
+    evaluateAchievements();
 }
 
 /** Grants the git-commit reward and shows a toast. */
@@ -203,6 +216,7 @@ function handleGitCommitDetected(): void {
     const reward = rewardsTracker.onGitCommit(saveManager.save.pets.length, cfg);
     if (!reward) { return; }
     applyReward(reward);
+    bumpProgress('commits');
     vscode.window.showInformationMessage(`🎉 Git commit! +${cfg.commitGold} gold.`);
 }
 
@@ -216,6 +230,7 @@ function handleGitPushDetected(): void {
         ? saveManager.save.pets[reward.candyPetIndex]?.name
         : undefined;
     applyReward(reward);
+    bumpProgress('pushes');
     const candyPart = candyPetName ? ` — ${candyPetName} got a candy!` : '!';
     vscode.window.showInformationMessage(
         `🎉 Git push! Your Pokémon earned ${cfg.pushGold}g${candyPart}`,
@@ -424,6 +439,7 @@ function harvestPlant(harvestIndex: number): boolean {
 
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     webview.postMessage({ type: 'harvest_result', name: produceName, count: fruits });
+    bumpProgress('berriesHarvested', fruits);
     return true;
 }
 
@@ -567,6 +583,8 @@ function refreshPokedex(): void {
 function checkAndHandleHeldItemEvolution(petIndex: number): void {
     const result = evolution.checkHeldItemEvolution(petIndex);
     if (result.evolved && result.newForm) {
+        // Held-item evolutions consume the held stone
+        addProgress('stoneEvolutions');
         announceEvolution(petIndex, result.newForm.name, true);
     }
 }
@@ -596,6 +614,184 @@ function syncSaveBackup(): void {
     });
 }
 
+// ── Achievements & badges ───────────────────────────────────────────────
+
+/** Bumps a lifetime progress counter (no achievement check — see bumpProgress). */
+function addProgress(counter: string, amount = 1): void {
+    if (amount <= 0) { return; }
+    const counters = saveManager.save.progress.counters;
+    counters[counter] = (counters[counter] ?? 0) + amount;
+    saveManager.scheduleSave();
+}
+
+/** Records that a form has been owned at some point (for collection badges). */
+function noteFormOwned(formName: string | undefined): void {
+    if (typeof formName !== 'string' || formName.length === 0) { return; }
+    saveManager.save.progress.formsOwned[formName.toLowerCase()] = 1;
+    saveManager.scheduleSave();
+}
+
+/** Builds a short human-readable reward description ("+100g, 1× Potion"). */
+function describeReward(reward: BadgeReward): string {
+    const parts: string[] = [];
+    if (reward.gold) { parts.push(`+${reward.gold}g`); }
+    for (const [itemId, count] of Object.entries(reward.items ?? {})) {
+        parts.push(`${count}× ${ConsumablesMap.get(itemId)?.name ?? itemId}`);
+    }
+    return parts.join(', ');
+}
+
+/** Grants a badge/calendar reward (gold + items) and notifies the webview. */
+function grantBadgeReward(reward: BadgeReward): void {
+    if (reward.gold) {
+        saveManager.updateMoney(saveManager.save.money + reward.gold);
+        telemetry.trackGoldEarned(reward.gold);
+        addProgress('goldEarnedTotal', reward.gold);
+        webview.postMessage({ type: 'money', value: saveManager.save.money });
+    }
+    if (reward.items) {
+        for (const [itemId, count] of Object.entries(reward.items)) {
+            if (!ConsumablesMap.has(itemId) || count <= 0) { continue; }
+            saveManager.updateInventory(itemId, saveManager.getConsumableCount(itemId) + count);
+        }
+        webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+    }
+}
+
+/**
+ * Checks all achievements against current progress, unlocking and rewarding
+ * any that are newly complete. Cheap enough to call after any game event.
+ */
+function evaluateAchievements(): void {
+    updateHighWaterMarks(saveManager.save);
+    // High-water marks / formsOwned back-fill are lifetime records — persist
+    // them even when nothing unlocks
+    saveManager.scheduleSave();
+
+    // Grant-then-recheck so badge reward gold can chain-unlock gold badges
+    const newly: AchievementDef[] = [];
+    for (let pass = 0; pass < 4; pass++) {
+        const unlocked = evaluateUnlocks(saveManager.save);
+        if (unlocked.length === 0) { break; }
+        for (const def of unlocked) {
+            grantBadgeReward(def.reward);
+        }
+        newly.push(...unlocked);
+    }
+    if (newly.length === 0) { return; }
+    saveManager.scheduleSave();
+
+    // One toast per badge is fine normally; a migration catch-up (existing
+    // players unlocking many at once) gets a single summary instead.
+    if (newly.length <= 3) {
+        for (const def of newly) {
+            const rewardText = describeReward(def.reward);
+            vscode.window.showInformationMessage(
+                `🏅 Badge earned: ${def.name} — ${def.title}!${rewardText ? ` ${rewardText}` : ''}`,
+            );
+        }
+    } else {
+        vscode.window.showInformationMessage(
+            `🏅 You earned ${newly.length} badges! Open Badges in the Actions menu to see them.`,
+        );
+    }
+
+    postBadgesData();
+}
+
+/** Bumps a counter and immediately checks achievements. */
+function bumpProgress(counter: string, amount = 1): void {
+    addProgress(counter, amount);
+    evaluateAchievements();
+}
+
+// ── Daily reward calendar ───────────────────────────────────────────────
+
+/** Rolls the calendar over to the current month when needed. */
+function ensureCalendarMonth(): void {
+    const key = monthKey();
+    const calendar = saveManager.save.calendar;
+    if (calendar.month === key) { return; }
+    calendar.month = key;
+    calendar.claimedDays = [];
+    saveManager.scheduleSave();
+}
+
+/** Builds the payload the webview's Badges menu renders from. */
+function buildBadgesPayload(): unknown {
+    ensureCalendarMonth();
+    const save = saveManager.save;
+    updateHighWaterMarks(save);
+    saveManager.scheduleSave(); // persist high-water/formsOwned back-fill
+    const metrics = computeMetrics(save);
+    const now = new Date();
+    const totalDays = daysInMonth(now);
+
+    return {
+        achievements: Achievements.map(def => ({
+            id: def.id,
+            name: def.name,
+            title: def.title,
+            description: def.description,
+            col: def.col,
+            row: def.row,
+            target: def.target,
+            current: Math.min(metrics[def.metric] ?? 0, def.target),
+            unlocked: Boolean(save.progress.unlocked[def.id]),
+            unlockedAt: save.progress.unlocked[def.id],
+            rewardText: describeReward(def.reward),
+        })),
+        calendar: {
+            month: save.calendar.month,
+            today: now.getDate(),
+            daysInMonth: totalDays,
+            claimedDays: save.calendar.claimedDays,
+            rewards: CALENDAR_REWARDS.slice(0, totalDays).map(reward => ({
+                gold: reward.gold ?? 0,
+                hasItems: Object.keys(reward.items ?? {}).length > 0,
+                text: describeReward(reward),
+            })),
+        },
+    };
+}
+
+function postBadgesData(): void {
+    webview.postMessage({ type: 'badges_data', value: buildBadgesPayload() });
+}
+
+function handleRequestBadges(): void {
+    postBadgesData();
+}
+
+function handleClaimCalendarDay(message: any): void {
+    ensureCalendarMonth();
+    const today = new Date().getDate();
+    if (!isValidIndex(message.day)) { return; }
+    if (message.day !== today) {
+        // Stale view (e.g. left open across midnight) — re-sync it
+        webview.postMessage({ type: 'show_message', text: "Only today's reward can be claimed!" });
+        postBadgesData();
+        return;
+    }
+    const calendar = saveManager.save.calendar;
+    if (calendar.claimedDays.includes(today)) {
+        postBadgesData();
+        return;
+    }
+
+    calendar.claimedDays.push(today);
+    const reward = calendarRewardForDay(today);
+    grantBadgeReward(reward);
+    addProgress('calendarDaysClaimed');
+    if (calendar.claimedDays.length === daysInMonth()) {
+        addProgress('calendarFullMonths');
+    }
+    saveManager.scheduleSave();
+    evaluateAchievements();
+    postBadgesData();
+    webview.postMessage({ type: 'show_message', text: `Day ${today} reward claimed! ${describeReward(reward)}` });
+}
+
 // ── Unified Tick (single 60s interval for all periodic tasks) ───────────
 
 /** How many unified ticks between stamina drains (6 × 60s = 360s). */
@@ -618,6 +814,10 @@ function ensureUnifiedTick(): void {
         if (unifiedTickCounter % STAMINA_DRAIN_TICKS === 0) {
             drainStamina();
         }
+
+        // Calendar month rollover + achievement catch-all check
+        ensureCalendarMonth();
+        evaluateAchievements();
 
         // Mirror the save into Settings Sync (no-op when unchanged)
         syncSaveBackup();
@@ -644,9 +844,10 @@ function handleMoneyDelta(message: any): void {
     if (!isFiniteNumber(delta) || delta === 0) { return; }
     const clamped = Math.max(-MAX_MONEY_DELTA, Math.min(MAX_MONEY_DELTA, delta));
     saveManager.updateMoney(saveManager.save.money + clamped);
-    if (clamped > 0) { telemetry.trackGoldEarned(clamped); }
-    else { telemetry.trackGoldSpent(-clamped); }
+    if (clamped > 0) { telemetry.trackGoldEarned(clamped); addProgress('goldEarnedTotal', clamped); }
+    else { telemetry.trackGoldSpent(-clamped); addProgress('goldSpentTotal', -clamped); }
     webview.postMessage({ type: 'money', value: saveManager.save.money });
+    evaluateAchievements();
 }
 
 function handleSpawnWildPokemon(): void {
@@ -666,6 +867,8 @@ function handleWildPokemonCaught(): void {
     webview.postMessage({ type: 'money', value: saveManager.save.money, reward: catchReward });
     telemetry.trackGoldEarned(catchReward);
     telemetry.trackWildPokemonCaught();
+    addProgress('goldEarnedTotal', catchReward);
+    bumpProgress('wildCaught');
 }
 
 function handleBallCaught(message: any): void {
@@ -674,6 +877,7 @@ function handleBallCaught(message: any): void {
         addFriendship(ballPetIndex, BALL_CATCH_FRIENDSHIP);
         // Check if held item evolution triggers from friendship gain
         checkAndHandleHeldItemEvolution(ballPetIndex);
+        bumpProgress('ballCatches');
     }
 }
 
@@ -695,6 +899,7 @@ function handlePetsPlayed(message: any): void {
     addFriendship(indexB, PLAY_FRIENDSHIP);
     checkAndHandleHeldItemEvolution(indexA);
     checkAndHandleHeldItemEvolution(indexB);
+    bumpProgress('playdates');
 }
 
 function handleUseCandy(petIndex: unknown, currentCount: number): void {
@@ -702,6 +907,7 @@ function handleUseCandy(petIndex: unknown, currentCount: number): void {
     saveManager.updateInventory('candy', currentCount - 1);
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     telemetry.trackCandyFed();
+    bumpProgress('candyFed');
 
     if (!isValidIndex(petIndex) || petIndex >= saveManager.save.pets.length) { return; }
 
@@ -755,6 +961,7 @@ function handleUseStone(consumable: Consumable, petIndex: unknown, currentCount:
     if (result.evolved && result.newForm) {
         saveManager.updateInventory(consumable.id, currentCount - 1);
         webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
+        addProgress('stoneEvolutions');
         announceEvolution(petIndex, result.newForm.name, true);
     } else if (result.equipped) {
         // Item equipped as held item — consume from inventory
@@ -806,6 +1013,8 @@ function handleBuyConsumable(message: any): void {
     webview.postMessage({ type: 'money', value: saveManager.save.money });
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     telemetry.trackGoldSpent(totalCost);
+    addProgress('goldSpentTotal', totalCost);
+    bumpProgress('itemsBought', qty);
 }
 
 function handleSellConsumable(message: any): void {
@@ -825,6 +1034,7 @@ function handleSellConsumable(message: any): void {
     webview.postMessage({ type: 'money', value: saveManager.save.money });
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     telemetry.trackGoldEarned(sellPrice);
+    bumpProgress('goldEarnedTotal', sellPrice);
 }
 
 function handleMoveDecor(message: any): void {
@@ -851,8 +1061,11 @@ function handleAddDecor(message: any): void {
     // sanity-clamped since this is a local single-player economy.)
     const price = isFiniteNumber(message.price) ? Math.max(0, Math.min(MAX_DECOR_PRICE, Math.floor(message.price))) : 0;
     if (price > 0) {
+        // Only count gold that actually existed (updateMoney clamps at 0)
+        const spent = Math.min(price, saveManager.save.money);
         saveManager.updateMoney(saveManager.save.money - price);
-        telemetry.trackGoldSpent(price);
+        telemetry.trackGoldSpent(spent);
+        addProgress('goldSpentTotal', spent);
         webview.postMessage({ type: 'money', value: saveManager.save.money });
     }
     saveManager.addDecor({
@@ -862,6 +1075,7 @@ function handleAddDecor(message: any): void {
         name: message.name,
     });
     telemetry.trackDecorationPlaced();
+    bumpProgress('decorPlaced');
 }
 
 function handleRemoveDecor(message: any): void {
@@ -885,9 +1099,12 @@ function handleAddPlant(message: any): void {
         webview.postMessage({ type: 'show_message', text: 'Too many plants!' });
         return;
     }
-    // Seeds are paid on placement — deduct here (single atomic operation)
+    // Seeds are paid on placement — deduct here (single atomic operation).
+    // Only count gold that actually existed (updateMoney clamps at 0).
+    const spent = Math.min(plantType.price, saveManager.save.money);
     saveManager.updateMoney(saveManager.save.money - plantType.price);
-    telemetry.trackGoldSpent(plantType.price);
+    telemetry.trackGoldSpent(spent);
+    addProgress('goldSpentTotal', spent);
     webview.postMessage({ type: 'money', value: saveManager.save.money });
     saveManager.addPlant({
         x: message.x,
@@ -896,6 +1113,7 @@ function handleAddPlant(message: any): void {
         phase: 0,
         phaseStartTime: new Date().toISOString(),
     });
+    bumpProgress('plantsPlanted');
 }
 
 function handleMovePlant(message: any): void {
@@ -945,6 +1163,7 @@ function handleApplyMulch(message: any): void {
     webview.postMessage({ type: 'inventory', value: saveManager.save.inventory });
     webview.postMessage({ type: 'set_mulch', index: message.index, mulch: mulchId });
     webview.postMessage({ type: 'show_message', text: `Applied ${mulchItem.name}!` });
+    bumpProgress('mulchApplied');
 }
 
 async function handleRenameSpecificPet(message: any): Promise<void> {
@@ -1006,6 +1225,8 @@ const messageHandlers: Record<string, (message: any) => void | Promise<void>> = 
     request_rename_pet: () => renamePetCommand(),
     request_rename_specific_pet: handleRenameSpecificPet,
     request_pokedex: () => refreshPokedex(),
+    request_badges: () => handleRequestBadges(),
+    claim_calendar_day: handleClaimCalendarDay,
     unequip_item: handleUnequipItem,
 };
 
@@ -1107,6 +1328,8 @@ async function addPetCommand(): Promise<void> {
 
     loadPet(pet);
     telemetry.trackPokemonAdded(pokemonData.name);
+    noteFormOwned(formData.name);
+    bumpProgress('petsSummoned');
     vscode.window.showInformationMessage(`Say hi to ${name} the ${formData.name}!`);
 }
 
@@ -1239,16 +1462,40 @@ function sanitizeImportedSave(clipText: string): Save {
             totalRewardsClaimed: typeof imported.streak.totalRewardsClaimed === 'number' ? Math.max(0, Math.floor(imported.streak.totalRewardsClaimed)) : 0,
         };
     }
+    const safeRecord = (v: unknown): { [k: string]: number } => {
+        if (typeof v !== 'object' || v === null || Array.isArray(v)) { return {}; }
+        const out: { [k: string]: number } = {};
+        for (const [k, n] of Object.entries(v)) {
+            if (typeof k === 'string' && typeof n === 'number' && Number.isFinite(n)) { out[k] = Math.max(0, Math.floor(n)); }
+        }
+        return out;
+    };
+    if (typeof imported.progress === 'object' && imported.progress !== null && !Array.isArray(imported.progress)) {
+        const pr = imported.progress;
+        sanitized.progress.counters = safeRecord(pr.counters);
+        for (const key of Object.keys(safeRecord(pr.formsOwned))) {
+            sanitized.progress.formsOwned[key] = 1;
+        }
+        if (typeof pr.unlocked === 'object' && pr.unlocked !== null && !Array.isArray(pr.unlocked)) {
+            const knownIds = new Set(Achievements.map(a => a.id));
+            for (const [id, date] of Object.entries(pr.unlocked)) {
+                if (knownIds.has(id) && typeof date === 'string') {
+                    sanitized.progress.unlocked[id] = date;
+                }
+            }
+        }
+    }
+    if (typeof imported.calendar === 'object' && imported.calendar !== null && !Array.isArray(imported.calendar)) {
+        sanitized.calendar = {
+            month: typeof imported.calendar.month === 'string' ? imported.calendar.month.slice(0, 7) : '',
+            claimedDays: Array.isArray(imported.calendar.claimedDays)
+                ? Array.from(new Set<number>(imported.calendar.claimedDays
+                    .filter((d: unknown): d is number => typeof d === 'number' && Number.isInteger(d) && d >= 1 && d <= 31)))
+                : [],
+        };
+    }
     if (typeof imported.telemetry === 'object' && imported.telemetry !== null && !Array.isArray(imported.telemetry)) {
         const t = imported.telemetry;
-        const safeRecord = (v: unknown): { [k: string]: number } => {
-            if (typeof v !== 'object' || v === null || Array.isArray(v)) { return {}; }
-            const out: { [k: string]: number } = {};
-            for (const [k, n] of Object.entries(v)) {
-                if (typeof k === 'string' && typeof n === 'number' && Number.isFinite(n)) { out[k] = Math.max(0, Math.floor(n)); }
-            }
-            return out;
-        };
         const safeNum = (v: unknown): number => typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
         sanitized.telemetry = {
             pokemonAdded: safeRecord(t.pokemonAdded),
@@ -1334,6 +1581,8 @@ async function importPokemonCommand(): Promise<void> {
 
     loadPet(pet);
     telemetry.trackPokemonAdded(pet.specie);
+    noteFormOwned(pet.form ?? pet.specie);
+    bumpProgress('petsSummoned');
     webview.postMessage({ type: 'pet_stats', value: buildPetStats() });
     vscode.window.showInformationMessage(`🎁 ${pet.name} joined your team!`);
 }
@@ -1374,6 +1623,11 @@ async function importSaveCommand(): Promise<void> {
 
     webview.postMessage({ type: 'reset' });
     initGame();
+    // Re-check achievements against the imported counters and refresh the
+    // badges view so nothing shows as "complete but locked"
+    ensureCalendarMonth();
+    evaluateAchievements();
+    postBadgesData();
     vscode.window.showInformationMessage('Save imported successfully! 🎉');
 }
 
@@ -1505,6 +1759,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (reward) {
             saveManager.updateMoney(saveManager.save.money + reward.gold);
             telemetry.trackGoldEarned(reward.gold);
+            addProgress('goldEarnedTotal', reward.gold);
             streakToastTimer = setTimeout(() => {
                 streakToastTimer = undefined;
                 vscode.window.showInformationMessage(reward.message);
@@ -1513,6 +1768,21 @@ export function activate(context: vscode.ExtensionContext): void {
         }
     } catch (err) {
         log('Failed to claim daily streak:', err);
+    }
+
+    // Calendar month rollover + achievement catch-up (also unlocks badges
+    // retroactively for veterans whose counters were seeded from telemetry)
+    ensureCalendarMonth();
+    evaluateAchievements();
+
+    // Gentle daily-reward reminder when today's calendar day is unclaimed
+    if (!saveManager.save.calendar.claimedDays.includes(new Date().getDate())) {
+        dailyReminderTimer = setTimeout(() => {
+            dailyReminderTimer = undefined;
+            vscode.window.showInformationMessage(
+                '📅 Your daily reward is ready — open Badges from the Actions menu to claim it!',
+            );
+        }, 5000);
     }
 
     context.subscriptions.push(
@@ -1540,10 +1810,16 @@ export function activate(context: vscode.ExtensionContext): void {
             vscode.commands.executeCommand('vscode.open', vscode.Uri.file(saveManager.getSavePath()));
         }),
         vscode.commands.registerCommand('pokemon-pets.reloadSaveFile', () => {
+            // Flush pending in-memory changes first so they aren't lost when
+            // re-reading from disk
+            saveManager.flushSave();
             webview.postMessage({ type: 'reset' });
             saveManager.loadGame();
             syncAutoFeedState();
             initGame();
+            ensureCalendarMonth();
+            evaluateAchievements();
+            postBadgesData();
         }),
         vscode.commands.registerCommand('pokemon-pets.exportSave', exportSaveCommand),
         vscode.commands.registerCommand('pokemon-pets.importSave', importSaveCommand),
@@ -1560,7 +1836,10 @@ export function activate(context: vscode.ExtensionContext): void {
             const codingReward = rewardsTracker.onFileSave(
                 doc.uri.toString(), saveManager.save.pets.length, cfg,
             );
-            if (codingReward) { applyReward(codingReward); }
+            if (codingReward) {
+                applyReward(codingReward);
+                bumpProgress('savesRewarded');
+            }
         }),
     );
 
@@ -1580,6 +1859,10 @@ export function deactivate(): void {
     if (streakToastTimer !== undefined) {
         clearTimeout(streakToastTimer);
         streakToastTimer = undefined;
+    }
+    if (dailyReminderTimer !== undefined) {
+        clearTimeout(dailyReminderTimer);
+        dailyReminderTimer = undefined;
     }
     stopUnifiedTick();
     try {

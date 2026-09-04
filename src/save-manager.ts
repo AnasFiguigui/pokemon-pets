@@ -1,12 +1,23 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Decoration, Pet, PlantInstance, Save, SAVE_VERSION, VALID_MULCH_IDS, getMaxHp, getMaxStamina } from './models';
-import { PlantTypes } from './game-data';
+import { Decoration, Pet, PlantInstance, Save, SAVE_VERSION, VALID_MULCH_IDS, defaultCalendar, defaultProgress, getMaxHp, getMaxStamina } from './models';
+import { PlantTypes, Pokemons } from './game-data';
+import { Achievements } from './achievements';
 import { log } from './log';
 
 /** Known plant-type ids — plants with retired/unknown ids are dropped on load
  *  so extension and webview plant indices always line up 1:1. */
 const KNOWN_PLANT_IDS: ReadonlySet<string> = new Set(PlantTypes.map(p => p.id));
+
+/** Known achievement ids — unknown keys in `unlocked` would inflate the
+ *  completionist badge count. */
+const KNOWN_ACHIEVEMENT_IDS: ReadonlySet<string> = new Set(Achievements.map(a => a.id));
+
+/** All known form names (lowercased) — unknown keys in `formsOwned` would
+ *  inflate the collection badge counts. */
+const KNOWN_FORM_NAMES: ReadonlySet<string> = new Set(
+    Object.values(Pokemons).flat().flatMap(species => species.forms.map(f => f.name.toLowerCase())),
+);
 
 export const DEFAULT_MAX_POKEMONS = 6;
 export const HARD_CAP_POKEMONS = 12;
@@ -123,6 +134,7 @@ export class SaveManager {
         if (this.validatePlants()) { saveUpdated = true; }
         if (this.validateInventory()) { saveUpdated = true; }
         if (this.validateMeta()) { saveUpdated = true; }
+        if (this.validateProgress()) { saveUpdated = true; }
 
         if (saveUpdated) {
             this.saveGame();
@@ -343,6 +355,81 @@ export class SaveManager {
             // Merge with defaults so new fields are always present
             this.save.telemetry = { ...defaultTelemetry(), ...this.save.telemetry };
         }
+        return updated;
+    }
+
+    /**
+     * Validates achievement progress & calendar data. A save from an older
+     * version gets progress initialized silently (seeded from telemetry so
+     * long-time players get a head start); malformed data is repaired.
+     */
+    private validateProgress(): boolean {
+        let updated = false;
+
+        if (!isPlainObject(this.save.progress)) {
+            // Older save — initialize silently and seed lifetime counters
+            // from the telemetry the player may already have accumulated.
+            const t = isPlainObject(this.save.telemetry) ? this.save.telemetry : undefined;
+            this.save.progress = defaultProgress();
+            this.save.progress.counters = {
+                candyFed: toNonNegativeInt(t?.candyFed),
+                wildCaught: toNonNegativeInt(t?.wildPokemonCaught),
+                decorPlaced: toNonNegativeInt(t?.decorationsPlaced),
+                goldEarnedTotal: toNonNegativeInt(t?.goldEarned),
+                goldSpentTotal: toNonNegativeInt(t?.goldSpent),
+            };
+        } else {
+            const p = this.save.progress as Record<string, unknown>;
+            for (const field of ['counters', 'formsOwned', 'unlocked'] as const) {
+                if (!isPlainObject(p[field])) {
+                    p[field] = {};
+                    updated = true;
+                }
+            }
+            for (const key of Object.keys(this.save.progress.counters)) {
+                const value = this.save.progress.counters[key];
+                if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+                    this.save.progress.counters[key] = 0;
+                    updated = true;
+                }
+            }
+            // Unknown unlocked/formsOwned keys would inflate collection and
+            // completionist metrics (hand-edited or future-version saves)
+            for (const id of Object.keys(this.save.progress.unlocked)) {
+                if (!KNOWN_ACHIEVEMENT_IDS.has(id) || typeof this.save.progress.unlocked[id] !== 'string') {
+                    delete this.save.progress.unlocked[id];
+                    updated = true;
+                }
+            }
+            for (const form of Object.keys(this.save.progress.formsOwned)) {
+                if (!KNOWN_FORM_NAMES.has(form)) {
+                    delete this.save.progress.formsOwned[form];
+                    updated = true;
+                }
+            }
+        }
+
+        if (!isPlainObject(this.save.calendar)) {
+            // Older save — initialize silently
+            this.save.calendar = defaultCalendar();
+        } else {
+            if (typeof this.save.calendar.month !== 'string') {
+                this.save.calendar.month = '';
+                updated = true;
+            }
+            if (!Array.isArray(this.save.calendar.claimedDays)) {
+                this.save.calendar.claimedDays = [];
+                updated = true;
+            } else {
+                const validDays = [...new Set(this.save.calendar.claimedDays
+                    .filter((d): d is number => typeof d === 'number' && Number.isInteger(d) && d >= 1 && d <= 31))];
+                if (validDays.length !== this.save.calendar.claimedDays.length) {
+                    this.save.calendar.claimedDays = validDays;
+                    updated = true;
+                }
+            }
+        }
+
         return updated;
     }
 

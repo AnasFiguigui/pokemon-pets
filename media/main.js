@@ -464,10 +464,225 @@ function renderPokedex(preserveScroll) {
 
 function toggleActionDecor() {
     //Close actions menu
-    Menus.close(); 
-    
+    Menus.close();
+
     //Toggle decor mode
     DecorMode.toggle();
+}
+
+//Badges & daily reward calendar
+let badgesData = null;      //Last payload from the extension
+let badgesRequested = false; //True while waiting for data to open the menu
+let badgeTab = 'badges';    //'badges' | 'calendar'
+let selectedBadgeId = null;
+
+function openBadges() {
+    badgesRequested = true;
+    vscode.postMessage({ type: 'request_badges' });
+}
+
+function setBadgeTab(tab) {
+    badgeTab = tab;
+    //Switching tabs starts fresh: no lingering selection or scroll position
+    selectedBadgeId = null;
+    document.getElementById('badgeTabBadges').toggleAttribute('active', tab === 'badges');
+    document.getElementById('badgeTabCalendar').toggleAttribute('active', tab === 'calendar');
+    renderBadgesMenu();
+    document.getElementById('badgesContent').scrollTop = 0;
+}
+
+/** Resets the badges view to its default state (badge tab, nothing selected). */
+function resetBadgesView() {
+    badgeTab = 'badges';
+    selectedBadgeId = null;
+    document.getElementById('badgeTabBadges').toggleAttribute('active', true);
+    document.getElementById('badgeTabCalendar').toggleAttribute('active', false);
+    document.getElementById('badgesContent').scrollTop = 0;
+}
+
+function handleBadgesData(value) {
+    if (typeof value !== 'object' || value === null) { return; }
+    badgesData = value;
+    if (Menus.current === 'badgesMenu') {
+        renderBadgesMenu();
+    } else if (badgesRequested) {
+        badgesRequested = false;
+        // Open when coming from the Actions menu (the normal path) or when
+        // no menu is open; skip only if the user navigated somewhere else
+        // while the request was in flight.
+        if (!Menus.current || Menus.current === 'actions') {
+            renderBadgesMenu();
+            Menus.toggle('badgesMenu', true);
+        }
+    }
+}
+
+function renderBadgesMenu() {
+    if (!badgesData) { return; }
+    const content = document.getElementById('badgesContent');
+    const dock = document.getElementById('badgeDetailDock');
+    content.innerHTML = '';
+    dock.innerHTML = '';
+    dock.hidden = true;
+    if (badgeTab === 'calendar') {
+        renderCalendarTab(content);
+    } else {
+        renderBadgeTab(content);
+        renderBadgeDetailDock(dock);
+    }
+}
+
+function applyBadgeSprite(el, achievement) {
+    // Inline background-image URLs resolve against the DOCUMENT base (not the
+    // stylesheet), so they must be absolute webview URIs via Game.mediaURI.
+    const sheet = achievement.unlocked ? 'badges.png' : 'badges_locked.png';
+    el.style.backgroundImage = `url('${Game.mediaURI}sprites/${sheet}')`;
+    el.style.backgroundPosition = `${-achievement.col * 32}px ${-achievement.row * 32}px`;
+}
+
+function renderBadgeTab(content) {
+    const achievements = Array.isArray(badgesData.achievements) ? badgesData.achievements : [];
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+
+    const summary = document.createElement('div');
+    summary.classList.add('badgeSummary');
+    summary.innerText = `Badges ${unlockedCount}/${achievements.length}`;
+    content.appendChild(summary);
+
+    const grid = document.createElement('div');
+    grid.classList.add('badgeGrid');
+    for (const achievement of achievements) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.classList.add('badgeCell');
+        cell.title = achievement.unlocked ? achievement.name : `${achievement.name} (locked)`;
+        if (!achievement.unlocked) { cell.setAttribute('locked', ''); }
+        if (achievement.id === selectedBadgeId) { cell.setAttribute('selected', ''); }
+
+        const sprite = document.createElement('span');
+        sprite.classList.add('badgeSprite');
+        applyBadgeSprite(sprite, achievement);
+        cell.appendChild(sprite);
+
+        cell.onclick = () => {
+            selectedBadgeId = achievement.id === selectedBadgeId ? null : achievement.id;
+            renderBadgesMenu();
+        };
+        grid.appendChild(cell);
+    }
+    content.appendChild(grid);
+}
+
+/** Renders the selected badge's details into the fixed dock below the grid. */
+function renderBadgeDetailDock(dock) {
+    const achievements = Array.isArray(badgesData.achievements) ? badgesData.achievements : [];
+    const selected = achievements.find(a => a.id === selectedBadgeId);
+    if (!selected) { return; }
+
+    dock.hidden = false;
+    const detail = document.createElement('div');
+    detail.classList.add('badgeDetail');
+    {
+        const name = document.createElement('span');
+        name.classList.add('badgeDetailName');
+        name.innerText = selected.name;
+        detail.appendChild(name);
+
+        const title = document.createElement('span');
+        title.classList.add('badgeDetailTitle');
+        title.innerText = selected.unlocked ? `✓ ${selected.title}` : selected.title;
+        detail.appendChild(title);
+
+        const desc = document.createElement('span');
+        desc.classList.add('badgeDetailDesc');
+        desc.innerText = selected.description;
+        detail.appendChild(desc);
+
+        if (selected.rewardText) {
+            const reward = document.createElement('span');
+            reward.classList.add('badgeDetailReward');
+            reward.innerText = `Reward: ${selected.rewardText}`;
+            detail.appendChild(reward);
+        }
+
+        if (selected.unlocked) {
+            const when = document.createElement('span');
+            when.classList.add('badgeDetailDesc');
+            const date = selected.unlockedAt ? new Date(selected.unlockedAt) : null;
+            when.innerText = date && !Number.isNaN(date.getTime())
+                ? `Earned on ${date.toLocaleDateString()}`
+                : 'Earned';
+            detail.appendChild(when);
+        } else {
+            const bar = document.createElement('div');
+            bar.classList.add('badgeProgressBar');
+            const fill = document.createElement('div');
+            fill.classList.add('badgeProgressFill');
+            const pct = selected.target > 0 ? (selected.current / selected.target) * 100 : 0;
+            fill.style.width = `${Math.min(100, pct)}%`;
+            bar.appendChild(fill);
+            const label = document.createElement('span');
+            label.classList.add('badgeProgressLabel');
+            label.innerText = `${selected.current}/${selected.target}`;
+            bar.appendChild(label);
+            detail.appendChild(bar);
+        }
+    }
+    dock.appendChild(detail);
+}
+
+function renderCalendarTab(content) {
+    const calendar = badgesData.calendar;
+    if (!calendar) { return; }
+
+    const header = document.createElement('div');
+    header.classList.add('calendarHeader');
+    const [yearStr, monthStr] = String(calendar.month).split('-');
+    const monthDate = new Date(Number(yearStr), Number(monthStr) - 1, 1);
+    header.innerText = Number.isNaN(monthDate.getTime())
+        ? 'Daily Rewards'
+        : monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    content.appendChild(header);
+
+    //Hint only while today's reward is still unclaimed
+    if (!calendar.claimedDays.includes(calendar.today)) {
+        const hint = document.createElement('div');
+        hint.classList.add('calendarHint');
+        hint.innerText = "Click today's glowing day to claim your reward!";
+        content.appendChild(hint);
+    }
+
+    const grid = document.createElement('div');
+    grid.classList.add('calendarGrid');
+    for (let day = 1; day <= calendar.daysInMonth; day++) {
+        const reward = calendar.rewards?.[day - 1] ?? {};
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.classList.add('calendarCell');
+        cell.title = `Day ${day}: ${reward.text ?? ''}`;
+
+        //Day number + the reward shown right in the cell
+        const dayLabel = document.createElement('span');
+        dayLabel.classList.add('calendarDay');
+        dayLabel.innerText = `${day}`;
+        cell.appendChild(dayLabel);
+
+        const rewardLabel = document.createElement('span');
+        rewardLabel.classList.add('calendarReward');
+        rewardLabel.innerText = `${reward.gold ?? 0}g${reward.hasItems ? '+🎁' : ''}`;
+        cell.appendChild(rewardLabel);
+
+        if (calendar.claimedDays.includes(day)) {
+            cell.setAttribute('claimed', '');
+        } else if (day === calendar.today) {
+            cell.setAttribute('today', '');
+            cell.onclick = () => vscode.postMessage({ type: 'claim_calendar_day', day });
+        } else if (day < calendar.today) {
+            cell.setAttribute('missed', '');
+        }
+        grid.appendChild(cell);
+    }
+    content.appendChild(grid);
 }
 
 //Store menu
@@ -1137,6 +1352,9 @@ function handleGameMessage(message) {
                 if (Menus.current === 'pokedex') { updatePokedexStats(); }
             }
             break;
+        case 'badges_data':
+            handleBadgesData(message.value);
+            break;
         case 'consumable_failed':
             Game.showMessage('It had no effect!');
             break;
@@ -1649,7 +1867,7 @@ function wireStaticUiEvents() {
     stopMouse(menus);
     menus.addEventListener('click', () => Menus.close());
     menus.addEventListener('keydown', e => { if (e.key === 'Escape') { Menus.close(); } });
-    for (const id of ['actions', 'store', 'backpack', 'pokedex']) {
+    for (const id of ['actions', 'store', 'backpack', 'pokedex', 'badgesMenu']) {
         const menu = document.getElementById(id);
         if (!menu) { continue; }
         menu.addEventListener('click', e => e.stopPropagation());
@@ -1662,7 +1880,14 @@ function wireStaticUiEvents() {
     on('actionsPokedexBtn', () => openPokedex());
     on('actionsBackpackBtn', () => openBackpack());
     on('actionsStoreBtn', () => openStoreMenu());
+    on('actionsBadgesBtn', () => openBadges());
     on('actionsDecorBtn', () => toggleActionDecor());
+
+    //Badges menu
+    on('badgesBackBtn', () => Menus.toggle('actions', true));
+    on('badgesCloseBtn', () => Menus.close());
+    on('badgeTabBadges', () => setBadgeTab('badges'));
+    on('badgeTabCalendar', () => setBadgeTab('calendar'));
 
     //Store / backpack / pokédex top bars. (The store back button's handler is
     //reassigned per page whenever a store page opens.)
@@ -1698,7 +1923,11 @@ Menus.onOpen = () => {
 };
 
 //Hide top bar when all menus close (deferred so menu-to-menu navigation keeps it visible)
-Menus.onClose = () => {
+Menus.onClose = (name) => {
+    //A dismissed menu also cancels any pending badges auto-open
+    badgesRequested = false;
+    //Leaving the badges menu resets it, so it always reopens fresh
+    if (name === 'badgesMenu') { resetBadgesView(); }
     if (!topBarVisible) {
         setTimeout(() => {
             if (!Menus.current) {

@@ -79,6 +79,10 @@
                         <img src="{media}sprites/ui/pokedex.png" alt="Pokédex">
                         <span>Pokédex</span>
                     </button>
+                    <button type="button" id="actionsBadgesBtn" class="menuButton">
+                        <img src="{media}sprites/ui/badge.png" alt="Badges">
+                        <span>Badges</span>
+                    </button>
                     <button type="button" id="actionsBackpackBtn" class="menuButton">
                         <img src="{media}sprites/ui/backpack.png" alt="Backpack">
                         <span>Backpack</span>
@@ -126,6 +130,24 @@
                 <div id="pokedexContent" class="menuContent" scrollable>
                     <!-- Pokédex entries populated by JS -->
                 </div>
+            </div>
+
+            <!-- Badges & daily calendar menu -->
+            <div id="badgesMenu" class="menu" role="menu">
+                <div class="menuTopBar">
+                    <button id="badgesBackBtn" class="menuTopButton">Back</button>
+                    <button id="badgesCloseBtn" class="menuTopButton">X</button>
+                </div>
+                <div class="badgeTabs" role="tablist">
+                    <button type="button" id="badgeTabBadges" class="badgeTab" role="tab" active>Badges</button>
+                    <button type="button" id="badgeTabCalendar" class="badgeTab" role="tab">Calendar</button>
+                </div>
+                <div id="badgesContent" class="menuContent" scrollable>
+                    <!-- Populated by JS -->
+                </div>
+                <!-- Selected badge details live OUTSIDE the scroll area so the
+                     grid never collapses when a description is open -->
+                <div id="badgeDetailDock" hidden></div>
             </div>
 
         </div>

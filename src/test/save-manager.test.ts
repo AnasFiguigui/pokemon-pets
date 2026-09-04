@@ -671,6 +671,50 @@ describe('SaveManager', () => {
         });
     });
 
+    // ── Hardening: achievement progress validation ──────────────────────
+
+    describe('progress validation', () => {
+        it('prunes unknown achievement ids and form names (anti-inflation)', () => {
+            const saveData = completeSave({
+                progress: {
+                    counters: { candyFed: 5, bogus: -3 },
+                    formsOwned: { pikachu: 1, not_a_pokemon: 1 },
+                    unlocked: { boulder: '2026-01-01', fake_badge: '2026-01-01', cascade: 42 },
+                },
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+            vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+
+            manager.loadGame();
+
+            expect(manager.save.progress.counters.candyFed).toBe(5);
+            expect(manager.save.progress.counters.bogus).toBe(0);
+            expect(manager.save.progress.formsOwned).toEqual({ pikachu: 1 });
+            expect(manager.save.progress.unlocked).toEqual({ boulder: '2026-01-01' });
+        });
+
+        it('initializes missing progress silently, seeded from telemetry', () => {
+            const saveData = completeSave({
+                telemetry: {
+                    pokemonAdded: {}, pokemonEvolved: {}, candyFed: 42,
+                    wildPokemonCaught: 7, decorationsPlaced: 3,
+                    goldEarned: 1000, goldSpent: 500, sessionsCount: 1, lastSessionDate: '',
+                },
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(saveData));
+
+            manager.loadGame();
+
+            expect(manager.save.progress.counters.candyFed).toBe(42);
+            expect(manager.save.progress.counters.wildCaught).toBe(7);
+            expect(manager.save.progress.counters.goldEarnedTotal).toBe(1000);
+            // Pure absence of progress/calendar must not force a rewrite
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+    });
+
     // ── Atomic writes ───────────────────────────────────────────────────
 
     describe('atomic writes', () => {
