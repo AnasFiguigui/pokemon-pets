@@ -3,7 +3,7 @@
 ## [1.5.0] — Stability & Performance
 
 ### New Features
-- **Pet playdates** — Every so often, two Pokémon walk up to each other, meet in the middle, and play — both gain a little friendship.
+- **Pokemon playdates** — Every so often, two Pokémon walk up to each other, meet in the middle, and play — both react with the same emote and gain a little friendship.
 - **Pokémon gift codes** — `Pokemon Pets: Export Pokémon gift code` copies a shareable code for one Pokémon to the clipboard (yours stays with you); a friend runs `Pokemon Pets: Import Pokémon gift code` to add it to their team. No full save swap needed.
 - **Settings Sync save backup** — The save is mirrored into VS Code Settings Sync (toggle with `pokemon-pets.syncSaveBackup`) and restored automatically on a fresh install, so your Pokémon follow you across machines. An existing local save is never overwritten.
 - **Git commit rewards** — Commits now grant gold (default 100, configurable via `pokemon-pets.rewards.commitGold`, set to 0 to disable).

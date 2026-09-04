@@ -451,9 +451,15 @@ class PetAI extends AI {
         this.#moodHideTimeout.wait(2000);
     }
 
-    //Two pets met up for a play session — celebrate with hearts
-    playWithFriend() {
-        this.#setHeartMood();
+    //Two pets met up for a play session — celebrate. Both playmates are
+    //given the SAME mood (picked once per session) so they visibly react
+    //to each other; without one, fall back to hearts.
+    playWithFriend(sharedMood) {
+        if (sharedMood instanceof Vec2) {
+            this.#setMood(sharedMood);
+        } else {
+            this.#setHeartMood();
+        }
         this.showMood();
         this.setState(AI.SPECIAL);
     }

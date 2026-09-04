@@ -1466,11 +1466,14 @@ function steerPetPlay() {
     const by = petB.pos.y + petB.size.y / 2;
 
     if (Math.hypot(ax - bx, ay - by) <= PET_PLAY_MEET_DIST) {
-        //They met — celebrate and tell the extension (friendship for both)
+        //They met — celebrate and tell the extension (friendship for both).
+        //Both pets show the SAME random emote, like they're reacting to
+        //each other.
+        const sharedMood = PetMoods.RANDOM;
         const indexA = Game.pets.indexOf(petA);
         const indexB = Game.pets.indexOf(petB);
-        petA.ai.playWithFriend();
-        petB.ai.playWithFriend();
+        petA.ai.playWithFriend(sharedMood);
+        petB.ai.playWithFriend(sharedMood);
         if (indexA >= 0 && indexB >= 0 && indexA !== indexB) {
             vscode.postMessage({ type: 'pets_played', indexA, indexB });
         }
